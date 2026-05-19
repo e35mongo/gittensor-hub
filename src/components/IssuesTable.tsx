@@ -25,6 +25,7 @@ import {
   TriangleDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  GitPullRequestIcon,
 } from '@primer/octicons-react';
 import type { IssueDto } from '@/lib/api-types';
 import { IssueStatusBadge } from '@/components/StatusBadge';
@@ -339,6 +340,7 @@ export default function IssuesTable() {
                   />
                 </Box>
               </Box>
+              <HeaderCell label="Linked PRs" />
               <HeaderCell label="Weight" onClick={() => toggleSort('weight')} active={sortKey === 'weight'} dir={sortDir} align="right" />
               <HeaderCell label="Comments" onClick={() => toggleSort('comments')} active={sortKey === 'comments'} dir={sortDir} align="right" />
               <HeaderCell label="Opened" onClick={() => toggleSort('opened')} active={sortKey === 'opened'} dir={sortDir} />
@@ -348,7 +350,7 @@ export default function IssuesTable() {
           <Box as="tbody">
             {isLoading && rows.length === 0 && (
               <Box as="tr">
-                <Box as="td" colSpan={9} sx={{ p: 0 }}>
+                <Box as="td" colSpan={10} sx={{ p: 0 }}>
                   <TableRowsSkeleton
                     rows={12}
                     cols={[
@@ -357,6 +359,7 @@ export default function IssuesTable() {
                       { flex: 1 },
                       { width: 120 },
                       { width: 100 },
+                      { width: 80 },
                       { width: 60 },
                       { width: 60 },
                       { width: 60 },
@@ -368,7 +371,7 @@ export default function IssuesTable() {
             )}
             {!isLoading && rows.length === 0 && (
               <Box as="tr">
-                <Box as="td" colSpan={9} sx={{ p: 4, textAlign: 'center', color: 'fg.muted' }}>
+                <Box as="td" colSpan={10} sx={{ p: 4, textAlign: 'center', color: 'fg.muted' }}>
                   {data && data.count === 0
                     ? 'No issues cached for current repositories yet. Visit a repo page or run the poller to populate.'
                     : 'No issues match these filters.'}
@@ -392,7 +395,7 @@ export default function IssuesTable() {
                   />
                   {expanded && settings.contentDisplay === 'accordion' && (
                     <Box as="tr">
-                      <Box as="td" colSpan={9} sx={{ p: 0 }}>
+                      <Box as="td" colSpan={10} sx={{ p: 0 }}>
                         <ContentViewer
                           target={{ kind: 'issue', owner: o, name: n, number: issue.number, preloaded: issue }}
                           mode="inline"
@@ -811,6 +814,42 @@ function IssueTableRow({
           </button>
         ) : (
           <Text sx={{ fontWeight: 500, color: 'fg.muted' }}>—</Text>
+        )}
+      </Box>
+      <Box as="td" sx={{ ...issueRowCellSx, fontSize: 0 }}>
+        {issue.linked_prs && issue.linked_prs.length > 0 ? (
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            {issue.linked_prs.slice(0, 3).map((pr) => {
+              const target = `/?repo=${encodeURIComponent(issue.repo_full_name)}&tab=pulls&pull=${pr.number}`;
+              return (
+                <Link key={pr.number} href={target} prefetch={false} style={{ textDecoration: 'none' }} onClick={(e) => e.stopPropagation()}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: '6px',
+                      py: '1px',
+                      bg: pr.merged ? 'var(--success-subtle)' : 'var(--bg-emphasis)',
+                      border: '1px solid',
+                      borderColor: pr.merged ? 'success.emphasis' : 'border.default',
+                      borderRadius: 999,
+                      color: pr.merged ? 'success.fg' : 'accent.fg',
+                      '&:hover': { borderColor: pr.merged ? 'success.fg' : 'accent.emphasis' },
+                    }}
+                  >
+                    <GitPullRequestIcon size={11} />
+                    <Text>#{pr.number}</Text>
+                  </Box>
+                </Link>
+              );
+            })}
+            {issue.linked_prs.length > 3 && (
+              <Text sx={{ color: 'fg.muted', fontSize: 0 }}>+{issue.linked_prs.length - 3}</Text>
+            )}
+          </Box>
+        ) : (
+          <Text sx={{ color: 'fg.muted' }}>—</Text>
         )}
       </Box>
       <Box

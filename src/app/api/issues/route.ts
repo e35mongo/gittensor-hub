@@ -264,6 +264,7 @@ export async function GET(req: NextRequest) {
     .all(...filteredWhere.args, limit, offset) as IssueRow[];
 
   const mergedPrCounts = new Map<string, number>();
+  const linkedPrs = new Map<string, Array<{ number: number; merged: boolean }>>();
   if (rows.length > 0) {
     const pairWhere = rows.map(() => '(l.repo_full_name = ? AND l.issue_number = ?)').join(' OR ');
     const pairArgs = rows.flatMap((r) => [r.repo_full_name, r.number]);
@@ -278,6 +279,21 @@ export async function GET(req: NextRequest) {
       .all(...pairArgs) as Array<{ repo_full_name: string; issue_number: number; merged_pr_count: number }>;
     for (const r of countRows) {
       mergedPrCounts.set(`${r.repo_full_name}#${r.issue_number}`, r.merged_pr_count);
+    }
+    const prLinks = db
+      .prepare(
+        `SELECT l.repo_full_name, l.issue_number, l.pr_number, p.merged
+         FROM pr_issue_links l
+         JOIN pulls p ON p.repo_full_name = l.repo_full_name AND p.number = l.pr_number
+         WHERE (${pairWhere})
+         ORDER BY p.merged DESC, p.created_at DESC`,
+      )
+      .all(...pairArgs) as Array<{ repo_full_name: string; issue_number: number; pr_number: number; merged: number }>;
+    for (const pr of prLinks) {
+      const key = `${pr.repo_full_name}#${pr.issue_number}`;
+      const list = linkedPrs.get(key) ?? [];
+      list.push({ number: pr.pr_number, merged: pr.merged === 1 });
+      linkedPrs.set(key, list);
     }
   }
 
@@ -295,6 +311,7 @@ export async function GET(req: NextRequest) {
       ...r,
       labels: parseLabels(r.labels),
       merged_pr_count: mergedPrCounts.get(`${r.repo_full_name}#${r.number}`) ?? 0,
+      linked_prs: linkedPrs.get(`${r.repo_full_name}#${r.number}`) ?? [],
     })),
   });
 }

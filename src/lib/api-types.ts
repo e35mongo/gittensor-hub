@@ -17,6 +17,7 @@ export interface IssueDto {
   fetched_at: string;
   first_seen_at: string;
   merged_pr_count?: number;
+  linked_prs?: Array<{ number: number; merged: boolean }>;
 }
 
 export interface PullDto {
