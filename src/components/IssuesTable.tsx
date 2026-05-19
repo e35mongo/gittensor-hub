@@ -267,12 +267,11 @@ export default function IssuesTable() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', minWidth: 0 }}>
-          <TextInput
-            leadingVisual={SearchIcon}
+          <SearchInput
             placeholder="Filter by title, repo, #, author…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            sx={{ width: [280, 360, 380], maxWidth: '100%' }}
+            onChange={setQuery}
+            width={380}
           />
           <Dropdown
             value={stateFilter}
