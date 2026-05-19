@@ -56,6 +56,12 @@ import { ResizeHandle } from '@/components/repo-explorer/ResizeHandle';
 import { InlinePagination } from '@/components/repo-explorer/Pagination';
 import { useIssueFilters, type IssueState } from '@/components/repo-explorer/useIssueFilters';
 import { usePullFilters, type PRState } from '@/components/repo-explorer/usePullFilters';
+import {
+  DEFAULT_EXCESSIVE_PR_PENALTY_THRESHOLD,
+  DEFAULT_MIN_CREDIBILITY,
+  DEFAULT_MIN_ISSUE_CREDIBILITY,
+  DEFAULT_OPEN_ISSUE_SPAM_THRESHOLD,
+} from '@/lib/gittensor-policy';
 
 type RepoSort = 'weight' | 'name' | 'tracked';
 type Tab = 'issues' | 'pulls';
@@ -213,10 +219,10 @@ const EMPTY_REPO: Sn74Repo = {
 
 function RepoPolicyPanel({ repo }: { repo: Sn74Repo }) {
   if (!repo.fullName) return null;
-  const excessivePrThreshold = repo.excessivePrPenaltyThreshold ?? 2;
-  const openIssueThreshold = repo.openIssueSpamThreshold ?? 2;
-  const minPrCredibility = repo.minCredibility ?? 0.8;
-  const minIssueCredibility = repo.minIssueCredibility ?? 0.8;
+  const excessivePrThreshold = repo.excessivePrPenaltyThreshold ?? DEFAULT_EXCESSIVE_PR_PENALTY_THRESHOLD;
+  const openIssueThreshold = repo.openIssueSpamThreshold ?? DEFAULT_OPEN_ISSUE_SPAM_THRESHOLD;
+  const minPrCredibility = repo.minCredibility ?? DEFAULT_MIN_CREDIBILITY;
+  const minIssueCredibility = repo.minIssueCredibility ?? DEFAULT_MIN_ISSUE_CREDIBILITY;
 
   return (
     <Box

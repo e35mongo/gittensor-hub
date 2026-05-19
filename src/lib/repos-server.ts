@@ -4,6 +4,12 @@
 // intentionally not consulted here — live is the sole source of truth.
 import type { Sn74Repo } from './repos';
 import { getDb } from './db';
+import {
+  DEFAULT_EXCESSIVE_PR_PENALTY_THRESHOLD,
+  DEFAULT_MIN_CREDIBILITY,
+  DEFAULT_MIN_ISSUE_CREDIBILITY,
+  DEFAULT_OPEN_ISSUE_SPAM_THRESHOLD,
+} from './gittensor-policy';
 
 // Live source. We poll entrius/gittensor:main/master_repositories.json every
 // 5 minutes. Per-poll semantics:
@@ -56,11 +62,6 @@ type LiveRepoMeta = {
   labelMultipliers: Record<string, number> | null;
   inactiveAt: string | null;
 };
-
-const DEFAULT_MIN_CREDIBILITY = 0.8;
-const DEFAULT_MIN_ISSUE_CREDIBILITY = 0.8;
-const DEFAULT_EXCESSIVE_PR_PENALTY_THRESHOLD = 2;
-const DEFAULT_OPEN_ISSUE_SPAM_THRESHOLD = 2;
 
 function entryWeight(ent: MasterRepoEntry): number {
   if (typeof ent.emission_share === 'number') return ent.emission_share;

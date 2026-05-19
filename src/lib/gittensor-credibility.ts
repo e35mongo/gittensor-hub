@@ -3,6 +3,7 @@ import type { AuthorCredibility } from '@/types/entities';
 const REPO_MINERS_BASE_URL = 'https://api.gittensor.io/repos';
 const CREDIBILITY_TTL_MS = 30_000;
 const CREDIBILITY_FETCH_TIMEOUT_MS = 2_500;
+const MAX_REPO_CREDIBILITY_FETCHES = 6;
 const LOGIN_FIELDS = ['githubUsername', 'github_username', 'githubLogin', 'github_login', 'username', 'author', 'login'];
 const REPO_FIELDS = ['repository_full_name', 'repositoryFullName', 'repository', 'repo_full_name', 'repoFullName', 'full_name', 'fullName'];
 
@@ -130,11 +131,33 @@ function uniqueRepos(repoFullNames: Iterable<string> | undefined): string[] {
   return Array.from(repos.values());
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await mapper(items[index]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 export async function getGittensorCredibilityIndex(repoFullNames?: Iterable<string>): Promise<AuthorCredibilityIndex | null> {
   const repos = uniqueRepos(repoFullNames);
   if (repos.length === 0) return emptyIndex();
 
-  const repoCredibilities = await Promise.all(repos.map((repoFullName) => getRepoCredibility(repoFullName)));
+  const repoCredibilities = await mapWithConcurrency(
+    repos,
+    MAX_REPO_CREDIBILITY_FETCHES,
+    (repoFullName) => getRepoCredibility(repoFullName),
+  );
   const index = emptyIndex();
 
   for (const repoCredibility of repoCredibilities) {
