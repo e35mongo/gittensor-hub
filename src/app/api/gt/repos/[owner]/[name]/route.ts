@@ -8,7 +8,7 @@ const REPOS_URL = 'https://api.gittensor.io/dash/repos';
 const PRS_URL = 'https://api.gittensor.io/prs';
 const TTL_MS = 30_000;
 
-interface UpstreamRepo { fullName: string; weight: string | number; inactiveAt?: string | null }
+interface UpstreamRepo { fullName: string; weight: string | number; inactiveAt?: string | null; config?: { emissionShare?: string | number; eligibilityMode?: boolean } | null }
 interface UpstreamPr {
   repository: string;
   author?: string | null;
@@ -38,7 +38,9 @@ async function refresh(): Promise<CachedAggregates> {
   ]);
   const byRepo = new Map<string, { totalScore: number; mergedPrCount: number; contributors: Set<string>; weight: number; isActive: boolean }>();
   for (const r of reposRaw) {
-    byRepo.set(r.fullName, { totalScore: 0, mergedPrCount: 0, contributors: new Set<string>(), weight: num(r.weight), isActive: !r.inactiveAt });
+    const eligibilityMode = r.config?.eligibilityMode;
+    const inactive = eligibilityMode === false || !!r.inactiveAt;
+    byRepo.set(r.fullName, { totalScore: 0, mergedPrCount: 0, contributors: new Set<string>(), weight: num(r.config?.emissionShare ?? r.weight), isActive: !inactive });
   }
   for (const p of prsRaw) {
     const a = byRepo.get(p.repository);

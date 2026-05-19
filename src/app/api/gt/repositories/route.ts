@@ -9,17 +9,14 @@ const TTL_MS = 30_000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface UpstreamRepoConfig {
-  weight?: string | number;
-  inactiveAt?: string | null;
+  emissionShare?: string | number;
+  eligibilityMode?: boolean;
 }
 
 interface UpstreamRepo {
   fullName: string;
   name: string;
   owner: string;
-  // Upstream nests weight + inactiveAt under `config`. Older snapshots had
-  // them at the top level, so we accept either shape and prefer config when
-  // both are present.
   config?: UpstreamRepoConfig | null;
   weight?: string | number;
   inactiveAt?: string | null;
@@ -122,14 +119,16 @@ async function refresh(): Promise<Cached> {
     const trendingPct = prsLastWeek > 0
       ? ((prsThisWeek - prsLastWeek) / prsLastWeek) * 100
       : prsThisWeek > 0 ? prsThisWeek * 100 : 0;
-    const weight = num(r.config?.weight ?? r.weight);
-    const inactiveAt = r.config?.inactiveAt ?? r.inactiveAt ?? null;
+    const weight = num(r.config?.emissionShare ?? r.weight);
+    const eligibilityMode = r.config?.eligibilityMode;
+    // upstream: eligibilityMode=false means ineligible; fall back to legacy inactiveAt
+    const inactiveAt = eligibilityMode === false ? '1970-01-01T00:00:00.000Z' : (r.inactiveAt ?? null);
     return {
       fullName: r.fullName,
       owner: r.owner,
       name: r.name,
       weight,
-      isActive: !inactiveAt,
+      isActive: eligibilityMode !== false && !inactiveAt,
       inactiveAt,
       totalScore: a?.totalScore ?? 0,
       totalPrCount: a?.totalPrCount ?? 0,
