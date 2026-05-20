@@ -37,6 +37,7 @@ import { useMinerLogin } from '@/lib/use-miner';
 import Dropdown from '@/components/Dropdown';
 import ContentViewer from '@/components/ContentViewer';
 import AuthorCredibilityNote from '@/components/AuthorCredibilityNote';
+import PullScoreCell from '@/components/PullScoreCell';
 import RelatedPRsCell, { type LinkedPullReference } from '@/components/RelatedPRsCell';
 import { IssueLabels } from '@/components/IssueLabels';
 import SearchInput from '@/components/SearchInput';
@@ -1163,6 +1164,24 @@ export default function RepoExplorer() {
     [pullsData?.pulls, selected.owner, selected.name, settings.contentDisplay],
   );
 
+  const openLinkedIssue = useCallback(
+    async (issueNumber: number) => {
+      setAuthorTarget(null);
+      setPullModal(null);
+      setExpandedIssue(null);
+      setExpandedPull(null);
+
+      try {
+        const r = await fetch(`/api/issue/${selected.owner}/${selected.name}/${issueNumber}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        setIssueModal((await r.json()) as Issue);
+      } catch (err) {
+        console.warn('[explorer] could not open linked issue:', err);
+      }
+    },
+    [selected.owner, selected.name],
+  );
+
   const openAuthorSidebar = useCallback((login: string, association: string | null | undefined, initialTab: 'issues' | 'pulls') => {
     setIssueModal(null);
     setPullModal(null);
@@ -2067,6 +2086,7 @@ export default function RepoExplorer() {
                       { width: 60 },
                       { flex: 1 },
                       { width: 100 },
+                      { width: 72 },
                       { width: 60 },
                       { width: 60 },
                       { width: 60 },
@@ -2080,13 +2100,14 @@ export default function RepoExplorer() {
                   </Box>
                 )
               ) : (
-                <Box as="table" sx={{ width: '100%', minWidth: 960, borderCollapse: 'collapse', fontSize: 1 }}>
+                <Box as="table" sx={{ width: '100%', minWidth: 1040, borderCollapse: 'collapse', fontSize: 1 }}>
                   <Box as="thead" sx={{ position: 'sticky', top: 0, bg: 'var(--bg-subtle)', zIndex: 1 }}>
                     <Box as="tr" sx={{ borderBottom: '1px solid', borderColor: 'var(--border-default)' }}>
                       <Box as="th" sx={{ ...tableHeaderSx, width: 28 }}></Box>
                       <SortHeader label="State" sortKey="state" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
                       <Box as="th" sx={tableHeaderSx}>Pull Request</Box>
                       <SortHeader label="Author" sortKey="author" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
+                      <Box as="th" sx={tableHeaderSx}>Score</Box>
                       <SortHeader label="Opened" sortKey="opened" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
                       <SortHeader label="Updated" sortKey="updated" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
                       <SortHeader label="Merged / Closed" sortKey="closed" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
@@ -2115,18 +2136,11 @@ export default function RepoExplorer() {
                             onView={handleView}
                             linkedIssues={linkedIssues}
                             onAuthorClick={openPullAuthorSidebar}
-                            onIssueClick={(num) => {
-                              setPullModal(null);
-                              setIssueModal(null);
-                              setExpandedPull(null);
-                              setExpandedIssue(null);
-                              switchTab('issues');
-                              setPendingOpen({ kind: 'issue', number: num });
-                            }}
+                            onIssueClick={openLinkedIssue}
                           />
                           {expanded && settings.contentDisplay === 'accordion' && (
                             <Box as="tr">
-                              <Box as="td" colSpan={8} sx={{ p: 0 }}>
+                              <Box as="td" colSpan={9} sx={{ p: 0 }}>
                                 <ContentViewer
                                   target={{
                                     kind: 'pull',
@@ -2290,7 +2304,7 @@ export default function RepoExplorer() {
         </Box>
       )}
 
-      {issueModal && settings.contentDisplay === 'modal' && (
+      {issueModal && settings.contentDisplay !== 'side' && (
         <ContentViewer
           target={{
             kind: 'issue',
@@ -2662,6 +2676,9 @@ const ExplorerPullRow = React.memo(function ExplorerPullRow({
           highlight={mine}
           onClick={onAuthorClick}
         />
+      </Box>
+      <Box as="td" sx={{ ...tableCellSx, fontSize: 0, whiteSpace: 'nowrap' }}>
+        <PullScoreCell pr={pr} />
       </Box>
       <Box as="td" sx={tableTimeSx} title={pr.created_at ?? undefined}>
         <RecentTime iso={pr.created_at} />

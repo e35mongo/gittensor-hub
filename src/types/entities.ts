@@ -351,7 +351,13 @@ export interface Pull {
   html_url: string | null;
   fetched_at: string;
   first_seen_at: string;
+  score?: PullScore | null;
   author_credibility?: AuthorCredibility | null;
+}
+
+export interface PullScore {
+  score: number | null;
+  collateral_score: number | null;
 }
 
 export interface PullStateCounts {
