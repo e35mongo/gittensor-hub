@@ -1,5 +1,7 @@
 import type { RepoEntry, RepoEligibilityConfig } from './repos';
 
+const OSS_SHARE = 0.9;
+
 export interface ResolvedEligibility {
   minValidMergedPrs: number;
   minCredibility: number;
@@ -49,12 +51,17 @@ export function resolveEligibility(input: RepoEligibilityConfig | null | undefin
   };
 }
 
+function repoScoringPool(repo: RepoEntry): number {
+  const maintainerCut = Math.min(1, Math.max(0, repo.maintainerCut));
+  return repo.emissionShare * OSS_SHARE * (1 - maintainerCut);
+}
+
 export function prPool(repo: RepoEntry): number {
-  return repo.emissionShare * Math.max(0, 1 - repo.issueDiscoveryShare);
+  return repoScoringPool(repo) * Math.max(0, 1 - repo.issueDiscoveryShare);
 }
 
 export function issuePool(repo: RepoEntry): number {
-  return repo.emissionShare * repo.issueDiscoveryShare;
+  return repoScoringPool(repo) * repo.issueDiscoveryShare;
 }
 
 export function bestLabelMultiplier(repo: RepoEntry): { label: string | null; multiplier: number } {
@@ -89,5 +96,5 @@ export function opportunityScore(
   const recentActivity = 1 + Math.min(0.5, (stats?.prsThisWeek ?? 0) * 0.03);
   const issueBalance = 1 + repo.issueDiscoveryShare * 0.25;
   const labelLift = Math.max(0.25, bestLabel);
-  return (repo.emissionShare * labelLift * issueBalance * recentActivity) / competition;
+  return (repoScoringPool(repo) * labelLift * issueBalance * recentActivity) / competition;
 }

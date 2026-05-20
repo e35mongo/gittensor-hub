@@ -2,7 +2,7 @@
 // imported by client components. The `repos.ts` sibling stays as the
 // client-safe type/helper surface; the bundled JSON snapshot it ships is
 // intentionally not consulted here: live is the sole source of truth.
-import type { RepoEligibilityConfig, RepoEntry } from './repos';
+import { DEFAULT_SCORING, type RepoEligibilityConfig, type RepoEntry, type RepoScoringConfig, type RepoTimeDecayConfig } from './repos';
 import { getDb } from './db';
 
 // Live source. We poll entrius/gittensor:main/master_repositories.json every
@@ -31,11 +31,28 @@ interface MasterRepoEligibility {
   max_open_issue_threshold?: number | null;
 }
 
+interface MasterRepoTimeDecay {
+  grace_period_hours?: number | null;
+  sigmoid_midpoint_days?: number | null;
+  sigmoid_steepness?: number | null;
+  min_multiplier?: number | null;
+}
+
+interface MasterRepoScoring {
+  pr_lookback_days?: number | null;
+  open_pr_collateral_percent?: number | null;
+  review_penalty_rate?: number | null;
+  standard_issue_multiplier?: number | null;
+  maintainer_issue_multiplier?: number | null;
+  time_decay?: MasterRepoTimeDecay | null;
+}
+
 interface MasterRepoEntry {
   emission_share?: number;
   issue_discovery_share?: number;
   eligibility_mode?: boolean;
   eligibility?: MasterRepoEligibility;
+  scoring?: MasterRepoScoring | null;
   fixed_base_score?: number | null;
   label_multipliers?: Record<string, number> | null;
   default_label_multiplier?: number;
@@ -96,6 +113,26 @@ function normalizeEligibility(raw: MasterRepoEligibility | null | undefined): Re
   };
 }
 
+function normalizeTimeDecay(raw: MasterRepoTimeDecay | null | undefined): RepoTimeDecayConfig {
+  return {
+    gracePeriodHours: num(raw?.grace_period_hours, DEFAULT_SCORING.timeDecay.gracePeriodHours),
+    sigmoidMidpointDays: num(raw?.sigmoid_midpoint_days, DEFAULT_SCORING.timeDecay.sigmoidMidpointDays),
+    sigmoidSteepness: num(raw?.sigmoid_steepness, DEFAULT_SCORING.timeDecay.sigmoidSteepness),
+    minMultiplier: num(raw?.min_multiplier, DEFAULT_SCORING.timeDecay.minMultiplier),
+  };
+}
+
+function normalizeScoring(raw: MasterRepoScoring | null | undefined): RepoScoringConfig {
+  return {
+    prLookbackDays: num(raw?.pr_lookback_days, DEFAULT_SCORING.prLookbackDays),
+    openPrCollateralPercent: num(raw?.open_pr_collateral_percent, DEFAULT_SCORING.openPrCollateralPercent),
+    reviewPenaltyRate: num(raw?.review_penalty_rate, DEFAULT_SCORING.reviewPenaltyRate),
+    standardIssueMultiplier: num(raw?.standard_issue_multiplier, DEFAULT_SCORING.standardIssueMultiplier),
+    maintainerIssueMultiplier: num(raw?.maintainer_issue_multiplier, DEFAULT_SCORING.maintainerIssueMultiplier),
+    timeDecay: normalizeTimeDecay(raw?.time_decay),
+  };
+}
+
 function normalizeLabelMultipliers(raw: MasterRepoEntry['label_multipliers']): Record<string, number> {
   if (!raw || typeof raw !== 'object') return {};
   const out: Record<string, number> = {};
@@ -136,6 +173,7 @@ function baseRepoEntry(fullName: string, weight: number): RepoEntry {
     fixedBaseScore: null,
     maintainerCut: 0,
     eligibility: { ...EMPTY_ELIGIBILITY },
+    scoring: { ...DEFAULT_SCORING, timeDecay: { ...DEFAULT_SCORING.timeDecay } },
     inactiveAt: null,
   };
 }
@@ -152,6 +190,7 @@ function buildRepoEntry(fullName: string, ent: MasterRepoEntry): RepoEntry {
     fixedBaseScore: nullableNum(ent.fixed_base_score),
     maintainerCut: num(ent.maintainer_cut, 0),
     eligibility: normalizeEligibility(ent.eligibility),
+    scoring: normalizeScoring(ent.scoring),
     inactiveAt: entryInactiveAt(ent),
   };
 }

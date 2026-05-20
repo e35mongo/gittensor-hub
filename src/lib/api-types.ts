@@ -1,3 +1,15 @@
+export interface IssueLinkedPrDto {
+  number: number;
+  title: string;
+  state: string;
+  draft: number;
+  merged: number;
+  author_login: string | null;
+  closed_at?: string | null;
+  merged_at?: string | null;
+  html_url?: string | null;
+}
+
 export interface IssueDto {
   id: number;
   repo_full_name: string;
@@ -16,7 +28,10 @@ export interface IssueDto {
   html_url: string | null;
   fetched_at: string;
   first_seen_at: string;
+  linked_prs?: IssueLinkedPrDto[];
+  linked_pr_count?: number;
   merged_pr_count?: number;
+  closed_pr_count?: number;
 }
 
 export interface PullDto {

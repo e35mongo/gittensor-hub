@@ -13,6 +13,7 @@ export interface RepoEntry {
   fixedBaseScore: number | null;
   maintainerCut: number;
   eligibility: RepoEligibilityConfig;
+  scoring: RepoScoringConfig;
   /**
    * SN74's authoritative "this repo is inactive" timestamp. Set by the
    * Gittensor validator team in master_repositories.json when a repo is
@@ -35,6 +36,22 @@ export interface RepoEligibilityConfig {
   openIssueSpamBaseThreshold: number | null;
   openIssueSpamTokenScorePerSlot: number | null;
   maxOpenIssueThreshold: number | null;
+}
+
+export interface RepoTimeDecayConfig {
+  gracePeriodHours: number;
+  sigmoidMidpointDays: number;
+  sigmoidSteepness: number;
+  minMultiplier: number;
+}
+
+export interface RepoScoringConfig {
+  prLookbackDays: number;
+  openPrCollateralPercent: number;
+  reviewPenaltyRate: number;
+  standardIssueMultiplier: number;
+  maintainerIssueMultiplier: number;
+  timeDecay: RepoTimeDecayConfig;
 }
 
 /**
@@ -61,6 +78,20 @@ const EMPTY_ELIGIBILITY: RepoEligibilityConfig = {
   maxOpenIssueThreshold: null,
 };
 
+export const DEFAULT_SCORING: RepoScoringConfig = {
+  prLookbackDays: 30,
+  openPrCollateralPercent: 0.2,
+  reviewPenaltyRate: 0.15,
+  standardIssueMultiplier: 1.33,
+  maintainerIssueMultiplier: 1.66,
+  timeDecay: {
+    gracePeriodHours: 12,
+    sigmoidMidpointDays: 10,
+    sigmoidSteepness: 0.4,
+    minMultiplier: 0.05,
+  },
+};
+
 export function createRepoEntry(fullName: string, weight = 0, inactiveAt: string | null = null): RepoEntry {
   const [owner = '', name = ''] = fullName.split('/');
   return {
@@ -77,6 +108,7 @@ export function createRepoEntry(fullName: string, weight = 0, inactiveAt: string
     fixedBaseScore: null,
     maintainerCut: 0,
     eligibility: { ...EMPTY_ELIGIBILITY },
+    scoring: { ...DEFAULT_SCORING, timeDecay: { ...DEFAULT_SCORING.timeDecay } },
     inactiveAt,
   };
 }
