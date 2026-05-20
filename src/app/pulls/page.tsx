@@ -58,10 +58,10 @@ type StateFilter = 'all' | 'open' | 'draft' | 'merged' | 'closed';
 type SortKey = 'updated' | 'opened' | 'closed' | 'repo' | 'weight' | 'number';
 type SortDir = 'asc' | 'desc';
 
-const PULLS_CONTENT_MAX_WIDTH = 1480;
+const PULLS_CONTENT_MAX_WIDTH = 1400;
 const EMPTY_ISSUES: LinkedIssueReference[] = [];
 const pullRowCellSx = {
-  px: 2,
+  px: 1,
   py: 0,
   height: 40,
   maxHeight: 40,
@@ -346,7 +346,7 @@ export default function AllPullsPage() {
           </Box>
 
           <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, overflowX: 'auto', overflowY: 'hidden', bg: 'canvas.default' }}>
-            <Box as="table" sx={{ width: '100%', minWidth: 1200, borderCollapse: 'collapse', fontSize: 1 }}>
+            <Box as="table" sx={{ width: '100%', minWidth: 1100, borderCollapse: 'collapse', fontSize: 1 }}>
               <Box as="thead" sx={{ bg: 'canvas.subtle', borderBottom: '1px solid', borderColor: 'border.default' }}>
                 <Box as="tr">
                   <Box as="th" sx={{ ...headerCellSx, width: 44, textAlign: 'center' }} aria-label="Tracked repository" />
@@ -365,7 +365,7 @@ export default function AllPullsPage() {
                         }}
                         authors={authorOptions}
                         totalAuthors={data?.author_count ?? authorOptions.length}
-                        width={260}
+                        width={220}
                         ariaLabel="Filter by author"
                       />
                     </Box>
@@ -374,7 +374,7 @@ export default function AllPullsPage() {
                   <HeaderCell label="Opened" onClick={() => toggleSort('opened')} active={sortKey === 'opened'} dir={sortDir} />
                   <HeaderCell label="Updated" onClick={() => toggleSort('updated')} active={sortKey === 'updated'} dir={sortDir} />
                   <HeaderCell label="Closed" onClick={() => toggleSort('closed')} active={sortKey === 'closed'} dir={sortDir} />
-                  <Box as="th" sx={{ ...headerCellSx, textAlign: 'center' }}>Issues</Box>
+                  <Box as="th" sx={{ ...headerCellSx, textAlign: 'center', minWidth: 70 }}>Issues</Box>
                 </Box>
               </Box>
               <Box as="tbody">
@@ -758,7 +758,7 @@ function PullTableRow({
       <Box as="td" sx={pullRowCellSx}>
         <PullStatusBadge pr={pr} />
       </Box>
-      <Box as="td" sx={{ ...pullRowCellSx, maxWidth: 420 }}>
+      <Box as="td" sx={{ ...pullRowCellSx, maxWidth: 320 }}>
         <Box
           sx={{
             display: 'flex',
@@ -897,7 +897,7 @@ function PullTableRow({
       <Box as="td" sx={{ ...pullRowCellSx, fontSize: 0, whiteSpace: 'nowrap' }} title={pr.merged_at ?? pr.closed_at ?? undefined}>
         <RecentTime iso={pr.merged_at ?? pr.closed_at} />
       </Box>
-      <Box as="td" sx={{ ...pullRowCellSx, textAlign: 'center', whiteSpace: 'nowrap' }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+      <Box as="td" sx={{ ...pullRowCellSx, textAlign: 'center', whiteSpace: 'nowrap', minWidth: 70 }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <RelatedIssuesCell issues={linkedIssues} onIssueClick={onIssueClick} />
       </Box>
     </Box>
