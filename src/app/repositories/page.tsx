@@ -29,6 +29,15 @@ const STALE_MIN_WEIGHT = 0.01;
 const OPPORTUNITY_LIMIT = 5;
 const DEFAULT_OPEN_PR_THRESHOLD = 999;
 
+function emissionForWeight(
+  weight: number,
+  prices: PricesResponse | undefined,
+): { tao: number | null; usd: number | null } {
+  const tao = weight > 0 && prices && prices.tao_per_day > 0 ? weight * prices.tao_per_day : null;
+  const usd = tao != null && prices && prices.tao_usd > 0 ? tao * prices.tao_usd : null;
+  return { tao, usd };
+}
+
 interface PricesResponse {
   tao_usd: number;
   alpha_tao: number;
@@ -597,10 +606,7 @@ function NetworkKpiStrip({
   const scorePrev = data?.scoreEarnedPriorWeek ?? 0;
   const scoreDelta = score7d - scorePrev;
 
-  const taoPerDay =
-    weight > 0 && prices && prices.tao_per_day > 0 ? weight * prices.tao_per_day : null;
-  const usdPerDay =
-    taoPerDay != null && prices && prices.tao_usd > 0 ? taoPerDay * prices.tao_usd : null;
+  const { tao: taoPerDay, usd: usdPerDay } = emissionForWeight(weight, prices);
 
   return (
     <Box
@@ -631,9 +637,7 @@ function NetworkKpiStrip({
               flexShrink: 0,
             }}
           />
-          <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-            {activeCount}
-          </Text>
+          <KpiValue>{activeCount}</KpiValue>
           <Text sx={{ color: 'fg.muted', fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontSize: 1 }}>
             / {totalCount}
           </Text>
@@ -641,24 +645,18 @@ function NetworkKpiStrip({
       </KpiTile>
 
       <KpiTile label="WEIGHT ALLOCATED">
-        <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-          {formatPercent(weight, { scale: 100 })}
-        </Text>
+        <KpiValue>{formatPercent(weight, { scale: 100 })}</KpiValue>
       </KpiTile>
 
       <KpiTile label="EMISSION / DAY">
         {taoPerDay == null ? (
           <Box>
-            <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-              {formatPercent(weight, { scale: 100 })}
-            </Text>
+            <KpiValue>{formatPercent(weight, { scale: 100 })}</KpiValue>
             <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>weight share</Text>
           </Box>
         ) : (
           <Box>
-            <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-              {formatTao(taoPerDay)}
-            </Text>
+            <KpiValue>{formatTao(taoPerDay)}</KpiValue>
             <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>
               {usdPerDay != null ? `${formatUsd(usdPerDay)}/day` : 'TAO/day'}
             </Text>
@@ -668,31 +666,33 @@ function NetworkKpiStrip({
 
       <KpiTile label="PRS MERGED 7D">
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-          <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-            {formatCount(merged7d, { fallback: '0' })}
-          </Text>
+          <KpiValue>{formatCount(merged7d, { fallback: '0' })}</KpiValue>
           {(merged7d > 0 || mergedPrev > 0) && <WowDelta delta={delta} />}
         </Box>
       </KpiTile>
 
       <KpiTile label="CONTRIBUTORS 7D">
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-          <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-            {formatCount(contributors7d, { fallback: '0' })}
-          </Text>
+          <KpiValue>{formatCount(contributors7d, { fallback: '0' })}</KpiValue>
           {contributorsDelta !== 0 && <WowDelta delta={contributorsDelta} />}
         </Box>
       </KpiTile>
 
       <KpiTile label="SCORE EARNED 7D">
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-          <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
-            {formatCount(Math.round(score7d), { fallback: '0' })}
-          </Text>
+          <KpiValue>{formatCount(Math.round(score7d), { fallback: '0' })}</KpiValue>
           {Math.round(scoreDelta) !== 0 && <WowDelta delta={Math.round(scoreDelta)} />}
         </Box>
       </KpiTile>
     </Box>
+  );
+}
+
+function KpiValue({ children }: { children: React.ReactNode }) {
+  return (
+    <Text sx={{ fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 4, color: 'fg.default' }}>
+      {children}
+    </Text>
   );
 }
 
@@ -847,8 +847,6 @@ function PageBtn({
   );
 }
 
-const STALE_RED_MS = 14 * 24 * 60 * 60 * 1000;
-
 function RepoTable({
   rows,
   startRank,
@@ -903,12 +901,9 @@ function RepoTable({
           {rows.map((r, i) => {
             const rank = startRank + i;
             const isTracked = repoIsTracked(tracked, r.fullName);
-            const taoPerDay =
-              r.weight > 0 && prices && prices.tao_per_day > 0 ? r.weight * prices.tao_per_day : null;
-            const usdPerDay =
-              taoPerDay != null && prices && prices.tao_usd > 0 ? taoPerDay * prices.tao_usd : null;
+            const { tao: taoPerDay, usd: usdPerDay } = emissionForWeight(r.weight, prices);
             const lastMergeMs = r.lastPrAt ? Date.parse(r.lastPrAt) : 0;
-            const lastMergeStale = lastMergeMs > 0 && Date.now() - lastMergeMs > STALE_RED_MS;
+            const lastMergeStale = lastMergeMs > 0 && Date.now() - lastMergeMs > STALE_PR_MS;
             const isExpanded = expandedRepo === r.fullName;
             const detailId = `repo-detail-${r.owner}-${r.name}`;
             return (
