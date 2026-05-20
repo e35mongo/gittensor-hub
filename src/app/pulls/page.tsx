@@ -354,9 +354,9 @@ export default function AllPullsPage() {
                   <HeaderCell label="Pull Request" />
                   <HeaderCell label="Repository" onClick={() => toggleSort('repo')} active={sortKey === 'repo'} dir={sortDir} />
                   <HeaderCell label="Weight" onClick={() => toggleSort('weight')} active={sortKey === 'weight'} dir={sortDir} align="right" />
-                  <Box as="th" sx={{ ...headerCellSx, py: '4px' }}>
-                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ color: authorFilter !== 'all' && !mineOnly ? 'var(--accent-fg)' : 'inherit' }}>Author</Box>
+                  <Box as="th" sx={{ ...headerCellSx, py: '4px', width: 220, maxWidth: 220 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
+                      <Box sx={{ color: authorFilter !== 'all' && !mineOnly ? 'var(--accent-fg)' : 'inherit', flexShrink: 0 }}>Author</Box>
                       <AuthorFilter
                         value={mineOnly ? me || 'all' : authorFilter}
                         onChange={(next) => {
@@ -365,7 +365,7 @@ export default function AllPullsPage() {
                         }}
                         authors={authorOptions}
                         totalAuthors={data?.author_count ?? authorOptions.length}
-                        width={260}
+                        width={220}
                         ariaLabel="Filter by author"
                       />
                     </Box>
@@ -830,7 +830,7 @@ function PullTableRow({
       >
         {weight.toFixed(4)}
       </Box>
-      <Box as="td" sx={{ ...pullRowCellSx, fontSize: 0 }}>
+      <Box as="td" sx={{ ...pullRowCellSx, width: 220, maxWidth: 220, minWidth: 0, overflow: 'hidden', fontSize: 0 }}>
         {pr.author_login ? (
           <button
             type="button"
@@ -850,8 +850,10 @@ function PullTableRow({
               padding: 0,
               font: 'inherit',
               cursor: 'pointer',
+              width: '100%',
               maxWidth: '100%',
               minWidth: 0,
+              overflow: 'hidden',
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -866,6 +868,7 @@ function PullTableRow({
                 fontWeight: 500,
                 color: mine ? 'var(--attention-emphasis)' : 'var(--fg-default)',
                 minWidth: 0,
+                flex: '1 1 auto',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
