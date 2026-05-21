@@ -5,24 +5,19 @@ import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
-  TextInput,
   Text,
   Label,
   Link as PrimerLink,
 } from '@primer/react';
 import Spinner from '@/components/Spinner';
 import {
-  SearchIcon,
   RepoIcon,
   StarIcon,
   StarFillIcon,
-  ClockIcon,
   CommentIcon,
   IssueOpenedIcon,
   GitPullRequestIcon,
   PersonIcon,
-  XIcon,
-  EyeIcon,
   ChevronRightIcon,
   ChevronDownIcon,
   CheckIcon,
@@ -44,7 +39,6 @@ import AuthorFilter from '@/components/AuthorFilter';
 import AuthorActivitySidebar from '@/components/AuthorActivitySidebar';
 import { useSettings } from '@/lib/settings';
 import { useToast } from '@/lib/toast';
-import { pullStatus } from '@/types/entities';
 import type { AuthorCredibility, Issue, IssuesResponse, IssuesMetaResponse, LinkedIssueReference, Pull, PullsResponse, PullsMetaResponse } from '@/types/entities';
 import { RepoListSkeleton, TableRowsSkeleton } from '@/components/Skeleton';
 import { tableHeaderSx, tableCellSx, tableTimeSx } from '@/components/repo-explorer/styles';
@@ -2216,7 +2210,6 @@ export default function RepoExplorer() {
                 preloaded: issueModal,
               }}
               mode="side"
-              width={sideWidth}
               onClose={() => setIssueModal(null)}
             />
           )}
@@ -2230,7 +2223,6 @@ export default function RepoExplorer() {
                 preloaded: pullModal,
               }}
               mode="side"
-              width={sideWidth}
               onClose={() => setPullModal(null)}
             />
           )}
@@ -2265,87 +2257,6 @@ export default function RepoExplorer() {
         />
       )}
 
-    </Box>
-  );
-}
-
-function OwnerCommentsTab({
-  loading,
-  data,
-  ownerLogin,
-  repoFullName,
-}: {
-  loading: boolean;
-  data:
-    | {
-        count: number;
-        comments: Array<{
-          id: number;
-          issue_number: number;
-          author_login: string | null;
-          body: string | null;
-          html_url: string | null;
-          created_at: string | null;
-        }>;
-      }
-    | undefined;
-  ownerLogin: string;
-  repoFullName: string;
-}) {
-  if (loading && !data) {
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'var(--fg-muted)' }}>
-        <Spinner size="sm" tone="muted" />
-        <Text>Loading comments…</Text>
-      </Box>
-    );
-  }
-  const comments = data?.comments ?? [];
-  if (comments.length === 0) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center', color: 'var(--fg-muted)' }}>
-        No comments by an owner-association maintainer have been cached for {repoFullName} yet.
-      </Box>
-    );
-  }
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Text sx={{ color: 'var(--fg-muted)', fontSize: 0 }}>
-        {data?.count ?? comments.length} comment{(data?.count ?? comments.length) === 1 ? '' : 's'} by maintainers (
-        {ownerLogin} owns {repoFullName})
-      </Text>
-      {comments.map((c) => (
-        <Box
-          key={c.id}
-          sx={{
-            border: '1px solid',
-            borderColor: 'var(--border-default)',
-            borderRadius: 2,
-            p: 3,
-            bg: 'var(--bg-subtle)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Text sx={{ fontWeight: 600 }}>{c.author_login ?? 'unknown'}</Text>
-            <Text sx={{ color: 'var(--fg-muted)', fontSize: 0 }}>
-              on #{c.issue_number} · {formatRelativeTime(c.created_at)}
-            </Text>
-            {c.html_url && (
-              <PrimerLink
-                href={c.html_url}
-                target="_blank"
-                rel="noreferrer"
-                sx={{ ml: 'auto', color: 'var(--accent-fg)', fontSize: 0 }}
-              >
-                view on GitHub →
-              </PrimerLink>
-            )}
-          </Box>
-          <Text sx={{ color: 'var(--fg-default)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {c.body ?? ''}
-          </Text>
-        </Box>
-      ))}
     </Box>
   );
 }
