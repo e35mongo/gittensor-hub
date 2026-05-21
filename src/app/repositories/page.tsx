@@ -18,6 +18,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   GitPullRequestIcon,
+  GitMergeIcon,
 } from '@primer/octicons-react';
 import { SkeletonBar } from '@/components/Skeleton';
 import { isTracked as repoIsTracked, useTrackedRepos } from '@/lib/tracked-repos';
@@ -46,7 +47,7 @@ interface PricesResponse {
   fetched_at: number;
 }
 
-type SortKey = 'weight' | 'emission' | 'capacity' | 'openIssues' | 'discovery' | 'lastMerge' | 'fullName';
+type SortKey = 'weight' | 'emission' | 'capacity' | 'openIssues' | 'lastMerge' | 'fullName';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 const PAGE_SIZES = [10, 12, 25, 50, 100];
@@ -56,7 +57,6 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'emission', label: 'Emission/day' },
   { key: 'capacity', label: 'Capacity' },
   { key: 'openIssues', label: 'Open Work' },
-  { key: 'discovery', label: 'Issue Discovery' },
   { key: 'lastMerge', label: 'Last merge' },
   { key: 'fullName', label: 'Repository' },
 ];
@@ -133,7 +133,6 @@ export default function RepositoriesPage() {
       else if (sortKey === 'emission') cmp = a.weight - b.weight;
       else if (sortKey === 'capacity') cmp = capacityUtilization(a) - capacityUtilization(b);
       else if (sortKey === 'openIssues') cmp = a.openIssueCount - b.openIssueCount;
-      else if (sortKey === 'discovery') cmp = (a.issueDiscoveryShare ?? 0) - (b.issueDiscoveryShare ?? 0);
       else if (sortKey === 'lastMerge') {
         const at = a.lastPrAt ? Date.parse(a.lastPrAt) : 0;
         const bt = b.lastPrAt ? Date.parse(b.lastPrAt) : 0;
@@ -1246,12 +1245,12 @@ function RepoCard({
         </Box>
       </Box>
 
-      {/* Metrics grid — same divider-via-gap trick as the KPI strip. Six cells
+      {/* Metrics grid — same divider-via-gap trick as the KPI strip. Five cells
           collapse to a single column on the smallest viewports. */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: ['repeat(2, 1fr)', 'repeat(3, 1fr)', 'repeat(6, 1fr)'],
+          gridTemplateColumns: ['repeat(2, 1fr)', 'repeat(3, 1fr)', 'repeat(5, 1fr)'],
           gap: '1px',
           bg: 'border.muted',
           borderTop: '1px solid',
@@ -1316,12 +1315,6 @@ function RepoCard({
           {r.openIssueCount > 0 && (
             <Text sx={{ fontSize: 0, color: 'fg.muted', mt: '4px' }}>open issues</Text>
           )}
-        </RepoCell>
-        <RepoCell
-          label="Issue Discovery"
-          hint="Fraction of this repo's emission reserved for miners who report valid issues."
-        >
-          <DiscoveryCell repo={r} />
         </RepoCell>
       </Box>
 
@@ -1516,16 +1509,6 @@ function RepoTable({
             </Th>
             <Th
               align="right"
-              sortKey="discovery"
-              current={sortKey}
-              dir={sortDir}
-              onSort={onSort}
-              hint="Fraction of this repo's emission reserved for miners who report valid issues."
-            >
-              Issue Disc.
-            </Th>
-            <Th
-              align="right"
               sortKey="lastMerge"
               current={sortKey}
               dir={sortDir}
@@ -1694,9 +1677,6 @@ function RepoTable({
                     </Text>
                   </Box>
                   <Box as="td" sx={{ p: 2, textAlign: 'right', verticalAlign: 'middle' }}>
-                    <DiscoveryCell repo={r} />
-                  </Box>
-                  <Box as="td" sx={{ p: 2, textAlign: 'right', verticalAlign: 'middle' }}>
                     {!r.lastPrAt ? (
                       <Text sx={{ color: 'fg.muted', fontSize: 0 }}>Never</Text>
                     ) : (
@@ -1745,7 +1725,7 @@ function RepoTable({
                       '&:last-child': { borderBottom: 'none' },
                     }}
                   >
-                    <Box as="td" colSpan={11} sx={{ p: 0 }}>
+                    <Box as="td" colSpan={10} sx={{ p: 0 }}>
                       <ExpandedRowDetail repo={r} />
                     </Box>
                   </Box>
@@ -1755,7 +1735,7 @@ function RepoTable({
           })}
           {rows.length === 0 && (
             <Box as="tr">
-              <Box as="td" colSpan={11} sx={{ p: 4, textAlign: 'center', color: 'fg.muted' }}>
+              <Box as="td" colSpan={10} sx={{ p: 4, textAlign: 'center', color: 'fg.muted' }}>
                 No repositories match.
               </Box>
             </Box>
@@ -1955,32 +1935,6 @@ function CapacityGauge({
   );
 }
 
-function DiscoveryCell({ repo }: { repo: GtRepo }) {
-  // `issueDiscoveryShare` is a 0..1 fraction of this repo's emission allocated
-  // to issue discovery (vs OSS PR rewards).
-  const share = repo.issueDiscoveryShare;
-  if (share == null) {
-    return (
-      <Text sx={{ color: 'fg.muted', fontSize: 0 }} title="Not configured upstream">
-        —
-      </Text>
-    );
-  }
-  return (
-    <Text
-      sx={{
-        fontFamily: 'mono',
-        fontVariantNumeric: 'tabular-nums',
-        fontWeight: share > 0 ? 700 : 500,
-        color: share > 0 ? 'fg.default' : 'fg.muted',
-      }}
-      title="Fraction of this repo's emission allocated to issue discovery"
-    >
-      {formatPercent(share, { scale: 100 })}
-    </Text>
-  );
-}
-
 function PolicyChips({ repo }: { repo: GtRepo }) {
   type Chip = { label: string; title: string };
   const chips: Chip[] = [];
@@ -2079,17 +2033,20 @@ function ExpandedRowDetail({ repo }: { repo: GtRepo }) {
     const list = prsResp?.prs ?? [];
     return list
       .filter((p) => p.prState === 'OPEN')
-      .sort((a, b) => Date.parse(a.prCreatedAt) - Date.parse(b.prCreatedAt))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return Date.parse(a.prCreatedAt) - Date.parse(b.prCreatedAt);
+      })
       .slice(0, 5);
   }, [prsResp]);
 
-  const labelEntries = useMemo(() => {
-    const m = repo.labelMultipliers;
-    if (!m) return [] as Array<[string, number]>;
-    return Object.entries(m).sort((a, b) => b[1] - a[1]);
-  }, [repo.labelMultipliers]);
-  const labelsTop = labelEntries.slice(0, 6);
-  const labelsOverflow = labelEntries.slice(6);
+  const mergedPrs = useMemo(() => {
+    const list = prsResp?.prs ?? [];
+    return list
+      .filter((p) => p.prState === 'MERGED' && p.mergedAt)
+      .sort((a, b) => Date.parse(b.mergedAt!) - Date.parse(a.mergedAt!))
+      .slice(0, 5);
+  }, [prsResp]);
 
   return (
     <Box
@@ -2101,7 +2058,7 @@ function ExpandedRowDetail({ repo }: { repo: GtRepo }) {
       }}
     >
       {/* Column 1 — Top contributors */}
-      <DetailColumn title="TOP CONTRIBUTORS · LAST 35D">
+      <DetailColumn title="TOP CONTRIBUTORS · LAST 30D">
         {minersLoading ? (
           <DetailListSkeleton rows={5} />
         ) : minersError ? (
@@ -2176,8 +2133,8 @@ function ExpandedRowDetail({ repo }: { repo: GtRepo }) {
         )}
       </DetailColumn>
 
-      {/* Column 2 — Open PRs (oldest first) */}
-      <DetailColumn title="OPEN PRS · OLDEST FIRST">
+      {/* Column 2 — Open PRs (highest scored first) */}
+      <DetailColumn title="OPEN PRS · HIGHEST SCORED">
         {prsLoading ? (
           <DetailListSkeleton rows={5} />
         ) : prsError ? (
@@ -2263,28 +2220,90 @@ function ExpandedRowDetail({ repo }: { repo: GtRepo }) {
         )}
       </DetailColumn>
 
-      {/* Column 3 — Label multiplier breakdown */}
-      <DetailColumn title="LABEL MULTIPLIERS">
-        {labelsTop.length === 0 ? (
-          <Box sx={{ pt: 1 }}>
-            <Chip label="default labels" title="No per-label multipliers configured — default 1.0 applies" />
-          </Box>
+      {/* Column 3 — Recently merged PRs (mirrors Open PRs, but for shipped work) */}
+      <DetailColumn title="RECENTLY MERGED">
+        {prsLoading ? (
+          <DetailListSkeleton rows={5} />
+        ) : prsError ? (
+          <DetailErrorHint>Couldn’t load merged PRs.</DetailErrorHint>
+        ) : mergedPrs.length === 0 ? (
+          <EmptyHint>No merged PRs in this window.</EmptyHint>
         ) : (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, pt: 1 }}>
-            {labelsTop.map(([name, mult]) => (
-              <Chip
-                key={name}
-                label={`${name} ×${mult.toFixed(2)}`}
-                title={`${name}: scoring multiplier ${mult.toFixed(2)}`}
-              />
-            ))}
-            {labelsOverflow.length > 0 && (
-              <Chip
-                label={`+${labelsOverflow.length} more`}
-                title={labelsOverflow.map(([n, m]) => `${n} ×${m.toFixed(2)}`).join(', ')}
-              />
-            )}
-          </Box>
+          mergedPrs.map((p) => (
+            <Link
+              key={p.pullRequestNumber}
+              href={`https://github.com/${repo.fullName}/pull/${p.pullRequestNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              prefetch={false}
+              onClick={(e) => e.stopPropagation()}
+              style={{ display: 'block', textDecoration: 'none' }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  py: '6px',
+                  borderTop: '1px solid',
+                  borderColor: 'border.muted',
+                  '&:first-of-type': { borderTop: 'none' },
+                  '&:hover': { bg: 'canvas.default' },
+                  mx: -2,
+                  px: 2,
+                  borderRadius: 1,
+                }}
+              >
+                <Box sx={{ color: 'done.fg', display: 'inline-flex', mt: '2px', flexShrink: 0 }}>
+                  <GitMergeIcon size={12} />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Text
+                    sx={{
+                      display: 'block',
+                      color: 'fg.default',
+                      fontWeight: 500,
+                      fontSize: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={p.title}
+                  >
+                    <Text as="span" sx={{ color: 'fg.muted', fontFamily: 'mono' }}>
+                      #{p.pullRequestNumber}
+                    </Text>{' '}
+                    {p.title}
+                  </Text>
+                  <Text sx={{ display: 'block', color: 'fg.muted', fontSize: 0 }}>
+                    {p.author} · merged {formatRelativeTime(p.mergedAt!)}
+                  </Text>
+                </Box>
+                {p.score > 0 && (
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 1,
+                      py: '1px',
+                      border: '1px solid',
+                      borderColor: 'border.muted',
+                      borderRadius: 999,
+                      bg: 'canvas.default',
+                      fontFamily: 'mono',
+                      fontVariantNumeric: 'tabular-nums',
+                      fontSize: 0,
+                      fontWeight: 700,
+                      color: 'fg.default',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {p.score.toFixed(2)}
+                  </Box>
+                )}
+              </Box>
+            </Link>
+          ))
         )}
       </DetailColumn>
     </Box>
