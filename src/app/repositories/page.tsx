@@ -74,13 +74,13 @@ function avatarUrl(owner: string): string {
   return `https://github.com/${owner}.png?size=48`;
 }
 
-// Skip row expand/collapse when the activation originated on a nested link
-// or button — otherwise Enter on the repo link both navigates and expands.
-function isInteractiveTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof Element &&
-    !!target.closest('a, button, input, select, textarea, [role="button"]')
-  );
+// True only for activation on a nested interactive element, not the row
+// itself (which carries role="button"). Used to skip row expand/collapse
+// when the user clicks the repo link or star button.
+function isInteractiveTarget(e: { target: EventTarget | null; currentTarget: EventTarget | null }): boolean {
+  if (!(e.target instanceof Element) || !(e.currentTarget instanceof Element)) return false;
+  const nearest = e.target.closest('a, button, input, select, textarea, [role="button"]');
+  return !!nearest && nearest !== e.currentTarget;
 }
 
 export default function RepositoriesPage() {
@@ -1116,11 +1116,11 @@ function RepoCard({
         aria-expanded={isExpanded}
         aria-controls={detailId}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-          if (isInteractiveTarget(e.target)) return;
+          if (isInteractiveTarget(e)) return;
           onToggleExpand(r.fullName);
         }}
         onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-          if (isInteractiveTarget(e.target)) return;
+          if (isInteractiveTarget(e)) return;
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             onToggleExpand(r.fullName);
@@ -1552,11 +1552,11 @@ function RepoTable({
                   aria-expanded={isExpanded}
                   aria-controls={detailId}
                   onClick={(e: React.MouseEvent<HTMLTableRowElement>) => {
-                    if (isInteractiveTarget(e.target)) return;
+                    if (isInteractiveTarget(e)) return;
                     onToggleExpand(r.fullName);
                   }}
                   onKeyDown={(e: React.KeyboardEvent<HTMLTableRowElement>) => {
-                    if (isInteractiveTarget(e.target)) return;
+                    if (isInteractiveTarget(e)) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       onToggleExpand(r.fullName);
