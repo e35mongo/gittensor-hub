@@ -43,6 +43,12 @@ function normalizeRepoList(raw: string | null): string[] | null {
   return repos;
 }
 
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
 async function resolveRepoScope(reqRepos: string[] | null): Promise<string[]> {
   const { repos: liveRepos } = await getLiveReposAsyncServer();
   const db = getReadDb();
@@ -263,38 +269,40 @@ export async function GET(req: NextRequest) {
 
   const linked_issues_by_pull: Record<string, LinkedIssueReference[]> = {};
   if (rows.length > 0) {
-    const uniquePulls = Array.from(
-      new Map(rows.map((r) => [pullIssueMapKey(r.repo_full_name, r.number), r])).values(),
-    );
-    const where = uniquePulls.map(() => '(l.repo_full_name = ? AND l.pr_number = ?)').join(' OR ');
-    const args = uniquePulls.flatMap((r) => [r.repo_full_name, r.number]);
-    const linkRows = db
-      .prepare(
-        `SELECT l.repo_full_name, l.pr_number, i.number AS issue_number, i.title, i.state, i.state_reason, i.author_login
-         FROM pr_issue_links l
-         JOIN issues i ON i.repo_full_name = l.repo_full_name AND i.number = l.issue_number
-         WHERE ${where}
-         ORDER BY LOWER(l.repo_full_name) ASC, l.pr_number DESC, i.number ASC`,
-      )
-      .all(...args) as Array<{
-        repo_full_name: string;
-        pr_number: number;
-        issue_number: number;
-        title: string;
-        state: string;
-        state_reason: string | null;
-        author_login: string | null;
-      }>;
-    for (const lr of linkRows) {
-      const key = pullIssueMapKey(lr.repo_full_name, lr.pr_number);
-      if (!linked_issues_by_pull[key]) linked_issues_by_pull[key] = [];
-      linked_issues_by_pull[key].push({
-        number: lr.issue_number,
-        title: lr.title,
-        state: lr.state,
-        state_reason: lr.state_reason,
-        author_login: lr.author_login,
-      });
+    const repoNames = Array.from(new Set(rows.map((r) => r.repo_full_name)));
+    const wanted = new Set(rows.map((r) => pullIssueMapKey(r.repo_full_name.toLowerCase(), r.number)));
+    for (const batch of chunk(repoNames, 200)) {
+      const placeholders = batch.map(() => '?').join(',');
+      const linkRows = db
+        .prepare(
+          `SELECT l.repo_full_name, l.pr_number, i.number AS issue_number, i.title, i.state, i.state_reason, i.author_login
+           FROM pr_issue_links l
+           JOIN issues i ON i.repo_full_name = l.repo_full_name AND i.number = l.issue_number
+           WHERE l.repo_full_name IN (${placeholders})
+           ORDER BY LOWER(l.repo_full_name) ASC, l.pr_number DESC, i.number ASC`,
+        )
+        .all(...batch) as Array<{
+          repo_full_name: string;
+          pr_number: number;
+          issue_number: number;
+          title: string;
+          state: string;
+          state_reason: string | null;
+          author_login: string | null;
+        }>;
+      for (const lr of linkRows) {
+        const wantedKey = pullIssueMapKey(lr.repo_full_name.toLowerCase(), lr.pr_number);
+        if (!wanted.has(wantedKey)) continue;
+        const key = pullIssueMapKey(lr.repo_full_name, lr.pr_number);
+        if (!linked_issues_by_pull[key]) linked_issues_by_pull[key] = [];
+        linked_issues_by_pull[key].push({
+          number: lr.issue_number,
+          title: lr.title,
+          state: lr.state,
+          state_reason: lr.state_reason,
+          author_login: lr.author_login,
+        });
+      }
     }
   }
 

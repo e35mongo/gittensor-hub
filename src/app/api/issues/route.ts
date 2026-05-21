@@ -63,6 +63,12 @@ function normalizeRepoList(raw: string | null): string[] | null {
   return repos;
 }
 
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
 async function resolveRepoScope(reqRepos: string[] | null): Promise<string[]> {
   const { repos: liveRepos } = await getLiveReposAsyncServer();
   const db = getReadDb();
@@ -295,27 +301,35 @@ export async function GET(req: NextRequest) {
 
   const linkedPrsByIssue = new Map<string, LinkedPullRow[]>();
   if (rows.length > 0) {
-    for (const repoFullName of new Set(rows.map((r) => r.repo_full_name))) {
-      backfillPrIssueLinksIfNeeded(repoFullName);
+    const repoNames = Array.from(new Set(rows.map((r) => r.repo_full_name)));
+    for (const repoFullName of repoNames) {
+      try {
+        backfillPrIssueLinksIfNeeded(repoFullName);
+      } catch (err) {
+        console.warn(`[issues] skipped PR-link backfill for ${repoFullName}:`, err);
+      }
     }
 
-    const pairWhere = rows.map(() => '(l.repo_full_name = ? AND l.issue_number = ?)').join(' OR ');
-    const pairArgs = rows.flatMap((r) => [r.repo_full_name, r.number]);
-    const linkRows = db
-      .prepare(
-        `SELECT l.repo_full_name, l.issue_number, p.number, p.title, p.state, p.draft, p.merged,
-                p.author_login, p.closed_at, p.merged_at, p.html_url
-         FROM pr_issue_links l
-         JOIN pulls p ON p.repo_full_name = l.repo_full_name AND p.number = l.pr_number
-         WHERE ${pairWhere}
-         ORDER BY l.repo_full_name ASC, l.issue_number ASC, p.number ASC`,
-      )
-      .all(...pairArgs) as LinkedPullRow[];
-    for (const row of linkRows) {
-      const key = `${row.repo_full_name}#${row.issue_number}`;
-      const list = linkedPrsByIssue.get(key) ?? [];
-      list.push(row);
-      linkedPrsByIssue.set(key, list);
+    const wanted = new Set(rows.map((r) => `${r.repo_full_name.toLowerCase()}#${r.number}`));
+    for (const batch of chunk(repoNames, 200)) {
+      const placeholders = batch.map(() => '?').join(',');
+      const linkRows = db
+        .prepare(
+          `SELECT l.repo_full_name, l.issue_number, p.number, p.title, p.state, p.draft, p.merged,
+                  p.author_login, p.closed_at, p.merged_at, p.html_url
+           FROM pr_issue_links l
+           JOIN pulls p ON p.repo_full_name = l.repo_full_name AND p.number = l.pr_number
+           WHERE l.repo_full_name IN (${placeholders})
+           ORDER BY l.repo_full_name ASC, l.issue_number ASC, p.number ASC`,
+        )
+        .all(...batch) as LinkedPullRow[];
+      for (const row of linkRows) {
+        const key = `${row.repo_full_name.toLowerCase()}#${row.issue_number}`;
+        if (!wanted.has(key)) continue;
+        const list = linkedPrsByIssue.get(key) ?? [];
+        list.push(row);
+        linkedPrsByIssue.set(key, list);
+      }
     }
   }
 
@@ -337,7 +351,7 @@ export async function GET(req: NextRequest) {
     authors: authorRows,
     author_count: authorRows.length,
     issues: rows.map((r) => {
-      const linkedPrs = linkedPrsByIssue.get(`${r.repo_full_name}#${r.number}`) ?? [];
+      const linkedPrs = linkedPrsByIssue.get(`${r.repo_full_name.toLowerCase()}#${r.number}`) ?? [];
       return {
         ...r,
         labels: parseLabels(r.labels),
