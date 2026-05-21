@@ -150,8 +150,12 @@ function buildWhere({
   return { sql: where.length ? `WHERE ${where.join(' AND ')}` : '', args };
 }
 
+function latestPullActivitySql(): string {
+  return "MAX(COALESCE(p.merged_at, ''), COALESCE(p.closed_at, ''), COALESCE(p.updated_at, ''), COALESCE(p.created_at, ''), COALESCE(p.first_seen_at, ''))";
+}
+
 function orderBy(sort: SortKey, dir: SortDir, sinceIso: string | null): string {
-  if (sinceIso) return 'ORDER BY COALESCE(p.updated_at, p.merged_at, p.closed_at, p.created_at, p.first_seen_at) DESC';
+  if (sinceIso) return `ORDER BY ${latestPullActivitySql()} DESC`;
   const direction = dir === 'asc' ? 'ASC' : 'DESC';
   const col =
     sort === 'opened'
