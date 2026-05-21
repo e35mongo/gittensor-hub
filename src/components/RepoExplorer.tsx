@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   TextInput,
@@ -19,8 +19,6 @@ import {
   ClockIcon,
   CommentIcon,
   IssueOpenedIcon,
-  IssueClosedIcon,
-  SkipIcon,
   GitPullRequestIcon,
   PersonIcon,
   XIcon,
@@ -29,21 +27,25 @@ import {
   ChevronDownIcon,
   CheckIcon,
 } from '@primer/octicons-react';
-import { ALL_REPOS, type Sn74Repo } from '@/lib/repos';
+import { ALL_REPOS, createRepoEntry, type Sn74Repo } from '@/lib/repos';
 import { isTracked as repoIsTracked, useTrackedRepos } from '@/lib/tracked-repos';
 import { IssueStatusBadge, PullStatusBadge } from '@/components/StatusBadge';
 import { formatRelativeTime, isRecent } from '@/lib/format';
 import { useMinerLogin } from '@/lib/use-miner';
 import Dropdown from '@/components/Dropdown';
 import ContentViewer from '@/components/ContentViewer';
+import AuthorCredibilityNote from '@/components/AuthorCredibilityNote';
+import PullScoreCell from '@/components/PullScoreCell';
+import RelatedPRsCell, { type LinkedPullReference } from '@/components/RelatedPRsCell';
+import RelatedIssuesCell from '@/components/RelatedIssuesCell';
 import { IssueLabels } from '@/components/IssueLabels';
 import SearchInput from '@/components/SearchInput';
 import AuthorFilter from '@/components/AuthorFilter';
-import AuthorSidebar from '@/components/AuthorSidebar';
+import AuthorActivitySidebar from '@/components/AuthorActivitySidebar';
 import { useSettings } from '@/lib/settings';
 import { useToast } from '@/lib/toast';
 import { pullStatus } from '@/types/entities';
-import type { Issue, IssuesResponse, IssuesMetaResponse, Pull, PullsResponse, PullsMetaResponse } from '@/types/entities';
+import type { AuthorCredibility, Issue, IssuesResponse, IssuesMetaResponse, LinkedIssueReference, Pull, PullsResponse, PullsMetaResponse } from '@/types/entities';
 import { RepoListSkeleton, TableRowsSkeleton } from '@/components/Skeleton';
 import { tableHeaderSx, tableCellSx, tableTimeSx } from '@/components/repo-explorer/styles';
 import { weightColor, weightFontWeight } from '@/components/repo-explorer/weights';
@@ -54,11 +56,16 @@ import { ResizeHandle } from '@/components/repo-explorer/ResizeHandle';
 import { InlinePagination } from '@/components/repo-explorer/Pagination';
 import { useIssueFilters, type IssueState } from '@/components/repo-explorer/useIssueFilters';
 import { usePullFilters, type PRState } from '@/components/repo-explorer/usePullFilters';
+import {
+  DEFAULT_EXCESSIVE_PR_PENALTY_THRESHOLD,
+  DEFAULT_MIN_CREDIBILITY,
+  DEFAULT_MIN_ISSUE_CREDIBILITY,
+  DEFAULT_OPEN_ISSUE_SPAM_THRESHOLD,
+} from '@/lib/gittensor-policy';
 
 type RepoSort = 'weight' | 'name' | 'tracked';
 type Tab = 'issues' | 'pulls';
-type AuthorTarget = { login: string; association?: string | null };
-type RelatedPopoverLayout = { placement: 'down' | 'up'; maxHeight: number };
+type AuthorTarget = { login: string; association?: string | null; initialTab: 'issues' | 'pulls' };
 type StickyBadge = { issues: number; pulls: number; priority?: boolean };
 interface RepoBadgesResponse {
   repo: string;
@@ -71,63 +78,188 @@ interface RepoBadgesResponse {
 // Stable empty array so the relatedPRs fallback doesn't break React.memo on
 // rows with no linked PRs (otherwise `?? []` creates a fresh reference each
 // render, defeating prop equality).
-const EMPTY_PRS: Array<{ number: number; title: string; state: string; merged: number; draft: number; author_login?: string | null }> = [];
-const EMPTY_ISSUES: Array<{ number: number; title: string; state: string; state_reason: string | null; author_login: string | null }> = [];
+const EMPTY_PRS: LinkedPullReference[] = [];
+const EMPTY_ISSUES: LinkedIssueReference[] = [];
 
-const DEFAULT_RELATED_POPOVER_LAYOUT: RelatedPopoverLayout = { placement: 'down', maxHeight: 420 };
-
-function relatedPopoverLayout(anchor: HTMLElement | null, rowCount: number): RelatedPopoverLayout {
-  if (!anchor || typeof window === 'undefined') return DEFAULT_RELATED_POPOVER_LAYOUT;
-  const rect = anchor.getBoundingClientRect();
-  const estimatedHeight = Math.min(480, 36 + rowCount * 32);
-  const spaceBelow = window.innerHeight - rect.bottom - 44;
-  const spaceAbove = rect.top - 8;
-  const placement = spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove ? 'down' : 'up';
-  const available = Math.max(120, placement === 'down' ? spaceBelow : spaceAbove);
-  return { placement, maxHeight: Math.min(480, available) };
+function trimNumber(value: number, maxDigits = 2): string {
+  return value
+    .toFixed(maxDigits)
+    .replace(/\.?0+$/, '');
 }
 
-function relatedPopoverOffset(layout: RelatedPopoverLayout) {
-  return layout.placement === 'up'
-    ? { bottom: '100%', mb: 1 }
-    : { top: '100%', mt: 1 };
+function formatPolicyPercent(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return 'Not set';
+  const percent = value * 100;
+  const digits = percent > 0 && percent < 10 ? 2 : 1;
+  return `${trimNumber(percent, digits)}%`;
 }
 
-function useRelatedPopoverLayout(
-  open: boolean,
-  rowCount: number,
-  anchorRef: React.RefObject<HTMLDivElement | null>,
-) {
-  const [layout, setLayout] = useState<RelatedPopoverLayout>(DEFAULT_RELATED_POPOVER_LAYOUT);
-  const update = useCallback(() => {
-    setLayout(relatedPopoverLayout(anchorRef.current, rowCount));
-  }, [anchorRef, rowCount]);
+function formatPolicyScore(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return 'Not set';
+  return trimNumber(value, 2);
+}
 
-  useEffect(() => {
-    if (!open) return;
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-    };
-  }, [open, update]);
+function formatPolicyThreshold(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return 'Not set';
+  return trimNumber(value, 1);
+}
 
-  return [layout, update] as const;
+function policyTooltip(label: string, value: string, detail: string): string {
+  return `${label}: ${value}. ${detail}`;
+}
+
+function RepoPolicyChip({
+  label,
+  value,
+  title,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        minHeight: 24,
+        maxWidth: '100%',
+        px: '10px',
+        border: '1px solid',
+        borderColor: 'var(--border-default)',
+        borderRadius: 999,
+        bg: 'var(--bg-canvas)',
+        color: 'var(--fg-default)',
+        fontSize: '11px',
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+      }}
+      title={title ?? `${label}: ${value}`}
+      aria-label={title ?? `${label}: ${value}`}
+    >
+      <Text as="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+        {label}
+      </Text>
+      <Text as="span" sx={{ color: 'var(--fg-muted)', mx: 1 }}>
+        ·
+      </Text>
+      <Text as="span" sx={{ color: 'var(--fg-default)', fontFamily: 'mono', fontSize: '11px', flexShrink: 0 }}>
+        {value}
+      </Text>
+    </Box>
+  );
 }
 
 // Placeholder used while the live SN74 list is loading. We can't render with a
 // `null` selection without making every downstream read nullable, so we hold a
 // dummy entry that yields empty issues/PRs and gets swapped out the moment
 // `allRepos` populates (see the `selected`-hydration effect below).
-const EMPTY_REPO: Sn74Repo = {
-  fullName: '',
-  owner: '',
-  name: '',
-  weight: 0,
-  inactiveAt: null,
-};
+const EMPTY_REPO: Sn74Repo = createRepoEntry('');
+
+function keepPreviousDataForRepo<T>(owner: string, name: string) {
+  return (
+    previousData: T | undefined,
+    previousQuery?: { queryKey: readonly unknown[] },
+  ): T | undefined => {
+    const key = previousQuery?.queryKey;
+    return key?.[1] === owner && key?.[2] === name ? previousData : undefined;
+  };
+}
+
+function RepoPolicyPanel({ repo }: { repo: Sn74Repo }) {
+  if (!repo.fullName) return null;
+  const excessivePrThreshold = repo.excessivePrPenaltyThreshold ?? DEFAULT_EXCESSIVE_PR_PENALTY_THRESHOLD;
+  const openIssueThreshold = repo.openIssueSpamThreshold ?? DEFAULT_OPEN_ISSUE_SPAM_THRESHOLD;
+  const minPrCredibility = repo.minCredibility ?? DEFAULT_MIN_CREDIBILITY;
+  const minIssueCredibility = repo.minIssueCredibility ?? DEFAULT_MIN_ISSUE_CREDIBILITY;
+
+  return (
+    <Box
+      sx={{
+        mb: 3,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        flexWrap: 'wrap',
+      }}
+    >
+      <RepoPolicyChip
+        label="Emission"
+        value={formatPolicyPercent(repo.weight)}
+        title={policyTooltip(
+          'Emission',
+          formatPolicyPercent(repo.weight),
+          'Share of the SN74 repository reward pool assigned to this repository.',
+        )}
+      />
+      <RepoPolicyChip
+        label="Issue discovery"
+        value={formatPolicyPercent(repo.issueDiscoveryShare)}
+        title={policyTooltip(
+          'Issue discovery',
+          formatPolicyPercent(repo.issueDiscoveryShare),
+          'Portion of this repository reward pool reserved for discovering valid issues. The rest goes to pull request rewards.',
+        )}
+      />
+      <RepoPolicyChip
+        label="Maintainer cut"
+        value={formatPolicyPercent(repo.maintainerCut)}
+        title={policyTooltip(
+          'Maintainer cut',
+          formatPolicyPercent(repo.maintainerCut),
+          'Share reserved for repository maintainers before the remaining pool is distributed to contributors.',
+        )}
+      />
+      {repo.fixedBaseScore !== null && (
+        <RepoPolicyChip
+          label="Fixed base"
+          value={formatPolicyScore(repo.fixedBaseScore)}
+          title={policyTooltip(
+            'Fixed base score',
+            formatPolicyScore(repo.fixedBaseScore),
+            'Overrides the normal token-derived base score for this repository when configured.',
+          )}
+        />
+      )}
+      <RepoPolicyChip
+        label="Excessive PR threshold"
+        value={formatPolicyThreshold(excessivePrThreshold)}
+        title={policyTooltip(
+          'Excessive PR penalty threshold',
+          formatPolicyThreshold(excessivePrThreshold),
+          'Base number of open PRs a contributor can have in this repo before the open-PR spam penalty suppresses PR rewards. High token score can add bonus slots up to the configured maximum.',
+        )}
+      />
+      <RepoPolicyChip
+        label="Open issue threshold"
+        value={formatPolicyThreshold(openIssueThreshold)}
+        title={policyTooltip(
+          'Open issue spam threshold',
+          formatPolicyThreshold(openIssueThreshold),
+          'Base number of open issues a contributor can have in this repo before issue-discovery spam suppression applies. Solved issue token score can add bonus slots up to the configured maximum.',
+        )}
+      />
+      <RepoPolicyChip
+        label="Min PR cred"
+        value={formatPolicyPercent(minPrCredibility)}
+        title={policyTooltip(
+          'Minimum PR credibility',
+          formatPolicyPercent(minPrCredibility),
+          'Minimum merged-versus-closed PR credibility required for a contributor to receive PR rewards in this repository.',
+        )}
+      />
+      <RepoPolicyChip
+        label="Min issue cred"
+        value={formatPolicyPercent(minIssueCredibility)}
+        title={policyTooltip(
+          'Minimum issue credibility',
+          formatPolicyPercent(minIssueCredibility),
+          'Minimum solved-versus-closed issue credibility required for a contributor to receive issue-discovery rewards in this repository.',
+        )}
+      />
+    </Box>
+  );
+}
 
 export default function RepoExplorer() {
   const { tracked, toggle: toggleTrack } = useTrackedRepos();
@@ -437,9 +569,11 @@ export default function RepoExplorer() {
     const sn74Set = new Set(sn74Repos.map((r) => r.fullName));
     const userExtras: Sn74Repo[] = (userReposData?.repos ?? [])
       .filter((u) => !sn74Set.has(u.full_name))
-      .map((u) => {
-        const [owner, name] = u.full_name.split('/');
-        return { fullName: u.full_name, owner, name, weight: u.weight, inactiveAt: null };
+      .flatMap((u) => {
+        const parts = u.full_name.split('/');
+        if (parts.length !== 2 || !parts[0] || !parts[1]) return [];
+        const [owner, name] = parts;
+        return [{ ...createRepoEntry(u.full_name, u.weight), owner, name }];
       });
     return [...sn74Repos, ...userExtras];
   }, [sn74Repos, userReposData]);
@@ -629,7 +763,7 @@ export default function RepoExplorer() {
     },
     refetchInterval: 15000,
     staleTime: 10000,
-    placeholderData: keepPreviousData,
+    placeholderData: keepPreviousDataForRepo<IssuesResponse>(selected.owner, selected.name),
     refetchOnWindowFocus: false,
     enabled: queriesReady && shouldLoadIssues,
   });
@@ -925,7 +1059,7 @@ export default function RepoExplorer() {
     },
     refetchInterval: 15000,
     staleTime: 10000,
-    placeholderData: keepPreviousData,
+    placeholderData: keepPreviousDataForRepo<PullsResponse>(selected.owner, selected.name),
     refetchOnWindowFocus: false,
     enabled: queriesReady && shouldLoadPulls,
   });
@@ -963,13 +1097,45 @@ export default function RepoExplorer() {
     [pullsData?.pulls, selected.owner, selected.name, settings.contentDisplay],
   );
 
-  const openAuthorSidebar = useCallback((login: string, association?: string | null) => {
+  const openLinkedIssue = useCallback(
+    async (issueNumber: number) => {
+      setAuthorTarget(null);
+      setPullModal(null);
+      setExpandedIssue(null);
+      setExpandedPull(null);
+
+      try {
+        const r = await fetch(`/api/issue/${selected.owner}/${selected.name}/${issueNumber}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        setIssueModal((await r.json()) as Issue);
+      } catch (err) {
+        console.warn('[explorer] could not open linked issue:', err);
+      }
+    },
+    [selected.owner, selected.name],
+  );
+
+  const openAuthorSidebar = useCallback((login: string, association: string | null | undefined, initialTab: 'issues' | 'pulls') => {
     setIssueModal(null);
     setPullModal(null);
     setExpandedIssue(null);
     setExpandedPull(null);
-    setAuthorTarget({ login, association });
+    setAuthorTarget({ login, association, initialTab });
   }, []);
+
+  const openIssueAuthorSidebar = useCallback(
+    (login: string, association?: string | null) => {
+      openAuthorSidebar(login, association, 'issues');
+    },
+    [openAuthorSidebar],
+  );
+
+  const openPullAuthorSidebar = useCallback(
+    (login: string, association?: string | null) => {
+      openAuthorSidebar(login, association, 'pulls');
+    },
+    [openAuthorSidebar],
+  );
 
   const openIssueFromAuthorSidebar = useCallback(
     (issue: Issue) => {
@@ -984,6 +1150,24 @@ export default function RepoExplorer() {
 
       setTabState('issues');
       setExpandedIssue(issue.number);
+    },
+    [settings.contentDisplay],
+  );
+
+  const openPullFromAuthorSidebar = useCallback(
+    (pull: Pull) => {
+      setAuthorTarget(null);
+      setIssueModal(null);
+      setExpandedIssue(null);
+      setExpandedPull(null);
+
+      if (settings.contentDisplay === 'modal' || settings.contentDisplay === 'side') {
+        setPullModal(pull);
+        return;
+      }
+
+      setTabState('pulls');
+      setPendingOpen({ kind: 'pull', number: pull.number });
     },
     [settings.contentDisplay],
   );
@@ -1227,7 +1411,7 @@ export default function RepoExplorer() {
                 color: trackedOnly ? 'var(--attention-emphasis)' : 'var(--fg-default)',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontWeight: 500,
+                fontWeight: 400,
                 userSelect: 'none',
               }}
               title="Show only tracked repos"
@@ -1476,6 +1660,8 @@ export default function RepoExplorer() {
             )}
           </Box>
 
+          <RepoPolicyPanel repo={selected} />
+
           {/* Tabs */}
           <Box sx={{ display: 'flex', gap: 4, mb: '-1px' }}>
             <TabButton
@@ -1657,7 +1843,7 @@ export default function RepoExplorer() {
                             }
                             onSetValidation={(next) => setValidation.mutate({ number: issue.number, status: next })}
                             onPRClick={openLinkedPullRequest}
-                            onAuthorClick={openAuthorSidebar}
+                            onAuthorClick={openIssueAuthorSidebar}
                           />
                           {expanded && settings.contentDisplay === 'accordion' && (
                             <Box as="tr">
@@ -1833,6 +2019,7 @@ export default function RepoExplorer() {
                       { width: 60 },
                       { flex: 1 },
                       { width: 100 },
+                      { width: 72 },
                       { width: 60 },
                       { width: 60 },
                       { width: 60 },
@@ -1846,13 +2033,14 @@ export default function RepoExplorer() {
                   </Box>
                 )
               ) : (
-                <Box as="table" sx={{ width: '100%', minWidth: 960, borderCollapse: 'collapse', fontSize: 1 }}>
+                <Box as="table" sx={{ width: '100%', minWidth: 1040, borderCollapse: 'collapse', fontSize: 1 }}>
                   <Box as="thead" sx={{ position: 'sticky', top: 0, bg: 'var(--bg-subtle)', zIndex: 1 }}>
                     <Box as="tr" sx={{ borderBottom: '1px solid', borderColor: 'var(--border-default)' }}>
                       <Box as="th" sx={{ ...tableHeaderSx, width: 28 }}></Box>
                       <SortHeader label="State" sortKey="state" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
                       <Box as="th" sx={tableHeaderSx}>Pull Request</Box>
                       <SortHeader label="Author" sortKey="author" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
+                      <Box as="th" sx={tableHeaderSx}>Score</Box>
                       <SortHeader label="Opened" sortKey="opened" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
                       <SortHeader label="Updated" sortKey="updated" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
                       <SortHeader label="Merged / Closed" sortKey="closed" current={pullSortKey} dir={pullSortDir} onClick={togglePullSort} />
@@ -1880,18 +2068,12 @@ export default function RepoExplorer() {
                             expanded={expanded}
                             onView={handleView}
                             linkedIssues={linkedIssues}
-                            onIssueClick={(num) => {
-                              setPullModal(null);
-                              setIssueModal(null);
-                              setExpandedPull(null);
-                              setExpandedIssue(null);
-                              switchTab('issues');
-                              setPendingOpen({ kind: 'issue', number: num });
-                            }}
+                            onAuthorClick={openPullAuthorSidebar}
+                            onIssueClick={openLinkedIssue}
                           />
                           {expanded && settings.contentDisplay === 'accordion' && (
                             <Box as="tr">
-                              <Box as="td" colSpan={8} sx={{ p: 0 }}>
+                              <Box as="td" colSpan={9} sx={{ p: 0 }}>
                                 <ContentViewer
                                   target={{
                                     kind: 'pull',
@@ -1940,7 +2122,7 @@ export default function RepoExplorer() {
             sx={{
               position: 'absolute',
               inset: 0,
-              zIndex: 29,
+              zIndex: 219,
               bg: 'transparent',
               pointerEvents: 'auto',
             }}
@@ -1955,9 +2137,9 @@ export default function RepoExplorer() {
               top: 0,
               right: 0,
               bottom: 0,
-              width: '50vw',
-              minWidth: 'min(760px, calc(100vw - 24px))',
-              maxWidth: 'calc(100vw - 24px)',
+              width: ['100%', null, '50vw'],
+              minWidth: ['100%', null, 'min(760px, calc(100vw - 24px))'],
+              maxWidth: ['100%', null, 'calc(100vw - 24px)'],
               borderLeft: '1px solid',
               borderColor: 'var(--border-default)',
               bg: 'var(--bg-canvas)',
@@ -1967,18 +2149,21 @@ export default function RepoExplorer() {
               boxShadow: 'var(--shadow-panel-overlay)',
               transform: authorPanelActive ? 'translateX(0)' : 'translateX(100%)',
               transition: 'transform 220ms cubic-bezier(0.2, 0, 0, 1)',
-              zIndex: 30,
+              zIndex: 220,
               willChange: 'transform',
             }}
           >
-            <AuthorSidebar
+            <AuthorActivitySidebar
+              key={`${selected.fullName}:${renderedAuthorTarget.login}:${renderedAuthorTarget.initialTab}`}
               owner={selected.owner}
               name={selected.name}
               repoFullName={selected.fullName}
               login={renderedAuthorTarget.login}
               initialAssociation={renderedAuthorTarget.association ?? null}
+              initialTab={renderedAuthorTarget.initialTab}
               onClose={() => setAuthorTarget(null)}
               onIssueClick={openIssueFromAuthorSidebar}
+              onPullClick={openPullFromAuthorSidebar}
             />
           </Box>
         </>
@@ -2052,7 +2237,7 @@ export default function RepoExplorer() {
         </Box>
       )}
 
-      {issueModal && settings.contentDisplay === 'modal' && (
+      {issueModal && settings.contentDisplay !== 'side' && (
         <ContentViewer
           target={{
             kind: 'issue',
@@ -2199,11 +2384,15 @@ const RecentTime = React.memo(function RecentTime({ iso }: { iso: string | null 
 const AuthorCell = React.memo(function AuthorCell({
   login,
   association,
+  credibility,
+  credibilityVariant,
   highlight,
   onClick,
 }: {
   login: string | null;
   association?: string | null;
+  credibility?: AuthorCredibility | null;
+  credibilityVariant?: 'issues' | 'pulls';
   highlight?: boolean;
   onClick?: (login: string, association?: string | null) => void;
 }) {
@@ -2231,6 +2420,7 @@ const AuthorCell = React.memo(function AuthorCell({
         sx={{
           color: highlight ? 'var(--attention-emphasis)' : 'var(--fg-default)',
           fontWeight: 500,
+          minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -2239,6 +2429,9 @@ const AuthorCell = React.memo(function AuthorCell({
       >
         {login}
       </Text>
+      {credibilityVariant && (
+        <AuthorCredibilityNote credibility={credibility} variant={credibilityVariant} />
+      )}
       {showAssociation && (
         <Label variant="secondary" sx={{ fontSize: '10px', flexShrink: 0 }}>
           {(association ?? '').toLowerCase()}
@@ -2253,6 +2446,7 @@ const AuthorCell = React.memo(function AuthorCell({
     textDecoration: 'none',
     color: 'inherit',
     maxWidth: '100%',
+    minWidth: 0,
   };
 
   if (onClick) {
@@ -2326,13 +2520,15 @@ const ExplorerPullRow = React.memo(function ExplorerPullRow({
   expanded,
   onView,
   linkedIssues,
+  onAuthorClick,
   onIssueClick,
 }: {
   pr: Pull;
   mine: boolean;
   expanded: boolean;
   onView: () => void;
-  linkedIssues: Array<{ number: number; title: string; state: string; state_reason: string | null; author_login: string | null }>;
+  linkedIssues: LinkedIssueReference[];
+  onAuthorClick: (login: string, association?: string | null) => void;
   onIssueClick: (issueNumber: number) => void;
 }) {
   return (
@@ -2405,7 +2601,17 @@ const ExplorerPullRow = React.memo(function ExplorerPullRow({
         </Box>
       </Box>
       <Box as="td" sx={{ ...tableCellSx, fontSize: 0 }}>
-        <AuthorCell login={pr.author_login} association={pr.author_association} highlight={mine} />
+        <AuthorCell
+          login={pr.author_login}
+          association={pr.author_association}
+          credibility={pr.author_credibility}
+          credibilityVariant="pulls"
+          highlight={mine}
+          onClick={onAuthorClick}
+        />
+      </Box>
+      <Box as="td" sx={{ ...tableCellSx, fontSize: 0, whiteSpace: 'nowrap' }}>
+        <PullScoreCell pr={pr} />
       </Box>
       <Box as="td" sx={tableTimeSx} title={pr.created_at ?? undefined}>
         <RecentTime iso={pr.created_at} />
@@ -2438,6 +2644,7 @@ const ExplorerPullRow = React.memo(function ExplorerPullRow({
   prev.mine === next.mine &&
   prev.expanded === next.expanded &&
   prev.linkedIssues === next.linkedIssues &&
+  prev.onAuthorClick === next.onAuthorClick &&
   prev.onIssueClick === next.onIssueClick,
 );
 
@@ -2488,8 +2695,8 @@ const ExplorerIssueRow = React.memo(function ExplorerIssueRow({
       <Box as="td" sx={tableCellSx}>
         <IssueStatusBadge issue={issue} mergedPRCount={mergedPRCount} />
       </Box>
-      <Box as="td" sx={{ ...tableCellSx, maxWidth: 360 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+      <Box as="td" sx={{ ...tableCellSx, maxWidth: 360, overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0, width: '100%' }}>
           <PrimerLink
             href={issue.html_url ?? '#'}
             target="_blank"
@@ -2500,6 +2707,8 @@ const ExplorerIssueRow = React.memo(function ExplorerIssueRow({
             sx={{
               fontWeight: 500,
               color: 'var(--fg-default)',
+              minWidth: 0,
+              flex: '1 1 auto',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -2516,13 +2725,27 @@ const ExplorerIssueRow = React.memo(function ExplorerIssueRow({
               {issue.comments}
             </Box>
           )}
-          <IssueLabels labels={issue.labels} />
+          {issue.labels.length > 0 && (
+            <Box
+              sx={{
+                display: 'inline-flex',
+                minWidth: 0,
+                maxWidth: 'min(45%, 320px)',
+                overflow: 'hidden',
+                flex: '0 1 320px',
+              }}
+            >
+              <IssueLabels labels={issue.labels} maxVisible={3} maxLabelWidth={110} />
+            </Box>
+          )}
         </Box>
       </Box>
       <Box as="td" sx={{ ...tableCellSx, fontSize: 0 }}>
         <AuthorCell
           login={issue.author_login}
           association={issue.author_association}
+          credibility={issue.author_credibility}
+          credibilityVariant="issues"
           onClick={onAuthorClick}
         />
       </Box>
@@ -2557,357 +2780,3 @@ const ExplorerIssueRow = React.memo(function ExplorerIssueRow({
   prev.onPRClick === next.onPRClick &&
   prev.onAuthorClick === next.onAuthorClick,
 );
-
-function RelatedPRsCell({
-  prs,
-  onPRClick,
-}: {
-  prs: Array<{ number: number; title: string; state: string; merged: number; draft: number; author_login?: string | null }>;
-  onPRClick?: (prNumber: number) => void | Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const [popoverLayout, updatePopoverLayout] = useRelatedPopoverLayout(open, prs.length, wrapRef);
-
-  useEffect(() => {
-    if (!open) return;
-    const onMouseDown = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  if (prs.length === 0) {
-    return <Text sx={{ color: 'var(--fg-muted)', fontFamily: 'mono', fontSize: 0 }}>—</Text>;
-  }
-  const merged = prs.filter((p) => p.merged).length;
-  const open_ = prs.filter((p) => !p.merged && p.state === 'open').length;
-  const tone = open_ > 0 ? 'var(--success-emphasis)' : merged > 0 ? 'var(--done-emphasis)' : 'var(--fg-muted)';
-
-  return (
-    <Box
-      ref={wrapRef as unknown as React.Ref<HTMLDivElement>}
-      sx={{ position: 'relative', display: 'inline-block' }}
-      onClick={(e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!open) updatePopoverLayout();
-        setOpen((v) => !v);
-      }}
-    >
-      <Box
-        as="button"
-        title={`${prs.length} PR${prs.length === 1 ? '' : 's'} reference this issue`}
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 1,
-          px: '8px',
-          py: '3px',
-          border: '1px solid',
-          borderColor: 'var(--border-default)',
-          borderRadius: '999px',
-          bg: 'var(--bg-canvas)',
-          color: tone,
-          fontSize: '12px',
-          fontWeight: 700,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          '&:hover': { borderColor: tone },
-        }}
-      >
-        <GitPullRequestIcon size={11} />
-        {prs.length}
-      </Box>
-      {open && (
-        <Box
-          sx={{
-            position: 'absolute',
-            ...relatedPopoverOffset(popoverLayout),
-            right: 0,
-            minWidth: 280,
-            maxWidth: 360,
-            maxHeight: popoverLayout.maxHeight,
-            overflowY: 'auto',
-            bg: 'var(--bg-subtle)',
-            border: '1px solid',
-            borderColor: 'var(--border-default)',
-            borderRadius: 2,
-            boxShadow: 'var(--shadow-overlay)',
-            zIndex: 50,
-            py: 1,
-            textAlign: 'left',
-          }}
-        >
-          <Text sx={{ px: 2, py: 1, fontSize: 0, color: 'var(--fg-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block' }}>
-            Linked pull requests
-          </Text>
-          {prs.map((pr) => {
-            const status = pr.merged ? 'merged' : pr.draft ? 'draft' : pr.state === 'open' ? 'open' : 'closed';
-            const statusColor =
-              status === 'merged' ? 'var(--done-emphasis)' :
-              status === 'open' ? 'var(--success-emphasis)' :
-              status === 'draft' ? 'var(--fg-muted)' :
-              'var(--danger-fg)';
-            return (
-              <button
-                key={pr.number}
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  setOpen(false);
-                  void onPRClick?.(pr.number);
-                }}
-                onMouseEnter={highlightRelatedRow}
-                onMouseLeave={unhighlightRelatedRow}
-                style={relatedPopoverRowStyle}
-              >
-                {pr.author_login ? (
-                  <span style={relatedPopoverAuthorStyle}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://github.com/${pr.author_login}.png?size=32`}
-                      alt={pr.author_login}
-                      loading="lazy"
-                      style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid var(--border-muted)', display: 'block', flexShrink: 0 }}
-                    />
-                    <span style={relatedPopoverAuthorTextStyle}>
-                      {pr.author_login}
-                    </span>
-                  </span>
-                ) : (
-                  <GitPullRequestIcon size={12} />
-                )}
-                <span style={{ ...relatedPopoverStatusTextStyle, color: statusColor }}>
-                  {status}
-                </span>
-                <span style={relatedPopoverTitleStyle}>
-                  #{pr.number} {pr.title}
-                </span>
-              </button>
-            );
-          })}
-        </Box>
-      )}
-    </Box>
-  );
-}
-
-/** Inline cell for the PR table: shows a count badge with a popover listing
- *  the issues this PR closes/fixes/references. Mirrors RelatedPRsCell so the
- *  two columns feel consistent. */
-function RelatedIssuesCell({
-  issues,
-  onIssueClick,
-}: {
-  issues: Array<{ number: number; title: string; state: string; state_reason: string | null; author_login: string | null }>;
-  onIssueClick?: (issueNumber: number) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const [popoverLayout, updatePopoverLayout] = useRelatedPopoverLayout(open, issues.length, wrapRef);
-
-  useEffect(() => {
-    if (!open) return;
-    const onMouseDown = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  if (issues.length === 0) {
-    return <Text sx={{ color: 'var(--fg-muted)', fontFamily: 'mono', fontSize: 0 }}>—</Text>;
-  }
-
-  // Tone the badge based on the dominant state so a glance tells you whether
-  // the linked issues are still open (green) or all resolved (purple).
-  const openIssues = issues.filter((i) => i.state === 'open').length;
-  const tone = openIssues > 0 ? 'var(--success-emphasis)' : 'var(--done-emphasis)';
-
-  return (
-    <Box
-      ref={wrapRef as unknown as React.Ref<HTMLDivElement>}
-      sx={{ position: 'relative', display: 'inline-block' }}
-      onClick={(e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!open) updatePopoverLayout();
-        setOpen((v) => !v);
-      }}
-    >
-      <Box
-        as="button"
-        title={`${issues.length} linked issue${issues.length === 1 ? '' : 's'}`}
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 1,
-          px: '8px',
-          py: '3px',
-          border: '1px solid',
-          borderColor: 'var(--border-default)',
-          borderRadius: '999px',
-          bg: 'var(--bg-canvas)',
-          color: tone,
-          fontSize: '12px',
-          fontWeight: 700,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          '&:hover': { borderColor: tone },
-        }}
-      >
-        <IssueOpenedIcon size={11} />
-        {issues.length}
-      </Box>
-      {open && (
-        <Box
-          sx={{
-            position: 'absolute',
-            ...relatedPopoverOffset(popoverLayout),
-            right: 0,
-            minWidth: 280,
-            maxWidth: 360,
-            maxHeight: popoverLayout.maxHeight,
-            overflowY: 'auto',
-            bg: 'var(--bg-subtle)',
-            border: '1px solid',
-            borderColor: 'var(--border-default)',
-            borderRadius: 2,
-            boxShadow: 'var(--shadow-overlay)',
-            zIndex: 50,
-            py: 1,
-            textAlign: 'left',
-          }}
-        >
-          <Text sx={{ px: 2, py: 1, fontSize: 0, color: 'var(--fg-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block' }}>
-            Linked issues
-          </Text>
-          {issues.map((iss) => {
-            // Effective state mirroring the issues-table coloring: open/done/np/closed.
-            const reason = (iss.state_reason ?? '').toUpperCase();
-            const status =
-              iss.state === 'open' ? 'open' :
-              reason === 'NOT_PLANNED' ? 'not_planned' :
-              reason === 'COMPLETED' ? 'done' :
-              'closed';
-            const statusColor =
-              status === 'open' ? 'var(--success-fg)' :
-              status === 'done' ? 'var(--done-fg)' :
-              status === 'not_planned' ? 'var(--fg-muted)' :
-              'var(--danger-fg)';
-            const StatusIcon =
-              status === 'open' ? IssueOpenedIcon :
-              status === 'not_planned' ? SkipIcon :
-              IssueClosedIcon;
-            return (
-              <button
-                key={iss.number}
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  setOpen(false);
-                  onIssueClick?.(iss.number);
-                }}
-                onMouseEnter={highlightRelatedRow}
-                onMouseLeave={unhighlightRelatedRow}
-                style={relatedPopoverRowStyle}
-              >
-                <span style={{ color: statusColor, display: 'inline-flex', flexShrink: 0 }}>
-                  <StatusIcon size={12} />
-                </span>
-                {iss.author_login && (
-                  <span style={relatedPopoverAuthorStyle}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://github.com/${iss.author_login}.png?size=32`}
-                      alt={iss.author_login}
-                      loading="lazy"
-                      style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid var(--border-muted)', display: 'block', flexShrink: 0 }}
-                    />
-                    <span style={relatedPopoverAuthorTextStyle}>
-                      {iss.author_login}
-                    </span>
-                  </span>
-                )}
-                <span style={relatedPopoverTitleStyle}>
-                  #{iss.number} {iss.title}
-                </span>
-              </button>
-            );
-          })}
-        </Box>
-      )}
-    </Box>
-  );
-}
-
-const relatedPopoverRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  width: '100%',
-  padding: '6px 8px',
-  border: 'none',
-  background: 'transparent',
-  color: 'inherit',
-  fontFamily: 'inherit',
-  fontSize: 'inherit',
-  textAlign: 'left',
-  cursor: 'pointer',
-};
-
-const relatedPopoverAuthorStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  flexShrink: 0,
-  minWidth: 0,
-  maxWidth: 110,
-};
-
-const relatedPopoverAuthorTextStyle: React.CSSProperties = {
-  color: 'var(--fg-default)',
-  fontSize: 12,
-  fontWeight: 500,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const relatedPopoverStatusTextStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 700,
-  textTransform: 'capitalize',
-  flexShrink: 0,
-};
-
-const relatedPopoverTitleStyle: React.CSSProperties = {
-  color: 'var(--fg-default)',
-  fontSize: 12,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  flex: 1,
-};
-
-function highlightRelatedRow(e: React.MouseEvent<HTMLButtonElement>) {
-  e.currentTarget.style.background = 'var(--bg-emphasis)';
-}
-
-function unhighlightRelatedRow(e: React.MouseEvent<HTMLButtonElement>) {
-  e.currentTarget.style.background = 'transparent';
-}

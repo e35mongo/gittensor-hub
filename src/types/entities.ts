@@ -25,6 +25,28 @@ export interface Sn74Repo {
   owner: string;
   name: string;
   weight: number;
+  /** Fraction of this repo's emission allocated to issue discovery. Null when unknown. */
+  issueDiscoveryShare: number | null;
+  /** Fraction of this repo's emission reserved for registered maintainers. Null when unknown. */
+  maintainerCut: number | null;
+  /** Fixed PR/issue base score override. Null when not configured or unknown. */
+  fixedBaseScore: number | null;
+  /** Open-PR count threshold before the excessive-PR penalty applies. Null when unknown. */
+  excessivePrPenaltyThreshold: number | null;
+  /** Open-issue count threshold before issue-discovery spam suppression applies. Null when unknown. */
+  openIssueSpamThreshold: number | null;
+  /** Minimum PR credibility required for PR rewards. Null when unknown. */
+  minCredibility: number | null;
+  /** Minimum issue credibility required for issue-discovery rewards. Null when unknown. */
+  minIssueCredibility: number | null;
+  /** Multiplier used when no configured scoring label matches. Null when unknown. */
+  defaultLabelMultiplier: number | null;
+  /** Whether scoring-label application is trusted for this repo. Null when unknown. */
+  trustedLabelPipeline: boolean | null;
+  /** Extra branch patterns accepted in addition to the repository default branch. Null when unknown. */
+  additionalAcceptableBranches: string[] | null;
+  /** Per-label score multipliers configured for this repo. Null when none or unknown. */
+  labelMultipliers: Record<string, number> | null;
   /** SN74's authoritative "this repo is inactive" timestamp. Absent on active repos. */
   inactiveAt: string | null;
 }
@@ -61,6 +83,9 @@ export interface GtPrSummary {
   prCreatedAt: string;
   prState: string;
   mergedAt: string | null;
+  score?: number | null;
+  additions?: number | null;
+  deletions?: number | null;
 }
 
 /** `/api/gt/repositories` response envelope. */
@@ -72,6 +97,7 @@ export interface GtReposResponse {
   inactiveCount: number;
   repos: GtRepo[];
   recentPrs: GtPrSummary[];
+  prs?: GtPrSummary[];
 }
 
 /**
@@ -87,7 +113,11 @@ export interface GtRepoSummary {
   totalScore: number;
   mergedPrCount: number;
   contributorCount: number;
+  issueDiscoveryEnabled?: boolean;
+  issueDiscoveryShare?: number;
   closedIssueCount: number;
+  completedIssueCount?: number;
+  otherClosedIssueCount?: number | null;
   github: GtRepoGithubMeta | null;
 }
 
@@ -178,6 +208,12 @@ export interface Miner {
   usdPerDay?: number;
 }
 
+export interface AuthorCredibility {
+  credibility: number | null;
+  issue_credibility: number | null;
+  issue_discovery_disabled?: boolean;
+}
+
 export interface MinersResponse {
   count: number;
   fetched_at: number;
@@ -196,11 +232,19 @@ export interface RepoMiner {
   prCount: number;
   score: number;
   ossRank: number | null;
+  globalScore?: number | null;
   avatarUrl: string;
+  issueCount?: number;
+  completedIssueCount?: number;
+  otherClosedIssueCount?: number | null;
+  solvedIssueCount?: number;
+  candidateIssueCount?: number;
+  reason?: string | null;
 }
 
 export interface RepoMinersResponse {
   fullName: string;
+  issueDiscoveryEnabled?: boolean;
   ossContributions: RepoMiner[];
   issueDiscoveries: RepoMiner[];
   fetched_at: number;
@@ -227,6 +271,7 @@ export interface Issue {
   fetched_at: string;
   first_seen_at: string;
   merged_pr_count?: number;
+  author_credibility?: AuthorCredibility | null;
 }
 
 export interface IssueStateCounts {
@@ -322,6 +367,21 @@ export interface Pull {
   html_url: string | null;
   fetched_at: string;
   first_seen_at: string;
+  score?: PullScore | null;
+  author_credibility?: AuthorCredibility | null;
+}
+
+export interface PullScore {
+  score: number | null;
+  collateral_score: number | null;
+}
+
+export interface LinkedIssueReference {
+  number: number;
+  title: string;
+  state: string;
+  state_reason: string | null;
+  author_login: string | null;
 }
 
 export interface PullStateCounts {
@@ -340,16 +400,7 @@ export interface PullsResponse {
   last_error: string | null;
   pulls: Pull[];
   /** Linked issues (closes/fixes/sidebar-linked) for PRs on this page only. */
-  linked_issues_by_pull?: Record<
-    number,
-    Array<{
-      number: number;
-      title: string;
-      state: string;
-      state_reason: string | null;
-      author_login: string | null;
-    }>
-  >;
+  linked_issues_by_pull?: Record<string, LinkedIssueReference[]>;
 }
 
 export interface PullsMetaResponse {
