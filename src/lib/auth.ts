@@ -312,7 +312,11 @@ export function demoteUser(id: number, byId: number): UserRow {
     const target = getUserById(id);
     if (!target) throw new RoleError('not_found', 'User not found');
     if (!target.is_admin) return target;
-    if (countAdmins() <= 1) throw new RoleError('last_admin', 'Cannot demote the last admin');
+    // Only an *approved* admin counts toward countAdmins(); a rejected user
+    // keeps its stale is_admin flag but isn't an active admin, so clearing it
+    // can't lock us out. Mirror the rejectUser() guard.
+    if (target.status === 'approved' && countAdmins() <= 1)
+      throw new RoleError('last_admin', 'Cannot demote the last admin');
     db.prepare('UPDATE users SET is_admin = 0 WHERE id = ?').run(id);
     return getUserById(id)!;
   });
