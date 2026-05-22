@@ -260,6 +260,8 @@ export default function IssuesTable() {
   const safePage = Math.min(page, totalPages);
   const authorOptions = data?.authors ?? [];
   const myCount = authorOptions.find((a) => a.login.toLowerCase() === me.toLowerCase())?.count ?? 0;
+  const hasActiveFilters =
+    query.trim().length > 0 || stateFilter !== 'all' || mineOnly || trackedOnly || authorFilter !== 'all';
 
   // Reset to the first page when the server-side result set changes.
   useEffect(() => {
@@ -424,7 +426,9 @@ export default function IssuesTable() {
               <Box as="tr">
                 <Box as="td" colSpan={10} sx={{ p: 4, textAlign: 'center', color: 'fg.muted' }}>
                   {data && data.count === 0
-                    ? 'No issues cached for current repositories yet. Visit a repo page or run the poller to populate.'
+                    ? hasActiveFilters
+                      ? 'No issues match these filters.'
+                      : 'No issues cached for current repositories yet. Visit a repo page or run the poller to populate.'
                     : 'No issues match these filters.'}
                 </Box>
               </Box>
