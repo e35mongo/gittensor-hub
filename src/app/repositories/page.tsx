@@ -205,15 +205,17 @@ export default function RepositoriesPage() {
         >
           {/* Main column */}
           <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
-        {/* Toolbar — detached card, matching /pulls visual rhythm. */}
+        {/* Toolbar — Linear-style control rail: quiet surface, soft controls. */}
         <Box
           sx={{
             border: '1px solid',
-            borderColor: 'border.default',
+            borderColor: 'border.muted',
             borderRadius: 2,
             bg: 'canvas.subtle',
-            p: 2,
+            px: 2,
+            py: '7px',
             mb: 2,
+            boxShadow: 'inset 0 1px 0 var(--border-subtle)',
           }}
         >
           <Box
@@ -240,16 +242,23 @@ export default function RepositoriesPage() {
                 value={sortKey}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSortKey(e.target.value as SortKey); setPage(1); }}
                 sx={{
-                  bg: 'canvas.default',
+                  bg: 'neutral.subtle',
                   color: 'fg.default',
                   border: '1px solid',
-                  borderColor: 'border.default',
+                  borderColor: 'border.subtle',
                   borderRadius: 1,
-                  px: 1,
-                  py: '2px',
+                  px: 2,
+                  py: '3px',
                   fontSize: 1,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
+                  minHeight: 28,
+                  outline: 'none',
+                  '&:hover': { bg: 'neutral.muted', borderColor: 'border.muted' },
+                  '&:focus-visible': {
+                    borderColor: 'accent.muted',
+                    boxShadow: '0 0 0 2px var(--accent-subtle)',
+                  },
                 }}
               >
                 {SORT_OPTIONS.map((o) => (
@@ -265,15 +274,20 @@ export default function RepositoriesPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 24,
-                  height: 24,
-                  bg: 'canvas.default',
+                  width: 28,
+                  height: 28,
+                  bg: 'neutral.subtle',
                   color: 'fg.default',
                   border: '1px solid',
-                  borderColor: 'border.default',
+                  borderColor: 'border.subtle',
                   borderRadius: 1,
                   cursor: 'pointer',
-                  '&:hover': { borderColor: 'border.muted' },
+                  outline: 'none',
+                  '&:hover': { bg: 'neutral.muted', borderColor: 'border.muted' },
+                  '&:focus-visible': {
+                    borderColor: 'accent.muted',
+                    boxShadow: '0 0 0 2px var(--accent-subtle)',
+                  },
                 }}
               >
                 {sortDir === 'desc' ? <ArrowDownIcon size={14} /> : <ArrowUpIcon size={14} />}
@@ -292,15 +306,23 @@ export default function RepositoriesPage() {
                   setPage(1);
                 }}
                 sx={{
-                  bg: 'canvas.default',
+                  bg: 'neutral.subtle',
                   color: 'fg.default',
                   border: '1px solid',
-                  borderColor: 'border.default',
+                  borderColor: 'border.subtle',
                   borderRadius: 1,
-                  px: 1,
-                  py: '2px',
+                  px: 2,
+                  py: '3px',
                   fontSize: 1,
+                  fontFamily: 'inherit',
                   cursor: 'pointer',
+                  minHeight: 28,
+                  outline: 'none',
+                  '&:hover': { bg: 'neutral.muted', borderColor: 'border.muted' },
+                  '&:focus-visible': {
+                    borderColor: 'accent.muted',
+                    boxShadow: '0 0 0 2px var(--accent-subtle)',
+                  },
                 }}
               >
                 {PAGE_SIZES.map((n) => (
@@ -315,7 +337,22 @@ export default function RepositoriesPage() {
                 placeholder="Search or enter owner/name…"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-                sx={{ width: '100%' }}
+                sx={{
+                  width: '100%',
+                  minHeight: 32,
+                  bg: 'neutral.subtle',
+                  borderColor: 'border.subtle',
+                  color: 'fg.default',
+                  boxShadow: 'none',
+                  '& input': { color: 'fg.default' },
+                  '& svg': { color: 'fg.muted' },
+                  '&:hover': { bg: 'neutral.muted', borderColor: 'border.muted' },
+                  '&:focus-within': {
+                    bg: 'neutral.subtle',
+                    borderColor: 'accent.muted',
+                    boxShadow: '0 0 0 2px var(--accent-subtle)',
+                  },
+                }}
               />
             </Box>
           </Box>
@@ -965,23 +1002,34 @@ function StatusTab({
         alignItems: 'center',
         gap: 1,
         px: 2,
-        py: '4px',
+        py: '3px',
         border: '1px solid',
-        borderColor: active ? 'border.default' : 'transparent',
+        borderColor: active ? 'accent.muted' : 'transparent',
         borderRadius: 1,
-        bg: active ? 'canvas.default' : 'transparent',
+        bg: active ? 'accent.subtle' : 'transparent',
         color: active ? 'fg.default' : 'fg.muted',
         fontSize: 1,
         fontWeight: active ? 600 : 500,
         flexShrink: 0,
         cursor: 'pointer',
         fontFamily: 'inherit',
-        '&:hover': { color: 'fg.default' },
+        minHeight: 28,
+        outline: 'none',
+        transition: 'background-color 120ms ease, border-color 120ms ease, color 120ms ease',
+        '&:hover': {
+          bg: active ? 'accent.subtle' : 'neutral.subtle',
+          borderColor: active ? 'accent.muted' : 'border.subtle',
+          color: 'fg.default',
+        },
+        '&:focus-visible': {
+          borderColor: 'accent.muted',
+          boxShadow: '0 0 0 2px var(--accent-subtle)',
+        },
       }}
     >
       <Text>{label}</Text>
       {count !== undefined && (
-        <Text sx={{ color: active ? 'fg.muted' : 'fg.subtle', fontWeight: 500 }}>{count}</Text>
+        <Text sx={{ color: active ? 'accent.fg' : 'fg.subtle', fontWeight: 500 }}>{count}</Text>
       )}
     </Box>
   );
