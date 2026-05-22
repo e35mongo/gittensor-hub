@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, getReadDb, IssueRow } from '@/lib/db';
+import { getReadDb, IssueRow } from '@/lib/db';
 import { refreshIssuesIfStale, backfillPrIssueLinksIfNeeded } from '@/lib/refresh';
 import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { getSessionFromCookies } from '@/lib/auth';
