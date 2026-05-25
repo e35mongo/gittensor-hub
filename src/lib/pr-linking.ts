@@ -1,7 +1,13 @@
 import type { Pull } from '@/types/entities';
 
+// GitHub only treats close/fix/resolve as a *closing* keyword when it stands
+// as its own word right before the reference — `bugfix #42`, `hotfix #1234`,
+// `prefix #7`, `unresolved #5`, `discloses #3` are NOT links. The leading
+// `(?<=^|[^\w])` lookbehind enforces that boundary without consuming a
+// character; a consuming `(?:^|[^\w])` prefix would eat the separator and can
+// break adjacent matches under `matchAll`.
 const LINK_REGEX =
-  /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s*(?:(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+))?#(\d+)/gi;
+  /(?<=^|[^\w])(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s*(?:(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+))?#(\d+)/gi;
 
 export interface LinkedIssueRef {
   repo: string | null;

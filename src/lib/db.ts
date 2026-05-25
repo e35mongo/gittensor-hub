@@ -241,6 +241,12 @@ export function getDb(): Database.Database {
   if (!haveCol('closing_issues_backfilled_at')) {
     db.exec('ALTER TABLE repo_meta ADD COLUMN closing_issues_backfilled_at TEXT');
   }
+  // Tracks which `pr_issue_links` reconcile pass a repo last completed. Repos
+  // backfilled before the delete-then-insert reconcile (issue #151) carry the
+  // default 0 and are re-swept once to purge stale/false keyword links.
+  if (!haveCol('closing_issues_reconcile_version')) {
+    db.exec('ALTER TABLE repo_meta ADD COLUMN closing_issues_reconcile_version INTEGER NOT NULL DEFAULT 0');
+  }
   if (!haveCol('issue_body_links_backfilled_at')) {
     db.exec('ALTER TABLE repo_meta ADD COLUMN issue_body_links_backfilled_at TEXT');
   }

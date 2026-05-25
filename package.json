@@ -6,7 +6,8 @@
     "dev": "next dev -p 12074",
     "build": "next build",
     "start": "next start -p 12074",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@octokit/rest": "^21.0.2",

@@ -468,7 +468,13 @@ export async function fetchPrsClosingIssuesBatch(
     const fullName = `${owner}/${repo}`.toLowerCase();
     for (const n of prNumbers) {
       const pr = data.repository?.[`p${n}`];
-      const refs = pr?.closingIssuesReferences?.nodes ?? [];
+      // A null/absent alias means GitHub returned no node for this PR (deleted,
+      // or a partial-data error) — we have no authoritative answer, so we omit
+      // it from the map entirely rather than asserting "closes nothing". A
+      // present node with an empty `nodes` array DOES mean "closes nothing" and
+      // is recorded as []. Reconcilers must only act on PRs present in the map.
+      if (pr == null) continue;
+      const refs = pr.closingIssuesReferences?.nodes ?? [];
       const issueNums: number[] = [];
       for (const r of refs) {
         if (!r) continue;

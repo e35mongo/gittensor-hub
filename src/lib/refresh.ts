@@ -21,10 +21,13 @@ import { extractLinkedIssues } from './pr-linking';
  * that wiped out the strictly-larger set of links discovered by the
  * GraphQL closingIssuesReferences backfill (parenthetical `(#N)` refs,
  * sidebar-linked issues, etc.) on every poll. We now `INSERT OR IGNORE`
- * additively so the GraphQL-derived links survive subsequent polls. Stale
- * removals — i.e., a PR whose body once said "fixes #X" but no longer does
- * — are accepted as a minor cost; the link table is treated as a union of
- * everything that has ever pointed at the issue.
+ * additively so the GraphQL-derived links survive subsequent polls. The
+ * authoritative cleanup of stale/false rows — e.g. the `bugfix #N`-class
+ * over-matches the old unanchored regex produced before issue #151 — lives in
+ * `backfillClosingIssuesForRepo`, which reconciles each PR against GitHub's
+ * `closingIssuesReferences` (the source of truth) and can therefore delete.
+ * Keeping this per-poll path additive (never deleting) is what lets those
+ * GraphQL-only links survive between reconciles.
  */
 function replacePrIssueLinks(
   repoFullName: string,
@@ -56,28 +59,47 @@ function replacePrIssueLinks(
 // already cover both directions, so we rely on those exclusively.
 
 /**
- * One-shot backfill of `pr_issue_links` from GitHub's GraphQL API for every
- * cached PR in a repo. Catches links that the body-regex extractor misses —
- * parenthetical `(#N)` references, Development-sidebar manual links, and
- * keyword references that span the truncated body. Stamps
- * `closing_issues_backfilled_at` so we don't re-do completed repos.
+ * Reconciling backfill of `pr_issue_links` from GitHub's GraphQL API for every
+ * cached PR in a repo. Treats each PR's `closingIssuesReferences` as the source
+ * of truth and **delete-then-inserts** that PR's rows, so it both:
+ *   - catches links the body-regex extractor misses (parenthetical `(#N)`
+ *     references, Development-sidebar manual links, keyword refs that span the
+ *     truncated body), and
+ *   - PURGES stale/false rows the old append-only path could never remove —
+ *     notably the `bugfix #N` / `hotfix #N`-class over-matches the previously
+ *     unanchored keyword regex created (issue #151).
+ *
+ * Stamps `closing_issues_backfilled_at` + `closing_issues_reconcile_version` so
+ * we re-run once per repo whenever the reconcile semantics change.
  *
  * Returns counts so the caller can log progress.
  */
 const CLOSING_BACKFILL_BATCH = 50;
 const CLOSING_BACKFILL_PAUSE_MS = 200;
 
+// Bump when the reconciliation semantics change so already-backfilled repos
+// re-run once. v1: switch from append-only INSERT to delete-then-insert
+// reconcile against `closingIssuesReferences`, which removes the `bugfix #N`-
+// class false links the old unanchored regex created (issue #151).
+export const CLOSING_RECONCILE_VERSION = 1;
+
 export async function backfillClosingIssuesForRepo(
   repoFullName: string,
-): Promise<{ scanned: number; new_links: number; failed_batches: number }> {
+): Promise<{ scanned: number; new_links: number; removed_links: number; failed_batches: number }> {
   const [owner, repo] = repoFullName.split('/');
-  if (!owner || !repo) return { scanned: 0, new_links: 0, failed_batches: 0 };
+  if (!owner || !repo) return { scanned: 0, new_links: 0, removed_links: 0, failed_batches: 0 };
   const db = getDb();
 
   const prs = db
     .prepare(`SELECT number FROM pulls WHERE repo_full_name = ? ORDER BY number`)
     .all(repoFullName) as Array<{ number: number }>;
 
+  const selectLinks = db.prepare(
+    `SELECT issue_number FROM pr_issue_links WHERE repo_full_name = ? AND pr_number = ?`,
+  );
+  const deleteForPr = db.prepare(
+    `DELETE FROM pr_issue_links WHERE repo_full_name = ? AND pr_number = ?`,
+  );
   const insert = db.prepare(
     `INSERT OR IGNORE INTO pr_issue_links (repo_full_name, pr_number, issue_number)
      VALUES (?, ?, ?)`,
@@ -85,6 +107,7 @@ export async function backfillClosingIssuesForRepo(
 
   let scanned = 0;
   let newLinks = 0;
+  let removedLinks = 0;
   let failedBatches = 0;
   let failedPrs = 0;
 
@@ -95,16 +118,40 @@ export async function backfillClosingIssuesForRepo(
    * batch silently dropped 50 PRs' worth of `closingIssuesReferences`,
    * which is how `entrius/gittensor#1110` was showing 3 linked PRs in the
    * dashboard while GitHub itself reported 7.
+   *
+   * We only reconcile (and therefore only delete) PRs that GitHub actually
+   * answered for — `fetchPrsClosingIssuesBatch` omits null/missing nodes from
+   * the returned map, so a PR whose data we never got keeps its existing rows
+   * untouched. This preserves the bisection guard above: a failing batch never
+   * deletes anything; the rows are only reconciled once a sub-batch succeeds.
    */
   const runBatch = async (batch: number[], depth = 0): Promise<void> => {
     try {
       const refs = await fetchPrsClosingIssuesBatch(owner, repo, batch);
       const tx = db.transaction(() => {
         for (const [prNum, issueNums] of refs.entries()) {
-          for (const issueNum of issueNums) {
-            const r = insert.run(repoFullName, prNum, issueNum);
-            if (r.changes > 0) newLinks += 1;
+          const existing = new Set(
+            (selectLinks.all(repoFullName, prNum) as Array<{ issue_number: number }>).map(
+              (r) => r.issue_number,
+            ),
+          );
+          const want = new Set(issueNums);
+          // Skip untouched PRs so the common "already correct" case does no
+          // writes (and doesn't churn the WAL on every reconcile pass).
+          let changed = existing.size !== want.size;
+          if (!changed) {
+            for (const num of want) {
+              if (!existing.has(num)) {
+                changed = true;
+                break;
+              }
+            }
           }
+          if (!changed) continue;
+          deleteForPr.run(repoFullName, prNum);
+          for (const issueNum of issueNums) insert.run(repoFullName, prNum, issueNum);
+          for (const num of want) if (!existing.has(num)) newLinks += 1;
+          for (const num of existing) if (!want.has(num)) removedLinks += 1;
         }
       });
       tx();
@@ -143,19 +190,22 @@ export async function backfillClosingIssuesForRepo(
     console.warn(`[closing-backfill] ${repoFullName} skipped ${failedPrs} PR(s) after bisection`);
   }
 
-  db.prepare(`UPDATE repo_meta SET closing_issues_backfilled_at = ? WHERE full_name = ?`).run(
-    nowIso(),
-    repoFullName,
-  );
+  db.prepare(
+    `UPDATE repo_meta
+       SET closing_issues_backfilled_at = ?, closing_issues_reconcile_version = ?
+     WHERE full_name = ?`,
+  ).run(nowIso(), CLOSING_RECONCILE_VERSION, repoFullName);
 
-  return { scanned, new_links: newLinks, failed_batches: failedBatches };
+  return { scanned, new_links: newLinks, removed_links: removedLinks, failed_batches: failedBatches };
 }
 
 /**
- * Background sweep: scan every repo whose `closing_issues_backfilled_at` is
- * NULL and run `backfillClosingIssuesForRepo` on each. One repo at a time so
- * we don't hammer GitHub. Safe to call concurrently — guarded by an in-memory
- * flag and the per-repo timestamp.
+ * Background sweep: run `backfillClosingIssuesForRepo` on every repo that has
+ * either never been backfilled (`closing_issues_backfilled_at` IS NULL) or was
+ * last reconciled under an older `closing_issues_reconcile_version` — so a bump
+ * to CLOSING_RECONCILE_VERSION re-sweeps existing repos exactly once. One repo
+ * at a time so we don't hammer GitHub. Safe to call concurrently — guarded by
+ * an in-memory flag plus the per-repo timestamp/version.
  */
 let closingBackfillRunning = false;
 
@@ -168,28 +218,33 @@ export async function runClosingBackfillSweep(): Promise<void> {
       .prepare(
         `SELECT full_name FROM repo_meta
          WHERE closing_issues_backfilled_at IS NULL
+            OR COALESCE(closing_issues_reconcile_version, 0) < ?
          ORDER BY full_name`,
       )
-      .all() as Array<{ full_name: string }>;
+      .all(CLOSING_RECONCILE_VERSION) as Array<{ full_name: string }>;
     if (repos.length === 0) {
-      console.log('[closing-backfill] all repos already backfilled — nothing to do');
+      console.log('[closing-backfill] all repos already reconciled — nothing to do');
       return;
     }
     console.log(`[closing-backfill] starting sweep over ${repos.length} repo(s)`);
     let totalScanned = 0;
     let totalNew = 0;
+    let totalRemoved = 0;
     for (const r of repos) {
       const t0 = Date.now();
-      const { scanned, new_links, failed_batches } = await backfillClosingIssuesForRepo(r.full_name);
+      const { scanned, new_links, removed_links, failed_batches } = await backfillClosingIssuesForRepo(
+        r.full_name,
+      );
       totalScanned += scanned;
       totalNew += new_links;
+      totalRemoved += removed_links;
       const dt = ((Date.now() - t0) / 1000).toFixed(1);
       console.log(
-        `[closing-backfill] ${r.full_name}: scanned=${scanned} new_links=${new_links} failed_batches=${failed_batches} (${dt}s)`,
+        `[closing-backfill] ${r.full_name}: scanned=${scanned} new_links=${new_links} removed_links=${removed_links} failed_batches=${failed_batches} (${dt}s)`,
       );
     }
     console.log(
-      `[closing-backfill] sweep complete: ${totalScanned} PRs scanned, ${totalNew} new links discovered across ${repos.length} repo(s)`,
+      `[closing-backfill] sweep complete: ${totalScanned} PRs scanned, ${totalNew} links added, ${totalRemoved} stale/false links removed across ${repos.length} repo(s)`,
     );
   } finally {
     closingBackfillRunning = false;
