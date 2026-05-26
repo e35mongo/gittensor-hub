@@ -322,11 +322,24 @@ const inFlightLinksBackfill = new Set<string>();
  *     yields between batches. */
 export function backfillPrIssueLinksIfNeeded(repoFullName: string): number {
   // Hot-path gate uses the read connection so it doesn't queue behind any
-  // ongoing writer transactions in the poller.
-  const existingCount = (getReadDb()
+  // ongoing writer transactions in the poller. Two-part check:
+  //   - existingCount > 0   → links exist, fast hot path
+  //   - completedAt is set  → backfill ran successfully (even if it
+  //                            wrote zero links because the repo
+  //                            legitimately has none). Without this
+  //                            marker, "linkless" repos would
+  //                            re-trigger the full PR scan on every
+  //                            single request.
+  const readDb = getReadDb();
+  const existingCount = (readDb
     .prepare(`SELECT COUNT(*) AS c FROM pr_issue_links WHERE repo_full_name = ?`)
     .get(repoFullName) as { c: number }).c;
   if (existingCount > 0) return existingCount;
+  const completedAt = (readDb
+    .prepare('SELECT pr_issue_links_backfilled_at FROM repo_meta WHERE full_name = ?')
+    .get(repoFullName) as { pr_issue_links_backfilled_at: string | null } | undefined)
+    ?.pr_issue_links_backfilled_at;
+  if (completedAt) return 0;
 
   // Cold path: schedule the backfill OFF the request path.
   if (!inFlightLinksBackfill.has(repoFullName)) {
@@ -334,9 +347,21 @@ export function backfillPrIssueLinksIfNeeded(repoFullName: string): number {
     setImmediate(() => {
       try {
         runPrIssueLinksBackfill(repoFullName);
+        // Persistent marker so subsequent requests don't re-schedule
+        // when the repo legitimately has zero linked issues.
+        getDb()
+          .prepare(
+            `INSERT INTO repo_meta (full_name, pr_issue_links_backfilled_at)
+             VALUES (?, ?)
+             ON CONFLICT(full_name) DO UPDATE SET pr_issue_links_backfilled_at = excluded.pr_issue_links_backfilled_at`,
+          )
+          .run(repoFullName, new Date().toISOString());
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[refresh] backfillPrIssueLinks(${repoFullName}) failed:`, msg);
+        // Intentionally do NOT write the completed marker on failure
+        // — the next request should retry rather than treat a failed
+        // backfill as "ran, found nothing".
       } finally {
         inFlightLinksBackfill.delete(repoFullName);
       }
