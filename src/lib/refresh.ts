@@ -11,6 +11,7 @@ import {
   withRotation,
 } from './github';
 import { extractLinkedIssues } from './pr-linking';
+import { ISSUE_BODY_CAP, PULL_BODY_CAP, capBody } from './body-cap';
 
 /**
  * Add this PR's `pr_issue_links` rows from the body+title regex. Only
@@ -357,15 +358,32 @@ function upsertIssue(repoFullName: string, issue: GhIssue): void {
 
   const firstSeen = existing?.first_seen_at ?? nowIso();
 
+  const { body: cappedBody, truncated } = capBody(issue.body, ISSUE_BODY_CAP);
   db.prepare(
     `INSERT INTO issues
-     (repo_full_name, number, title, body, state, state_reason, author_login, author_association,
+     (repo_full_name, number, title, body, body_truncated, state, state_reason, author_login, author_association,
       labels, comments, created_at, updated_at, closed_at, html_url, raw_json, fetched_at, first_seen_at)
-     VALUES (@repo_full_name, @number, @title, @body, @state, @state_reason, @author_login, @author_association,
+     VALUES (@repo_full_name, @number, @title, @body, @body_truncated, @state, @state_reason, @author_login, @author_association,
              @labels, @comments, @created_at, @updated_at, @closed_at, @html_url, NULL, @fetched_at, @first_seen_at)
      ON CONFLICT(repo_full_name, number) DO UPDATE SET
        title              = excluded.title,
-       body               = excluded.body,
+       -- Don't let a poller sweep downgrade a complete body (e.g. one a detail
+       -- open fetched in full) back to a capped slice (issue #165). Overwrite
+       -- only when the incoming body is itself complete, the stored body is
+       -- already truncated, or the incoming text is at least as long as what's
+       -- stored (so a genuinely grown body still wins). A rarely-edited long
+       -- body may go briefly stale here; that's the accepted trade for keeping
+       -- the detail cache warm.
+       body               = CASE
+         WHEN excluded.body_truncated = 0
+           OR issues.body_truncated = 1
+           OR length(excluded.body) >= length(IFNULL(issues.body, ''))
+         THEN excluded.body ELSE issues.body END,
+       body_truncated     = CASE
+         WHEN excluded.body_truncated = 0
+           OR issues.body_truncated = 1
+           OR length(excluded.body) >= length(IFNULL(issues.body, ''))
+         THEN excluded.body_truncated ELSE issues.body_truncated END,
        state              = excluded.state,
        state_reason       = excluded.state_reason,
        author_login       = excluded.author_login,
@@ -381,7 +399,8 @@ function upsertIssue(repoFullName: string, issue: GhIssue): void {
     repo_full_name: repoFullName,
     number: issue.number,
     title: issue.title,
-    body: (issue.body ?? '').slice(0, 8000),
+    body: cappedBody,
+    body_truncated: truncated,
     state: issue.state,
     state_reason: issue.state_reason,
     author_login: issue.user?.login ?? null,
@@ -406,16 +425,27 @@ function upsertPull(repoFullName: string, pull: GhPull): void {
   const firstSeen = existing?.first_seen_at ?? nowIso();
   const merged = pull.merged_at ? 1 : 0;
 
-  const truncatedBody = (pull.body ?? '').slice(0, 4000);
+  const { body: truncatedBody, truncated } = capBody(pull.body, PULL_BODY_CAP);
   db.prepare(
     `INSERT INTO pulls
-     (repo_full_name, number, title, body, state, draft, merged, author_login, author_association,
+     (repo_full_name, number, title, body, body_truncated, state, draft, merged, author_login, author_association,
       created_at, updated_at, closed_at, merged_at, html_url, raw_json, fetched_at, first_seen_at)
-     VALUES (@repo_full_name, @number, @title, @body, @state, @draft, @merged, @author_login, @author_association,
+     VALUES (@repo_full_name, @number, @title, @body, @body_truncated, @state, @draft, @merged, @author_login, @author_association,
              @created_at, @updated_at, @closed_at, @merged_at, @html_url, NULL, @fetched_at, @first_seen_at)
      ON CONFLICT(repo_full_name, number) DO UPDATE SET
        title              = excluded.title,
-       body               = excluded.body,
+       -- See upsertIssue: never downgrade a complete body to a capped slice on
+       -- a poller sweep (issue #165).
+       body               = CASE
+         WHEN excluded.body_truncated = 0
+           OR pulls.body_truncated = 1
+           OR length(excluded.body) >= length(IFNULL(pulls.body, ''))
+         THEN excluded.body ELSE pulls.body END,
+       body_truncated     = CASE
+         WHEN excluded.body_truncated = 0
+           OR pulls.body_truncated = 1
+           OR length(excluded.body) >= length(IFNULL(pulls.body, ''))
+         THEN excluded.body_truncated ELSE pulls.body_truncated END,
        state              = excluded.state,
        draft              = excluded.draft,
        merged             = excluded.merged,
@@ -430,6 +460,7 @@ function upsertPull(repoFullName: string, pull: GhPull): void {
     number: pull.number,
     title: pull.title,
     body: truncatedBody,
+    body_truncated: truncated,
     state: pull.state,
     draft: pull.draft ? 1 : 0,
     merged,
