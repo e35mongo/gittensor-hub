@@ -193,8 +193,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-decoration: none !important;
 }
-.priBtn:hover { background: var(--btn-primary-hover-bg); }
+.priBtn:hover, .priBtn:focus, .priBtn:focus-visible {
+  background: var(--btn-primary-hover-bg);
+  text-decoration: none !important;
+}
 /* Light-mode primary stays on app vars (which already re-theme). */
 
 .secBtn {
@@ -209,10 +213,12 @@
   align-items: center;
   gap: 6px;
   transition: background 100ms, color 100ms;
+  text-decoration: none !important;
 }
-.secBtn:hover {
+.secBtn:hover, .secBtn:focus, .secBtn:focus-visible {
   background: var(--app-elev);
   color: var(--fg);
+  text-decoration: none !important;
 }
 
 .ghostBtn {
@@ -481,12 +487,482 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  /* Allow the per-repo earners row (flex-basis: 100%) to wrap onto its
+   * own line below the main flex row. Existing children don't have any
+   * shrink-trigger conditions that would cause them to wrap. */
+  flex-wrap: wrap;
   background: var(--app-surface);
   border: 1px solid var(--soft-border);
   border-radius: 7px;
   padding: 12px;
   min-height: 64px;
   transition: border-color 150ms, background 150ms;
+}
+
+/* ─── Per-repo top earners (rendered inline inside .barInspector) ───── */
+.inspectorEarners {
+  /* Label sits on its own row above the chip list. The block still
+   * lives inside the inspector flex row, so the whole earner column
+   * stays compact next to the stats group. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.inspectorEarnersLabel {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.inspectorEarnersList {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.inspectorEarnersEmpty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-subtle);
+  font-style: italic;
+}
+.inspectorEarnersEmpty svg {
+  color: var(--color-refact, #c5503a);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+.inspectorEarnerChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 7px 3px 4px;
+  border-radius: 999px;
+  background: var(--app-elev);
+  border: 1px solid var(--soft-border);
+  color: var(--fg-default);
+  text-decoration: none;
+  font-size: 11px;
+  line-height: 1;
+  transition: border-color 100ms, background 100ms;
+}
+.inspectorEarnerChip:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: var(--app-surface);
+}
+.inspectorEarnerRank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 9.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.inspectorEarnerName {
+  font-size: 11px;
+  color: var(--fg-muted);
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inspectorEarnerScore {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.minersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.minersHeaderMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.minersHeaderCount {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg-default);
+  letter-spacing: -0.02em;
+}
+.minersHeaderTag {
+  font-size: 9.5px;
+  font-family: ui-monospace, monospace;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+/* ─── Drawer miner treemap ─────────────────────────────────────────── */
+.mtileContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 2.7;
+  min-height: 260px;
+  max-height: 360px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--soft-border);
+  background: var(--app-deep, var(--app-surface));
+}
+.mtile {
+  position: absolute;
+  border: 1px solid;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: filter 100ms, z-index 0s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  /* `flex-start` so the avatar/name section anchors to the top instead
+   * of floating in the middle. The bottom block uses `margin-top: auto`
+   * to stick to the floor. */
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.mtile,
+.mtile:hover,
+.mtile:focus,
+.mtile:focus-visible {
+  text-decoration: none !important;
+}
+.mtile:hover {
+  filter: brightness(1.18);
+  z-index: 4;
+}
+/* ─── Tile tier palettes (Linear-indigo for eligibles, neutral for not) ─── */
+.mtileTierLeader {
+  background: rgba(94, 106, 210, 0.42);
+  border-color: rgba(94, 106, 210, 0.55);
+  color: #ffffff;
+}
+.mtileTierTop {
+  background: rgba(94, 106, 210, 0.24);
+  border-color: rgba(94, 106, 210, 0.32);
+  color: #f7f8f8;
+}
+.mtileTierMid {
+  background: rgba(94, 106, 210, 0.12);
+  border-color: rgba(94, 106, 210, 0.22);
+  color: #f4f6f5;
+}
+.mtileTierIneligible {
+  /* Subtle wash so the tile sits quietly behind eligible tiles. */
+  background: rgba(120, 125, 135, 0.05);
+  border-color: rgba(120, 125, 135, 0.14);
+  color: #d5d9df;
+}
+/* Light-mode: solid darker indigo so the tile reads against the lighter
+ * page background. White text stays legible across all eligible tiers;
+ * ineligible flips to dark text on a soft neutral. */
+[data-theme="light"] .mtileTierLeader {
+  background: rgba(94, 106, 210, 0.92);
+  border-color: rgba(94, 106, 210, 1);
+  color: #ffffff;
+}
+[data-theme="light"] .mtileTierTop {
+  background: rgba(94, 106, 210, 0.68);
+  border-color: rgba(94, 106, 210, 0.85);
+  color: #ffffff;
+}
+[data-theme="light"] .mtileTierMid {
+  /* Bumped from 0.42 → 0.55 so white text is legible at this tier too,
+   * matching the leader/top tiers' text color for a uniform look. */
+  background: rgba(94, 106, 210, 0.55);
+  border-color: rgba(94, 106, 210, 0.72);
+  color: #ffffff;
+}
+[data-theme="light"] .mtileTierIneligible {
+  /* Very light wash + dark text so scores read clearly. */
+  background: rgba(120, 125, 135, 0.07);
+  border-color: rgba(120, 125, 135, 0.20);
+  color: #2b2e36;
+}
+.mtileXl { padding: 14px 14px; }
+.mtileLg { padding: 10px 11px; }
+.mtileMd { padding: 7px 8px; }
+.mtileSm { padding: 5px 7px; }
+.mtileXs { padding: 3px 5px; }
+.mtileTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  justify-content: space-between;
+  min-width: 0;
+}
+.mtileTopMeta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-left: auto;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.mtileCrown {
+  color: #fde047;
+  font-size: 14px;
+  line-height: 1;
+}
+.mtileMid {
+  margin: 6px 0 4px;
+  min-width: 0;
+}
+.mtileIdentityStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  /* flex:1 makes the column claim all remaining width after the
+   * right-aligned topMeta — without it the stack sized to its widest
+   * intrinsic child (the avatar) and squeezed the name. */
+  flex: 1 1 0;
+  min-width: 0;
+}
+.mtileNameRow .mtileName {
+  /* Single-line ellipsis on the full-row name. Username fits in the
+   * tile's content width directly without the uid stealing space. */
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mtileIdentityRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+.mtileIdentityText {
+  min-width: 0;
+  flex: 1;
+}
+.mtileName {
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mtileNameSmall {
+  font-size: 11.5px;
+  line-height: 1.15;
+}
+.mtileCompactName {
+  width: 100%;
+  max-width: 100%;
+  /* Single-line ellipsis instead of mid-word wrapping — "jakearmstrong"
+   * was being broken into "jakearmstro…" on a new line, which looked
+   * worse than a clean truncation. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.15;
+}
+.mtileNameTiny {
+  width: 100%;
+  max-width: 100%;
+  font-size: 9px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+/* Avatars inside tiles render as circles — uses the global Avatar img
+ * directly so we don't have to introduce a new prop just for this view. */
+.mtile img {
+  border-radius: 50%;
+}
+.mtileAvatarWrap {
+  --cred-color: #7b8494;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1.5px solid var(--cred-color);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.mtileAvatarWrap img {
+  display: block;
+  border: 0;
+}
+.mtileCredBadge {
+  position: absolute;
+  right: -8px;
+  bottom: -5px;
+  min-width: 22px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cred-color);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+.mtileUid {
+  font-size: 10px;
+  color: inherit;
+  opacity: 0.68;
+  white-space: nowrap;
+}
+.mtileBottom {
+  min-width: 0;
+  overflow: hidden;
+  padding-bottom: 1px;
+  /* Pins this row to the bottom of the tile so the avatar/name stay at
+   * the top regardless of how much vertical space is left over. */
+  margin-top: auto;
+}
+.mtileNameRow {
+  /* Name sits directly below the avatar row, anchored to the top.
+   * Spans full content width so a username like `jakearmstrong` gets
+   * the entire tile to itself instead of competing with the uid. */
+  margin-top: 8px;
+  min-width: 0;
+}
+/* Horizontal layout for wide-short tiles: avatar + name on one row,
+ * uid/crown pushed to the far right. Saves the vertical space that the
+ * standard 3-section layout was eating up. */
+.mtileTopHorizontal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mtileHorizontalName {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mtileTao {
+  font-size: 14.5px;
+  color: inherit;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.mtileTaoUnit {
+  font-size: 10px;
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.72;
+  margin-left: 1px;
+}
+.mtileMeta {
+  font-size: 10.5px;
+  color: inherit;
+  opacity: 0.78;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mtileSep { color: inherit; opacity: 0.4; }
+.mtileCompact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  gap: 7px;
+}
+.mtileCompactIdentity {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+}
+.mtileTiny {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  overflow: hidden;
+}
+.mtileTinyIdentity {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  overflow: hidden;
+}
+.mtileTiny .mtileAvatarWrap {
+  margin-right: 7px;
+  margin-bottom: 2px;
+}
+.mtileTiny .mtileCredBadge {
+  right: -7px;
+  bottom: -4px;
+  min-width: 20px;
+  height: 13px;
+  font-size: 8px;
+  padding: 0 3px;
+}
+.mtileLegendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .mtileContainer {
+    aspect-ratio: 1 / 1.65;
+    min-height: 520px;
+    max-height: 720px;
+  }
 }
 .barInspector.isActive {
   border-color: var(--accent-glow);
@@ -1859,4 +2335,35 @@
 :global([data-theme='light']) .langIconFallback {
   color: rgba(255,255,255,0.95);
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.drawerLangGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 18px;
+  row-gap: 7px;
+}
+.drawerLangRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.drawerLangName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+.drawerLangPct {
+  flex-shrink: 0;
+  font-size: 11.5px;
+}
+
+@media (max-width: 430px) {
+  .drawerLangGrid {
+    grid-template-columns: 1fr;
+  }
 }

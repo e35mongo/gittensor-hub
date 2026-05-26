@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import styles from '../page.module.css';
 import Avatar from './Avatar';
 import { LABEL_COLORS, LANG_COLORS, LANG_NAME_ICONS, formatLangPct } from '../_lib/colors';
@@ -14,6 +15,8 @@ import {
   repoPRTAO,
   type RepoRow,
 } from '../_lib/incentives';
+import { squarify } from '../_lib/squarify';
+import type { RepoMiner, RepoMinersResponse } from '@/types/entities';
 
 interface DrawerProps {
   open: boolean;
@@ -341,6 +344,16 @@ export default function Drawer({
             </div>
           </div>
 
+          {/* Miner contributors — per-repo ranked treemap from the validator.
+            * Eligible miners are full-opacity; historical-but-ineligible
+            * miners are dimmed in-place rather than split into a separate
+            * section. */}
+          <MinersSection
+            owner={r.owner}
+            name={r.name}
+            repoPRTAOValue={repoPRTAO(r, subnetTAO)}
+          />
+
           {/* Languages — always render the section so the drawer's shape
             * matches the HTML; show a loading-style placeholder while the
             * /api/repos/metadata endpoint is still fetching. */}
@@ -349,12 +362,12 @@ export default function Drawer({
               Primary languages
             </div>
             {r.langs.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className={styles.drawerLangGrid}>
                 {r.langs.map(([n, p]) => {
                   const color = LANG_COLORS[n] ?? 'var(--fg-subtle)';
                   const spec = LANG_NAME_ICONS[n.toLowerCase()];
                   return (
-                    <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div key={n} className={styles.drawerLangRow}>
                       <LangIcon
                         spec={spec}
                         color={color}
@@ -362,8 +375,8 @@ export default function Drawer({
                         size={16}
                         title={n}
                       />
-                      <span style={{ fontSize: 12.5, flex: 1 }}>{n}</span>
-                      <span className={`mono tnum ${styles.textFgDim}`} style={{ fontSize: 11.5 }}>{formatLangPct(p)}</span>
+                      <span className={styles.drawerLangName}>{n}</span>
+                      <span className={`mono tnum ${styles.textFgDim} ${styles.drawerLangPct}`}>{formatLangPct(p)}</span>
                     </div>
                   );
                 })}
@@ -425,6 +438,481 @@ export default function Drawer({
         </div>
       </aside>
     </>
+  );
+}
+
+function minerKey(m: RepoMiner): string {
+  return `${m.githubId || m.githubUsername}-${m.uid ?? m.githubUsername}`;
+}
+
+const TOP_ACTIVE_MINERS_LIMIT = 5;
+
+function repoWorkScore(m: RepoMiner): number {
+  return Math.max(
+    m.score ?? 0,
+    m.baseScore ?? 0,
+    m.collateralScore ?? 0,
+    (m.totalPrCount ?? m.prCount ?? 0) * 0.25,
+  );
+}
+
+function tileScale(value: number): number {
+  return Math.pow(Math.max(value, 0), 0.35);
+}
+
+function minerTileWeight(m: RepoMiner, topEligibleScore: number): number {
+  const finalScore = Math.max(m.score ?? 0, 0);
+  const topEligibleUnit = tileScale(topEligibleScore);
+  if (m.isEligible === true) {
+    return Math.max(tileScale(finalScore), topEligibleUnit > 0 ? topEligibleUnit * 0.24 : 0, 0.75);
+  }
+
+  const baseRepoScore = Math.max(
+    m.baseScore ?? 0,
+    finalScore,
+    0.15,
+  );
+  if (topEligibleScore <= 0) return Math.max(tileScale(baseRepoScore), 0.75);
+
+  // Keep historical/ineligible miners visible, but visually subordinate to
+  // every eligible tile in the top-five set. The power scale keeps a huge
+  // leader dominant without compressing the rest of the map into slivers.
+  const damped = tileScale(baseRepoScore) * 0.55;
+  return Math.min(Math.max(damped, 0.35), Math.max(0.35, topEligibleUnit * 0.18));
+}
+
+function useNarrowTreemap(): boolean {
+  const [isNarrow, setIsNarrow] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsNarrow(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  return isNarrow;
+}
+
+function credibilityPct(miner: RepoMiner): number | null {
+  if (miner.credibility == null || !Number.isFinite(miner.credibility)) return null;
+  const pct = miner.credibility <= 1 ? miner.credibility * 100 : miner.credibility;
+  return Math.max(0, Math.min(100, Math.round(pct)));
+}
+
+/** Credibility tint — borrows Linear's status palette so the badge feels
+ *  at home in this product family. Linear uses subtle, slightly
+ *  desaturated tones graded by completion state: deep green for "done",
+ *  yellow for "in progress", red for "canceled", gray for "backlog". */
+function credibilityColor(pct: number | null): string {
+  if (pct == null) return '#95a2b3';  // Linear: backlog / unknown
+  if (pct >= 90) return '#26b574';    // Linear: done (deep green)
+  if (pct >= 75) return '#4cb782';    // Linear: in review (soft green)
+  if (pct >= 60) return '#f2c94c';    // Linear: in progress (yellow)
+  if (pct >= 40) return '#f5a623';    // Linear: warning amber
+  return '#eb5757';                    // Linear: blocked / canceled (red)
+}
+
+function MinerCredAvatar({ miner, size }: { miner: RepoMiner; size: 'xs' | 'sm' | 'md' | 'lg' }) {
+  const pct = credibilityPct(miner);
+  const color = credibilityColor(pct);
+  return (
+    <span
+      className={styles.mtileAvatarWrap}
+      style={{ '--cred-color': color } as React.CSSProperties}
+      title={pct == null ? `@${miner.githubUsername}` : `@${miner.githubUsername} · ${pct}% repo PR credibility`}
+    >
+      <Avatar fullName={miner.githubUsername} size={size} />
+      {pct != null ? <span className={`${styles.mtileCredBadge} mono`}>{pct}%</span> : null}
+    </span>
+  );
+}
+
+/** Per-repo miner contributors panel with a squarified treemap. */
+function MinersSection({ owner, name, repoPRTAOValue }: { owner: string; name: string; repoPRTAOValue: number }) {
+  const { data, isLoading, isError } = useQuery<RepoMinersResponse>({
+    queryKey: ['gt-repo-miners', owner, name],
+    queryFn: async ({ signal }) => {
+      const r = await fetch(`/api/gt/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/miners`, { signal });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json() as Promise<RepoMinersResponse>;
+    },
+    refetchInterval: 120_000,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { allRows, totalRows, totalEligibleScore, top1Pct, conc, eligibleCount, ineligibleCount } = useMemo(() => {
+    const list = (data?.ossContributions ?? [])
+      .filter((m) => m.isEligible === true || repoWorkScore(m) > 0)
+      .slice()
+      .sort((a, b) => {
+        if ((a.isEligible ? 1 : 0) !== (b.isEligible ? 1 : 0)) return a.isEligible ? -1 : 1;
+        return (b.score ?? 0) - (a.score ?? 0) || repoWorkScore(b) - repoWorkScore(a);
+      });
+    const topRows = list.slice(0, TOP_ACTIVE_MINERS_LIMIT);
+    const totalRowsCount = list.length;
+    const eligible = topRows.filter((m) => m.isEligible);
+    const ineligible = topRows.length - eligible.length;
+    const totalEligible = eligible.reduce((s, m) => s + m.score, 0);
+    const top1 = totalEligible > 0 ? ((eligible[0]?.score ?? 0) / totalEligible) * 100 : 0;
+    const concentration =
+      top1 >= 50 ? { label: 'concentrated', color: '#c5503a' } :
+      top1 >= 30 ? { label: 'top-heavy', color: '#eab308' } :
+      top1 >= 20 ? { label: 'balanced', color: '#9eb872' } :
+                   { label: 'distributed', color: '#7fb992' };
+    return {
+      allRows: topRows,
+      totalRows: totalRowsCount,
+      totalEligibleScore: totalEligible,
+      top1Pct: top1,
+      conc: concentration,
+      eligibleCount: eligible.length,
+      ineligibleCount: ineligible,
+    };
+  }, [data]);
+
+  const containerStyle = { padding: '16px 20px', borderBottom: '1px solid var(--soft-border, rgba(255,255,255,0.06))' } as const;
+
+  if (isLoading) {
+    return (
+      <div style={containerStyle}>
+        <div style={{ fontSize: 10.5, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+          Active miners
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--fg-subtle)', fontStyle: 'italic' }}>Loading miners…</div>
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div style={containerStyle}>
+        <div style={{ fontSize: 10.5, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+          Active miners
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--color-refact)' }}>Failed to load miner contributors.</div>
+      </div>
+    );
+  }
+  if (allRows.length === 0) {
+    return (
+      <div style={containerStyle}>
+        <div style={{ fontSize: 10.5, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+          Active miners
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--fg-subtle)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
+          Benchmark repo — no miners.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={containerStyle}>
+      <div style={{ fontSize: 10.5, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+        <span>
+          Active miners{' '}
+          <span className={`mono ${styles.textFgFaint}`} style={{ textTransform: 'none', letterSpacing: 0 }}>
+            top {TOP_ACTIVE_MINERS_LIMIT} by repo score
+          </span>
+        </span>
+      </div>
+
+      <div className={styles.minersHeader}>
+        <div className={styles.minersHeaderMain}>
+          <span className={`${styles.minersHeaderCount} mono`}>{allRows.length}</span>
+          <span style={{ fontSize: 10.5, color: 'var(--fg-muted)' }}>
+            active · top earner takes{' '}
+            <span className="mono" style={{ color: conc.color }}>{top1Pct.toFixed(0)}%</span>
+          </span>
+          <span
+            className={styles.minersHeaderTag}
+            style={{ color: conc.color, background: `${conc.color}1a`, borderColor: `${conc.color}44` }}
+          >
+            {conc.label}
+          </span>
+        </div>
+      </div>
+
+      <MinerTreemap
+        miners={allRows}
+        totalEligibleScore={totalEligibleScore}
+        repoPRTAOValue={repoPRTAOValue}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, fontSize: 10, color: 'var(--fg-faint)', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span className={styles.mtileLegendDot} style={{ background: '#5e6ad2' }} /> eligible
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span className={styles.mtileLegendDot} style={{ background: 'rgba(120,125,135,0.5)' }} /> historical
+          </span>
+        </span>
+        <span style={{ fontStyle: 'italic' }}>
+          Top five only · tile size follows repo score
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Squarified treemap of repo contributors. Tile area is based on the
+ *  miner's score for this repo, with ineligible/historical miners damped so
+ *  eligible miners remain visually dominant while every status still has a
+ *  place in the map. */
+function MinerTreemap({
+  miners,
+  totalEligibleScore,
+  repoPRTAOValue,
+}: {
+  miners: RepoMiner[];
+  totalEligibleScore: number;
+  repoPRTAOValue: number;
+}) {
+  const isNarrow = useNarrowTreemap();
+  const W = isNarrow ? 600 : 1000;
+  const H = isNarrow ? 990 : 560;
+  const tiles = useMemo(() => {
+    const topEligibleScore = Math.max(0, ...miners.filter((m) => m.isEligible).map((m) => m.score ?? 0));
+    return squarify(
+      miners.map((m) => ({ w: minerTileWeight(m, topEligibleScore), data: m })),
+      0,
+      0,
+      W,
+      H,
+    );
+  }, [H, W, miners]);
+  // Rank among ELIGIBLE only — drives the leader crown and the lime tier
+  // shading. Ineligible miners don't get a "leader" treatment regardless
+  // of their historical score.
+  const eligibleRankByUser = useMemo(() => {
+    const ranks = new Map<string, number>();
+    miners
+      .filter((m) => m.isEligible)
+      .forEach((m, i) => ranks.set(minerKey(m), i + 1));
+    return ranks;
+  }, [miners]);
+
+  return (
+    <div className={styles.mtileContainer}>
+      {tiles.map((t) => {
+        const m = t.data;
+        const eligible = m.isEligible === true;
+        const eligRank = eligibleRankByUser.get(minerKey(m)) ?? null;
+        const share = eligible && totalEligibleScore > 0 ? m.score / totalEligibleScore : 0;
+        const tao = eligible ? share * repoPRTAOValue : 0;
+        const xPct = (t.x / W) * 100;
+        const yPct = (t.y / H) * 100;
+        const wPct = (t.w / W) * 100;
+        const hPct = (t.h / H) * 100;
+        // Thresholds tuned against the 1000x560 reference canvas so text
+        // only appears when it has enough real room in the responsive tile.
+        const sizeClass =
+          t.w >= 300 && t.h >= 190 ? 'xl' :
+          t.w >= 220 && t.h >= 160 ? 'lg' :
+          t.w >= 160 && t.h >= 125 ? 'md' :
+          t.w >= 112 && t.h >= 96  ? 'sm' :
+                                     'xs';
+        // Wide-short tiles can't fit the vertical 3-row layout (avatar
+        // on top, name below, score+meta at the bottom) — the bottom
+        // gets clipped. Switch to a horizontal layout where the avatar
+        // and name share the top row, freeing vertical room for the
+        // score/meta to render in full.
+        const wideShort = (sizeClass === 'lg' || sizeClass === 'md') && t.w > t.h * 1.6;
+        // Tier styling lives in CSS so light/dark themes can swap palettes
+        // without recomputing colors here. textTone is inherited from the
+        // tile's CSS `color` per tier.
+        const tierClass =
+          !eligible ? styles.mtileTierIneligible :
+          eligRank === 1 ? styles.mtileTierLeader :
+          eligRank !== null && eligRank <= 3 ? styles.mtileTierTop :
+                                               styles.mtileTierMid;
+        const textTone = 'inherit';
+        const sizeClassName =
+          sizeClass === 'xl' ? styles.mtileXl :
+          sizeClass === 'lg' ? styles.mtileLg :
+          sizeClass === 'md' ? styles.mtileMd :
+          sizeClass === 'sm' ? styles.mtileSm :
+                               styles.mtileXs;
+        const isLeader = eligRank === 1;
+        const cls = [styles.mtile, sizeClassName, tierClass].filter(Boolean).join(' ');
+        const credPct = credibilityPct(m);
+        const credText = credPct == null ? 'unknown credibility' : `${credPct}% repo PR credibility`;
+        const title = eligible
+          ? `@${m.githubUsername} · ${credText} · repo score ${m.score.toFixed(2)} · ${formatTAO(tao)} T/Day · ${(share * 100).toFixed(1)}% · ${m.prCount} merged · eligible`
+          : `@${m.githubUsername} · ${credText} · base score ${(m.baseScore ?? 0).toFixed(2)} · ${m.prCount} merged · ineligible`;
+        return (
+          <a
+            key={minerKey(m)}
+            href={`https://github.com/${encodeURIComponent(m.githubUsername)}`}
+            target="_blank"
+            rel="noreferrer"
+            className={cls}
+            style={{
+              left: `${xPct}%`,
+              top: `${yPct}%`,
+              width: `${wPct}%`,
+              height: `${hPct}%`,
+            }}
+            title={title}
+          >
+            <MinerTileContent
+              sizeClass={sizeClass}
+              wideShort={wideShort}
+              miner={m}
+              eligible={eligible}
+              isLeader={isLeader}
+              tao={tao}
+              share={share}
+              textTone={textTone}
+            />
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
+function MinerTileContent({
+  sizeClass,
+  wideShort,
+  miner,
+  eligible,
+  isLeader,
+  tao,
+  share,
+  textTone,
+}: {
+  sizeClass: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
+  wideShort: boolean;
+  miner: RepoMiner;
+  eligible: boolean;
+  isLeader: boolean;
+  tao: number;
+  share: number;
+  textTone: string;
+}) {
+  const visibleScore = eligible ? miner.score : (miner.baseScore ?? 0);
+  const scoreNode = (
+    <>
+      {visibleScore.toFixed(1)}
+      <span className={styles.mtileTaoUnit}> {eligible ? 'score' : 'base score'}</span>
+    </>
+  );
+  const shareText = eligible ? `${(share * 100).toFixed(1)}%` : 'ineligible';
+  const taoText = eligible ? `${formatTAO(tao)} T/Day` : '0 T/Day';
+  // Let the score text inherit from the tile's tier color so it adapts
+  // to dark/light mode automatically (was hardcoded `#edf0f2` and
+  // disappeared on light backgrounds).
+  const scoreColor: string | undefined = undefined;
+
+  // Top-right meta: uid + optional crown. Sits on the top row next to
+  // the avatar without stealing horizontal space from the name (which
+  // gets its own full-width row in mtileMid below).
+  const topMeta = miner.uid != null || isLeader ? (
+    <div className={styles.mtileTopMeta}>
+      {miner.uid != null ? (
+        <div className={`${styles.mtileUid} mono`}>uid {miner.uid}</div>
+      ) : null}
+      {isLeader ? <div className={styles.mtileCrown} title="top eligible earner">★</div> : null}
+    </div>
+  ) : null;
+
+  if (wideShort && (sizeClass === 'lg' || sizeClass === 'md')) {
+    // Horizontal layout: avatar+name share the top row, score+meta fill
+    // the bottom row. Saves the vertical space that the standard
+    // 3-section layout was eating up.
+    return (
+      <>
+        <div className={styles.mtileTopHorizontal}>
+          <MinerCredAvatar miner={miner} size={sizeClass === 'lg' ? 'md' : 'sm'} />
+          <div className={styles.mtileHorizontalName} style={{ color: textTone }}>
+            {miner.githubUsername}
+          </div>
+          {topMeta}
+        </div>
+        <div className={styles.mtileBottom}>
+          <div className={`${styles.mtileTao} mono`} style={{ fontSize: sizeClass === 'lg' ? undefined : 12, color: scoreColor }}>
+            {scoreNode}
+          </div>
+          <div className={`${styles.mtileMeta} mono`} style={{ fontSize: sizeClass === 'lg' ? undefined : 9.5 }}>
+            <span>{shareText}</span>
+            <span className={styles.mtileSep}>·</span>
+            <span>{taoText}</span>
+          </div>
+        </div>
+      </>
+    );
+  }
+  if (sizeClass === 'xl' || sizeClass === 'lg') {
+    return (
+      <>
+        <div className={styles.mtileTop}>
+          <MinerCredAvatar miner={miner} size={sizeClass === 'xl' ? 'lg' : 'md'} />
+          {topMeta}
+        </div>
+        <div className={styles.mtileNameRow}>
+          <div className={styles.mtileName} style={{ color: textTone }}>{miner.githubUsername}</div>
+        </div>
+        <div className={styles.mtileBottom}>
+          <div className={`${styles.mtileTao} mono`} style={{ color: scoreColor }}>
+            {scoreNode}
+          </div>
+          <div className={`${styles.mtileMeta} mono`}>
+            <span>{shareText}</span>
+            <span className={styles.mtileSep}>·</span>
+            <span>{taoText}</span>
+          </div>
+        </div>
+      </>
+    );
+  }
+  if (sizeClass === 'md') {
+    return (
+      <>
+        <div className={styles.mtileTop}>
+          <MinerCredAvatar miner={miner} size="sm" />
+          {topMeta}
+        </div>
+        <div className={styles.mtileNameRow}>
+          <div className={styles.mtileName} style={{ color: textTone }}>{miner.githubUsername}</div>
+        </div>
+        <div className={styles.mtileBottom}>
+          <div className={`${styles.mtileTao} mono`} style={{ fontSize: 12, color: scoreColor }}>
+            {scoreNode}
+          </div>
+          <div className={`${styles.mtileMeta} mono`} style={{ fontSize: 9.5 }}>
+            {shareText} · {taoText}
+          </div>
+        </div>
+      </>
+    );
+  }
+  if (sizeClass === 'sm') {
+    return (
+      <div className={styles.mtileCompact}>
+        <div className={styles.mtileCompactIdentity}>
+          <MinerCredAvatar miner={miner} size="sm" />
+          <div className={`${styles.mtileName} ${styles.mtileNameSmall} ${styles.mtileCompactName}`} style={{ color: textTone }}>
+            {miner.githubUsername}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // xs — identity-only. Hide UID/star from the visible layout because those
+  // controls steal the horizontal space the username needs in tiny tiles.
+  return (
+    <div className={styles.mtileTiny}>
+      <div className={styles.mtileTinyIdentity}>
+        <MinerCredAvatar miner={miner} size="xs" />
+        <div className={`${styles.mtileName} ${styles.mtileNameTiny}`} style={{ color: textTone }}>
+          {miner.githubUsername}
+        </div>
+      </div>
+    </div>
   );
 }
 
