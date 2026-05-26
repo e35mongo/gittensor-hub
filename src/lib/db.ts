@@ -318,16 +318,24 @@ export function getDb(): Database.Database {
   // Erring toward `1` is the safe direction — a false truncated flag costs one
   // detail re-fetch that then re-stores the full body and self-heals the flag,
   // whereas a false complete flag would serve a clipped body as if whole.
+  // The ADD COLUMN and its backfill must commit together: if a crash landed
+  // between them, the next boot would see the column present, skip this block,
+  // and leave capped rows defaulted to 0 (complete) — the unsafe direction.
+  // Wrapping in a transaction rolls the ALTER back too, so the migration re-runs.
   const issuesCols = db.prepare("PRAGMA table_info(issues)").all() as Array<{ name: string }>;
   if (!issuesCols.some((c) => c.name === 'body_truncated')) {
-    db.exec('ALTER TABLE issues ADD COLUMN body_truncated INTEGER NOT NULL DEFAULT 0');
-    db.prepare('UPDATE issues SET body_truncated = 1 WHERE body IS NOT NULL AND length(body) = ?')
-      .run(ISSUE_BODY_CAP);
+    db.transaction(() => {
+      db.exec('ALTER TABLE issues ADD COLUMN body_truncated INTEGER NOT NULL DEFAULT 0');
+      db.prepare('UPDATE issues SET body_truncated = 1 WHERE body IS NOT NULL AND length(body) = ?')
+        .run(ISSUE_BODY_CAP);
+    })();
   }
   if (!pullsCols.some((c) => c.name === 'body_truncated')) {
-    db.exec('ALTER TABLE pulls ADD COLUMN body_truncated INTEGER NOT NULL DEFAULT 0');
-    db.prepare('UPDATE pulls SET body_truncated = 1 WHERE body IS NOT NULL AND length(body) = ?')
-      .run(PULL_BODY_CAP);
+    db.transaction(() => {
+      db.exec('ALTER TABLE pulls ADD COLUMN body_truncated INTEGER NOT NULL DEFAULT 0');
+      db.prepare('UPDATE pulls SET body_truncated = 1 WHERE body IS NOT NULL AND length(body) = ?')
+        .run(PULL_BODY_CAP);
+    })();
   }
 
   // One-shot purge of false-positive pr_issue_links (issue #137). Guarded by
