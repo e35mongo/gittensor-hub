@@ -896,10 +896,13 @@
   margin-top: 2px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.mtileMeta span {
   white-space: nowrap;
 }
 .mtileSep { color: inherit; opacity: 0.4; }
