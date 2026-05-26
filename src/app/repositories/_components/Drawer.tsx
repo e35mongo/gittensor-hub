@@ -449,11 +449,12 @@ function tileScale(value: number): number {
   return Math.pow(Math.max(value, 0), 0.35);
 }
 
-function minerTileWeight(m: RepoMiner, topEligibleScore: number): number {
+function minerTileWeight(m: RepoMiner, topEligibleScore: number, hasEligibleMiners: boolean): number {
   const finalScore = Math.max(m.score ?? 0, 0);
-  const topEligibleUnit = tileScale(topEligibleScore);
+  const eligibleFloor = 3.2;
+  const topEligibleUnit = Math.max(tileScale(topEligibleScore), eligibleFloor);
   if (m.isEligible === true) {
-    return Math.max(tileScale(finalScore), topEligibleUnit > 0 ? topEligibleUnit * 0.24 : 0, 0.75);
+    return Math.max(tileScale(finalScore), topEligibleUnit * 0.72, eligibleFloor);
   }
 
   const baseRepoScore = Math.max(
@@ -461,13 +462,13 @@ function minerTileWeight(m: RepoMiner, topEligibleScore: number): number {
     finalScore,
     0.15,
   );
-  if (topEligibleScore <= 0) return Math.max(tileScale(baseRepoScore), 0.75);
+  if (!hasEligibleMiners) return Math.max(tileScale(baseRepoScore), 0.75);
 
   // Keep historical/ineligible miners visible, but visually subordinate to
-  // every eligible tile in the top-five set. The power scale keeps a huge
-  // leader dominant without compressing the rest of the map into slivers.
-  const damped = tileScale(baseRepoScore) * 0.55;
-  return Math.min(Math.max(damped, 0.35), Math.max(0.35, topEligibleUnit * 0.18));
+  // every eligible tile in the top-five set, even when the eligible miner's
+  // current repo score is zero and the historical base scores are large.
+  const damped = tileScale(baseRepoScore) * 0.22;
+  return Math.min(Math.max(damped, 0.35), topEligibleUnit * 0.42);
 }
 
 function useNarrowTreemap(): boolean {
@@ -659,9 +660,10 @@ function MinerTreemap({
   const W = isNarrow ? 600 : 1000;
   const H = isNarrow ? 990 : 560;
   const tiles = useMemo(() => {
-    const topEligibleScore = Math.max(0, ...miners.filter((m) => m.isEligible).map((m) => m.score ?? 0));
+    const eligibleMiners = miners.filter((m) => m.isEligible);
+    const topEligibleScore = Math.max(0, ...eligibleMiners.map((m) => m.score ?? 0));
     return squarify(
-      miners.map((m) => ({ w: minerTileWeight(m, topEligibleScore), data: m })),
+      miners.map((m) => ({ w: minerTileWeight(m, topEligibleScore, eligibleMiners.length > 0), data: m })),
       0,
       0,
       W,
