@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import styles from '../page.module.css';
 import Avatar from './Avatar';
@@ -95,9 +95,15 @@ export default function MarketSection({
   /* Build bar segments. The HTML floored each repo's visual width on touch
    * devices for tappability — we do the same when the user is on a coarse
    * pointer, otherwise honor the true share. */
-  const isTouchPrimary = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(pointer: coarse), (hover: none)').matches;
+  const [isTouchPrimary, setIsTouchPrimary] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(pointer: coarse), (hover: none)');
+    const update = () => setIsTouchPrimary(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
   interface Seg {

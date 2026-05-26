@@ -24,9 +24,24 @@ export function squarify<T>(
   w: number,
   h: number,
 ): Array<SquarifyRect<T>> {
-  const totalWeight = segs.reduce((a, b) => a + b.w, 0);
+  if (segs.length === 0 || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+    return [];
+  }
+
   const totalArea = w * h;
-  const items = segs.map((seg) => ({ data: seg.data, area: (seg.w / totalWeight) * totalArea }));
+  const weighted = segs.map((seg) => ({
+    data: seg.data,
+    w: Number.isFinite(seg.w) && seg.w > 0 ? seg.w : 0,
+  }));
+  const totalWeight = weighted.reduce((a, b) => a + b.w, 0);
+  const items = (totalWeight > 0
+    ? weighted.map((seg) => ({ data: seg.data, area: (seg.w / totalWeight) * totalArea }))
+    : weighted.map((seg) => ({ data: seg.data, area: totalArea / weighted.length }))
+  )
+    .filter((seg) => seg.area > 0)
+    .sort((a, b) => b.area - a.area);
+
+  if (items.length === 0) return [];
 
   const result: Array<SquarifyRect<T>> = [];
 

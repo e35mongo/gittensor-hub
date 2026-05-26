@@ -80,7 +80,7 @@ export default function RepoListRow({
     );
   } else {
     // No strategy: show highest configured mult, or "—" if no labels
-    if (r.labels) {
+    if (r.labels && Object.keys(r.labels).length > 0) {
       const entries = Object.entries(r.labels);
       const [topLabel, topVal] = entries.reduce((a, b) => (a[1] >= b[1] ? a : b));
       const c = LABEL_COLORS[topLabel] ?? { fg: 'var(--fg-subtle)', soft: '' };

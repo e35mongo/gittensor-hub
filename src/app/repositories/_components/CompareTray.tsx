@@ -17,8 +17,10 @@ const MAX = 4;
 
 export default function CompareTray({ rows, subnetTAO, onRemove, onClear, onOpen }: CompareTrayProps) {
   const n = rows.length;
+  if (n === 0) return null;
+
   return (
-    <div className={`${styles.compareTray} ${n > 0 ? styles.open : ''}`} aria-hidden={n === 0}>
+    <div className={`${styles.compareTray} ${styles.open}`}>
       <div className={styles.tray}>
         <div
           className={styles.hideOnMobile}
@@ -87,12 +89,17 @@ export default function CompareTray({ rows, subnetTAO, onRemove, onClear, onOpen
         <button type="button" className={styles.ghostBtn} onClick={onClear}>
           Clear
         </button>
-        <button type="button" className={styles.priBtn} onClick={onOpen} disabled={n < 2}>
+        <button
+          type="button"
+          className={styles.priBtn}
+          onClick={onOpen}
+          disabled={n < 2}
+          aria-label="Compare repositories side by side"
+        >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
             <path d="M3 6h4v15H3zM10 3h4v18h-4zM17 9h4v12h-4z" />
           </svg>
           <span className={styles.hideOnMobile}>Compare side by side</span>
-          <span style={{ display: 'none' }}>Compare</span>
         </button>
       </div>
     </div>

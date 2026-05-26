@@ -179,7 +179,7 @@ export default function RepoCard({
             labelColor="var(--fg-subtle)"
             labelWeight={400}
             labelFontSize={10.5}
-            barPct={(r.defaultLabel / 2) * 100}
+            barPct={Math.min(100, (r.defaultLabel / 2) * 100)}
             barBg="var(--border-strong)"
             value={`×${r.defaultLabel.toFixed(2)}`}
             valueColor="var(--fg-subtle)"

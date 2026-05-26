@@ -117,7 +117,14 @@ export default function Dropdown<T extends string>({
     // Scroll-to-close (opt-in). Captures scroll on any scrollable
     // ancestor since the menu is portal-rendered to body — `true` for
     // capture phase so we catch nested scrollers too.
-    const onScroll = () => setOpen(false);
+    const onScroll = (e: Event) => {
+      const target = e.target;
+      if (target instanceof Node) {
+        if (menuRef.current?.contains(target)) return;
+        if (triggerRef.current?.contains(target)) return;
+      }
+      setOpen(false);
+    };
     document.addEventListener('keydown', onKey);
     document.addEventListener('mousedown', onClick);
     if (closeOnScroll) window.addEventListener('scroll', onScroll, true);

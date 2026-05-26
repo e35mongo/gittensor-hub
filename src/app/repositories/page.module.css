@@ -801,6 +801,7 @@
 }
 .mtileAvatarWrap {
   --cred-color: #7b8494;
+
   position: relative;
   display: inline-flex;
   align-items: center;
