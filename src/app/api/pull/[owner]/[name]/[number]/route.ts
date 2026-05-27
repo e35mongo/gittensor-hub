@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, PullRow } from '@/lib/db';
 import { withRotation } from '@/lib/github';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
+import { parsePullLabels, pullLabelsToJson } from '@/lib/pull-labels';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -36,15 +37,16 @@ export async function GET(
   const cached = db
     .prepare(
       `SELECT id, repo_full_name, number, title, body, state, draft, merged,
-              author_login, author_association, created_at, updated_at, closed_at, merged_at,
+              author_login, author_association, labels, created_at, updated_at, closed_at, merged_at,
               html_url, fetched_at, first_seen_at
        FROM pulls WHERE repo_full_name = ? AND number = ?`
     )
     .get(repoFullName, num) as PullRow | undefined;
 
   if (cached && cached.body !== null && cached.body.length !== 4000) {
-    return NextResponse.json({ ...cached, source: 'cache' }, { headers: NO_STORE_HEADERS });
+    return NextResponse.json({ ...cached, labels: parsePullLabels(cached.labels), source: 'cache' }, { headers: NO_STORE_HEADERS });
   }
+
 
   try {
     const data = await withRotation(async (octokit) => {
@@ -60,9 +62,9 @@ export async function GET(
 
     db.prepare(
       `INSERT INTO pulls
-       (repo_full_name, number, title, body, state, draft, merged, author_login, author_association,
+       (repo_full_name, number, title, body, state, draft, merged, author_login, author_association, labels,
         created_at, updated_at, closed_at, merged_at, html_url, raw_json, fetched_at, first_seen_at)
-       VALUES (@repo_full_name, @number, @title, @body, @state, @draft, @merged, @author_login, @author_association,
+       VALUES (@repo_full_name, @number, @title, @body, @state, @draft, @merged, @author_login, @author_association, @labels,
                @created_at, @updated_at, @closed_at, @merged_at, @html_url, NULL, @fetched_at, @first_seen_at)
        ON CONFLICT(repo_full_name, number) DO UPDATE SET
          title              = excluded.title,
@@ -72,6 +74,7 @@ export async function GET(
          merged             = excluded.merged,
          author_login       = excluded.author_login,
          author_association = excluded.author_association,
+         labels             = excluded.labels,
          updated_at         = excluded.updated_at,
          closed_at          = excluded.closed_at,
          merged_at          = excluded.merged_at,
@@ -88,6 +91,7 @@ export async function GET(
       merged: data.merged ? 1 : 0,
       author_login: data.user?.login ?? null,
       author_association: data.author_association ?? null,
+      labels: pullLabelsToJson(data.labels),
       created_at: data.created_at,
       updated_at: data.updated_at,
       closed_at: data.closed_at,
@@ -108,6 +112,7 @@ export async function GET(
       merged: data.merged ? 1 : 0,
       author_login: data.user?.login ?? null,
       author_association: data.author_association ?? null,
+      labels: parsePullLabels(pullLabelsToJson(data.labels)),
       created_at: data.created_at,
       updated_at: data.updated_at,
       closed_at: data.closed_at,
@@ -120,7 +125,7 @@ export async function GET(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (cached) {
-      return NextResponse.json({ ...cached, source: 'cache-fallback', body_fetch_error: msg }, { headers: NO_STORE_HEADERS });
+      return NextResponse.json({ ...cached, labels: parsePullLabels(cached.labels), source: 'cache-fallback', body_fetch_error: msg }, { headers: NO_STORE_HEADERS });
     }
     return NextResponse.json({ error: msg }, { status: 404, headers: NO_STORE_HEADERS });
   }

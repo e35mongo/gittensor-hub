@@ -378,6 +378,7 @@ export interface IssuesMetaResponse {
 // ─── Pull ────────────────────────────────────────────────────────────────────
 
 export interface Pull {
+  labels?: import('@/lib/pull-labels').PullLabel[];
   id: number;
   repo_full_name: string;
   number: number;

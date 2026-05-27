@@ -5,6 +5,7 @@ import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gittensor-credibility';
 import { getIssueDiscoveryDisabledReposAsyncServer, isTrackedRepoServer } from '@/lib/repos-server';
 import { GITTENSOR_PR_SCORE_TTL_MS, getGittensorPrScoreMap, pullScoreKey } from '@/lib/gittensor-pr-scores';
+import { parsePullLabels } from '@/lib/pull-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -147,7 +148,7 @@ async function getPullsImpl(req: NextRequest, full: string) {
   const rows = db
     .prepare(
       `SELECT id, repo_full_name, number, title, NULL as body, state, draft, merged,
-              author_login, author_association, created_at, updated_at, closed_at, merged_at,
+              author_login, author_association, labels, created_at, updated_at, closed_at, merged_at,
               html_url, fetched_at, first_seen_at
        FROM pulls
        WHERE ${whereSql}
@@ -252,6 +253,7 @@ async function getPullsImpl(req: NextRequest, full: string) {
       last_error: meta?.last_fetch_error ?? null,
       pulls: rows.map((r) => ({
         ...r,
+        labels: parsePullLabels(r.labels),
         score: scoreMap?.get(pullScoreKey(r.repo_full_name, r.number)) ?? null,
         author_credibility: authorCredibilityForRepo(credibilityIndex, r.author_login, r.repo_full_name, {
           issueDiscoveryDisabled,
