@@ -215,13 +215,9 @@ export function getDb(): Database.Database {
     );
 
     -- Authoritative per-repo weight, refreshed by each live sync of
-    -- master_repositories.json. Semantics: a repo we've seen in any previous
-    -- live poll keeps its row forever; only its weight changes. After a sync:
-    --   * weight = live.weight, if the repo is in the latest master file
-    --   * weight = 0,           if it was in our list but disappeared upstream
-    --   * new row,              if the repo is in live but we hadn't seen it
-    -- The dashboard reads weights from this table; on cold start before the
-    -- first successful sync the table is empty and consumers see no repos.
+    -- master_repositories.json. The table mirrors the latest successful live
+    -- Gittensor repo list, so repos dropped upstream are removed instead of
+    -- lingering with stale cached issues/PRs.
     CREATE TABLE IF NOT EXISTS repo_weights (
       full_name   TEXT PRIMARY KEY,
       weight      REAL NOT NULL DEFAULT 0,
@@ -296,6 +292,13 @@ export function getDb(): Database.Database {
   }
   if (!haveCol('issue_body_links_backfilled_at')) {
     db.exec('ALTER TABLE repo_meta ADD COLUMN issue_body_links_backfilled_at TEXT');
+  }
+  // Marker for backfillPrIssueLinksIfNeeded — set on first successful
+  // backfill so a repo with legitimately zero linked issues doesn't
+  // get re-scanned on every request (existingCount === 0 alone isn't
+  // enough to distinguish "never ran" from "ran, found nothing").
+  if (!haveCol('pr_issue_links_backfilled_at')) {
+    db.exec('ALTER TABLE repo_meta ADD COLUMN pr_issue_links_backfilled_at TEXT');
   }
 
   const repoWeightsCols = db.prepare('PRAGMA table_info(repo_weights)').all() as Array<{ name: string }>;

@@ -263,7 +263,7 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
               </P>
               <Ul>
                 <Li>
-                  <strong>Left rail</strong> — searchable list of all SN74 + custom repos, sorted by weight, with star
+                  <strong>Left rail</strong> — searchable list of live Gittensor-listed repos, sorted by weight, with star
                   toggle, activity badges, and a <em>Mark all read</em> button. Click a repo to load its content into
                   the middle pane.
                 </Li>
@@ -283,28 +283,31 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
 
             <Article id="repositories" title="Repositories">
               <P>
-                <Code>/repositories</Code> — the full catalog of every repo the dashboard knows about, with
-                per-repository statistics:
+                <Code>/repositories</Code> — a strategy-oriented SN74 repository catalog. It combines the live
+                whitelist policy with Gittensor PR aggregates, GitHub metadata, and subnet emission estimates so
+                miners can compare where work is likely to be valuable.
               </P>
               <Ul>
-                <Li><strong>Weight / emission share</strong>: the repo's configured SN74 reward allocation share (0-1)</Li>
-                <Li><strong>Band</strong>: Flagship (≥0.5), High (0.3–0.5), Mid-high (0.15–0.3), Standard (0.05–0.15), Low</Li>
-                <Li><strong>Issues / Open</strong>: total cached issues + currently open</Li>
-                <Li><strong>PRs / PR Open / Merged</strong>: total / open / merged pulls</Li>
-                <Li><strong>Activity</strong>: last update timestamp across issues + PRs</Li>
+                <Li><strong>Market view</strong>: emission, miner / validator split, recycling, treasury, and owner-cut context for SN74</Li>
+                <Li><strong>Strategy filters</strong>: show all repos or bias the list toward bugs, enhancements, features, refactors, or issue discovery</Li>
+                <Li><strong>Card / list views</strong>: TAO/day estimates, repo stream split, label multipliers, language metadata, 30-day PR activity, and issue submissions</Li>
+                <Li><strong>Compare</strong>: add up to four repositories and inspect relative reward, competition, stream, label, and eligibility signals</Li>
+                <Li><strong>Drawer</strong>: open a repository for GitHub links, description, emission breakdown, eligibility rules, labels, and language details</Li>
+                <Li><strong>Tracking</strong>: star repositories from the cards or list rows to keep them in your tracked repo set for issue and PR filtering</Li>
               </Ul>
               <P>
                 The SN74 whitelist auto-syncs from{' '}
                 <a href="https://github.com/entrius/gittensor/blob/main/gittensor/validator/weights/master_repositories.json" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-fg)' }}>
                   master_repositories.json
                 </a>{' '}
-                every hour. Custom repos added via Manage Repositories appear with a blue <Pill>CUSTOM</Pill> pill.
+                every few minutes. GitHub descriptions, language ratios, open PR counts, and issue-submission
+                sparklines are cached separately because that metadata changes more slowly.
               </P>
             </Article>
 
             <Article id="issues" title="Issues page">
               <P>
-                <Code>/issues</Code> — global server-backed issue feed across current SN74 and custom repositories.
+                <Code>/issues</Code> — global server-backed issue feed across current Gittensor-listed repositories.
                 Results are fetched a page at a time, with compact pagination and configurable rows per page.
               </P>
               <Ul>
@@ -320,7 +323,7 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
 
             <Article id="pulls" title="Pull Requests page">
               <P>
-                <Code>/pulls</Code> — global server-backed PR feed across current SN74 and custom repositories. Results
+                <Code>/pulls</Code> — global server-backed PR feed across current Gittensor-listed repositories. Results
                 are fetched a page at a time, with the same compact pagination and row-count controls used by the Issues
                 view.
               </P>
@@ -340,12 +343,12 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
 
             <Article id="manage" title="Manage Repositories">
               <P>
-                <Code>/manage-repos</Code> (also accessible from the user menu). Add custom repositories that aren't on
-                the SN74 whitelist — useful for tracking your own projects or non-SN74 repos you contribute to.
+                <Code>/manage-repos</Code> (also accessible from the user menu) is now a legacy/admin custom-repo list.
+                Issue and PR polling only follows the live Gittensor repository list.
               </P>
               <Ul>
                 <Li>Form: <Code>owner/name</Code> + weight (0–1) + optional notes</Li>
-                <Li>Custom repos are polled by the same background worker and show up everywhere — Explorer left rail, Repositories table, Issues, Pulls — with a <Pill>CUSTOM</Pill> pill</Li>
+                <Li>Custom repos are stored for reference, but they do not feed the SN74 poller, Explorer, Issues, or Pull Requests pages unless they are also listed by Gittensor.</Li>
                 <Li>Edit weight or notes inline; remove with the trash icon (confirmation prompt)</Li>
               </Ul>
               <P>Stored in SQLite (<Code>user_repos</Code> table) so they persist across server restarts.</P>
@@ -477,28 +480,6 @@ function Pre({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <Box
-      as="span"
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        px: '6px',
-        py: '1px',
-        bg: 'var(--accent-subtle)',
-        color: 'accent.fg',
-        fontSize: 0,
-        fontWeight: 700,
-        borderRadius: 999,
-        letterSpacing: '0.4px',
-        textTransform: 'uppercase',
-      }}
-    >
-      {children}
-    </Box>
-  );
-}
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
