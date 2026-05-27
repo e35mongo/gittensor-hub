@@ -38,6 +38,7 @@ import RepoListRow from './_components/RepoListRow';
 import CompareTray from './_components/CompareTray';
 import CompareModal from './_components/CompareModal';
 import Drawer from './_components/Drawer';
+import HostileActionsModal from './_components/HostileActionsModal';
 import Palette from './_components/Palette';
 import RefPanels from './_components/RefPanels';
 
@@ -202,6 +203,7 @@ export default function RepositoriesPage() {
   const [drawerKey, setDrawerKey] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [hostileRepo, setHostileRepo] = useState<string | null>(null);
   const [selectedSeg, setSelectedSeg] = useState<SelectedSeg>(null);
 
   /* When user picks a strategy, swap the sort to "strategy" automatically;
@@ -545,6 +547,7 @@ export default function RepositoriesPage() {
                   onOpen={() => openDrawer(r.fullName)}
                   onToggleCompare={() => toggleCompare(r.fullName)}
                   onToggleTrack={() => toggleTrackedRepo(r.fullName)}
+                  onOpenHostileActions={() => setHostileRepo(r.fullName)}
                 />
               ))}
               {isRepoLoading ? (
@@ -683,6 +686,12 @@ export default function RepositoriesPage() {
         metadataLoaded={metadataLoaded}
         onClose={closeDrawer}
         onToggleCompare={(full) => toggleCompare(full)}
+      />
+
+      <HostileActionsModal
+        open={hostileRepo != null}
+        repoFullName={hostileRepo}
+        onClose={() => setHostileRepo(null)}
       />
 
       <Palette

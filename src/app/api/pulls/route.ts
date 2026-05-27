@@ -5,6 +5,7 @@ import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gi
 import { getGittensorPrScoreMap, pullScoreKey } from '@/lib/gittensor-pr-scores';
 import { chunk, normalizeRepoList, positiveInt, resolveRepoScope } from '@/lib/api-utils';
 import type { AuthorCredibility, LinkedIssueReference, PullScore } from '@/types/entities';
+import { parsePullLabels, type PullLabel } from '@/lib/pull-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,8 @@ const SINCE_LIMIT = 3000;
 type SortKey = 'updated' | 'opened' | 'closed' | 'repo' | 'weight' | 'number';
 type SortDir = 'asc' | 'desc';
 
-interface AggPullRow extends Omit<PullRow, 'body'> {
+interface AggPullRow extends Omit<PullRow, 'body' | 'labels'> {
+  labels: PullLabel[];
   score: PullScore | null;
   author_credibility: AuthorCredibility | null;
 }
@@ -127,7 +129,7 @@ const FAST_RECENT_MAX_PER_REPO = 5_000;
 
 const PULL_ROW_COLUMNS = `
   p.id, p.repo_full_name, p.number, p.title, NULL as body, p.state, p.draft, p.merged,
-  p.author_login, p.author_association, p.created_at, p.updated_at, p.closed_at, p.merged_at,
+  p.author_login, p.author_association, p.labels, p.created_at, p.updated_at, p.closed_at, p.merged_at,
   p.html_url, p.fetched_at, p.first_seen_at
 `;
 
@@ -380,6 +382,7 @@ export async function GET(req: NextRequest) {
   const totalPages = sinceMode ? 1 : Math.max(1, Math.ceil(totals.count / pageSize));
   const pulls: AggPullRow[] = rows.map((r) => ({
     ...r,
+    labels: parsePullLabels(r.labels),
     score: scoreMap?.get(pullScoreKey(r.repo_full_name, r.number)) ?? null,
     author_credibility: authorCredibilityForRepo(credibilityIndex, r.author_login, r.repo_full_name, {
       issueDiscoveryDisabled: issueDiscoveryDisabledRepos.has(r.repo_full_name.toLowerCase()),

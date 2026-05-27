@@ -269,6 +269,7 @@ export interface GhPull {
   // as the issues payload (OWNER / COLLABORATOR / CONTRIBUTOR / MEMBER /
   // FIRST_TIMER / FIRST_TIME_CONTRIBUTOR / MANNEQUIN / NONE).
   author_association: string;
+  labels?: Array<string | { name?: string | null; color?: string | null; description?: string | null }> | null;
   created_at: string;
   updated_at: string;
   closed_at: string | null;

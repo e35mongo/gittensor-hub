@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getReadDb, PullRow } from '@/lib/db';
 import { backfillPrIssueLinksIfNeeded, refreshIssueLinkedPrsIfStale } from '@/lib/refresh';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
+import { parsePullLabels } from '@/lib/pull-labels';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -33,7 +34,7 @@ export async function GET(
   const rows = db
     .prepare(
       `SELECT id, repo_full_name, number, title, body, state, draft, merged,
-              author_login, author_association, created_at, updated_at, closed_at, merged_at,
+              author_login, author_association, labels, created_at, updated_at, closed_at, merged_at,
               html_url, fetched_at, first_seen_at
        FROM pulls
        WHERE repo_full_name = ?
@@ -50,6 +51,6 @@ export async function GET(
     repo,
     issue_number: issueNum,
     count: rows.length,
-    pulls: rows,
+    pulls: rows.map((row) => ({ ...row, labels: parsePullLabels(row.labels) })),
   }, { headers: NO_STORE_HEADERS });
 }

@@ -11,6 +11,7 @@ import {
   withRotation,
 } from './github';
 import { extractLinkedIssues } from './pr-linking';
+import { pullLabelsToJson } from './pull-labels';
 
 /**
  * Add this PR's `pr_issue_links` rows from the body+title regex. Only
@@ -446,7 +447,7 @@ function nowIso(): string {
 
 function labelsToJson(labels: GhIssue['labels']): string {
   return JSON.stringify(
-    labels.map((l) => (typeof l === 'string' ? { name: l } : { name: l.name ?? '', color: l.color ?? '' }))
+    (labels ?? []).map((l) => (typeof l === 'string' ? { name: l } : { name: l.name ?? '', color: l.color ?? '' }))
   );
 }
 
@@ -510,9 +511,9 @@ function upsertPull(repoFullName: string, pull: GhPull): void {
   const truncatedBody = (pull.body ?? '').slice(0, 4000);
   db.prepare(
     `INSERT INTO pulls
-     (repo_full_name, number, title, body, state, draft, merged, author_login, author_association,
+     (repo_full_name, number, title, body, state, draft, merged, author_login, author_association, labels,
       created_at, updated_at, closed_at, merged_at, html_url, raw_json, fetched_at, first_seen_at)
-     VALUES (@repo_full_name, @number, @title, @body, @state, @draft, @merged, @author_login, @author_association,
+     VALUES (@repo_full_name, @number, @title, @body, @state, @draft, @merged, @author_login, @author_association, @labels,
              @created_at, @updated_at, @closed_at, @merged_at, @html_url, NULL, @fetched_at, @first_seen_at)
      ON CONFLICT(repo_full_name, number) DO UPDATE SET
        title              = excluded.title,
@@ -521,6 +522,7 @@ function upsertPull(repoFullName: string, pull: GhPull): void {
        draft              = excluded.draft,
        merged             = excluded.merged,
        author_association = excluded.author_association,
+       labels             = excluded.labels,
        updated_at         = excluded.updated_at,
        closed_at          = excluded.closed_at,
        merged_at          = excluded.merged_at,
@@ -536,6 +538,7 @@ function upsertPull(repoFullName: string, pull: GhPull): void {
     merged,
     author_login: pull.user?.login ?? null,
     author_association: pull.author_association ?? null,
+    labels: pullLabelsToJson(pull.labels),
     created_at: pull.created_at,
     updated_at: pull.updated_at,
     closed_at: pull.closed_at,
@@ -565,10 +568,10 @@ function touchRepoMeta(repoFullName: string, field: 'last_issues_fetch' | 'last_
 
 // Bump this when MAX_BOOTSTRAP_PAGES (in github.ts) grows OR when we add a
 // new field to the cache that the incremental `since=` sweep won't backfill
-// (e.g. `pulls.author_association` in v2). Existing rows carry an older
+// (e.g. pulls.author_association in v2, pulls.labels in v3). Existing rows carry an older
 // version in repo_meta and will re-bootstrap on next fetch so the cache
 // catches the long tail that the previous version missed.
-export const BOOTSTRAP_VERSION = 2;
+export const BOOTSTRAP_VERSION = 3;
 
 function markBootstrapDone(repoFullName: string, field: 'issues_bootstrap_done_at' | 'pulls_bootstrap_done_at'): void {
   const db = getDb();

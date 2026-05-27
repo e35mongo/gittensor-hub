@@ -4,6 +4,7 @@ import { withRotation, fetchPrsClosingIssuesBatch } from '@/lib/github';
 import { extractLinkedIssues } from '@/lib/pr-linking';
 import { backfillPrIssueLinksIfNeeded, refreshIssueLinkedPrsIfStale } from '@/lib/refresh';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
+import { parsePullLabels, pullLabelsToJson } from '@/lib/pull-labels';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -54,7 +55,7 @@ function selectPull(repoFullName: string, prNumber: number): PullRow | null {
     (getDb()
       .prepare(
         `SELECT id, repo_full_name, number, title, body, state, draft, merged,
-                author_login, author_association, created_at, updated_at, closed_at, merged_at,
+                author_login, author_association, labels, created_at, updated_at, closed_at, merged_at,
                 html_url, fetched_at, first_seen_at
          FROM pulls WHERE repo_full_name = ? AND number = ?`
       )
@@ -85,6 +86,7 @@ async function fetchPull(owner: string, repo: string, prNumber: number): Promise
       merged: data.merged ? 1 : 0,
       author_login: data.user?.login ?? null,
       author_association: data.author_association ?? null,
+      labels: pullLabelsToJson(data.labels),
       created_at: data.created_at,
       updated_at: data.updated_at,
       closed_at: data.closed_at,
@@ -177,7 +179,7 @@ function selectRelatedPulls(repoFullName: string, issueNumber: number): PullRow[
   return getDb()
     .prepare(
       `SELECT p.id, p.repo_full_name, p.number, p.title, p.body, p.state, p.draft, p.merged,
-              p.author_login, p.author_association, p.created_at, p.updated_at, p.closed_at, p.merged_at,
+              p.author_login, p.author_association, p.labels, p.created_at, p.updated_at, p.closed_at, p.merged_at,
               p.html_url, p.fetched_at, p.first_seen_at
        FROM pr_issue_links l
        JOIN pulls p ON p.repo_full_name = l.repo_full_name AND p.number = l.pr_number
@@ -286,7 +288,7 @@ export async function GET(
       pull_number: prNumber,
       count: issueRows.length,
       issues: issueRows.map((row) => issuePayload(row, mergedPullCountForIssue(repoFullName, row.number))),
-      related_pulls: relatedPulls,
+      related_pulls: relatedPulls.map((row) => ({ ...row, labels: parsePullLabels(row.labels) })),
     },
     { headers: NO_STORE_HEADERS },
   );
