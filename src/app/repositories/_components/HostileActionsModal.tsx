@@ -175,24 +175,24 @@ export default function HostileActionsModal({ repoFullName, open, onClose }: { r
   const evidenceCheckedCount = repo?.evidence_pulls_scanned ?? visiblePullCount;
   const labelActionCount = repo?.label_actions ?? 0;
   const verdictText = flaggedCount === 0
-    ? 'No hostile-action evidence found in the latest pull-request window.'
-    : formatActorList(primaryActors) + ' matched hostile-action signals' + (dateRange ? ' · ' + dateRange : '') + '.';
+    ? 'No repository risk signals found in the latest pull-request window.'
+    : formatActorList(primaryActors) + ' matched repository risk signals' + (dateRange ? ' · ' + dateRange : '') + '.';
 
   if (!open) return null;
 
   return (
     <>
       <div className={styles.hostileBackdrop + ' ' + styles.open} onClick={onClose} aria-hidden="true" />
-      <section className={styles.hostileModal + ' ' + styles.open} role="dialog" aria-modal="true" aria-label="Repository hostile action signals">
+      <section className={styles.hostileModal + ' ' + styles.open} role="dialog" aria-modal="true" aria-label="Repository risk signals">
         <header className={styles.hostileHeader}>
           <div className={styles.hostileTitleBlock}>
             <span className={styles.hostileIcon}><ShieldSlashIcon size={15} /></span>
             <div style={{ minWidth: 0 }}>
-              <div className={styles.hostileEyebrow}>Hostile action signals</div>
+              <div className={styles.hostileEyebrow}>Repository risk signals</div>
               <h2 className={styles.hostileTitle}>{repoFullName ?? 'Repository'}</h2>
             </div>
           </div>
-          <button type="button" className={styles.ghostBtn} onClick={onClose} aria-label="Close hostile action signals">
+          <button type="button" className={styles.ghostBtn} onClick={onClose} aria-label="Close repository risk signals">
             <XIcon size={16} />
           </button>
         </header>
@@ -214,7 +214,7 @@ export default function HostileActionsModal({ repoFullName, open, onClose }: { r
                     </div>
                     <div className={styles.hostileQuietBody}>
                       <h3>All clear</h3>
-                      <p>No hostile-action evidence found in the latest pull-request window.</p>
+                      <p>No repository risk signals found in the latest pull-request window.</p>
                       <div className={styles.hostileQuietStats}>
                         <span><em>{repo.pulls_scanned}</em> PRs screened</span>
                         <span><em>{evidenceCheckedCount}</em> histories checked</span>
@@ -328,7 +328,7 @@ export default function HostileActionsModal({ repoFullName, open, onClose }: { r
 
                 {flaggedCount > 0 ? (
                   <p className={styles.hostileNote}>
-                    High evidence requires a repo-side label action, close paired with hostile evidence, or maintainer language.
+                    High-confidence risk evidence requires a repo-side label action, close paired with risk evidence, or maintainer language.
                   </p>
                 ) : null}
               </>

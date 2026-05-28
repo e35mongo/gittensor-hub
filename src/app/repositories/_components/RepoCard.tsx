@@ -282,8 +282,8 @@ export default function RepoCard({
       <button
         type="button"
         className={`${styles.compareBtn} ${styles.hostileBtn}`}
-        aria-label={`Review hostile action evidence for ${r.fullName}`}
-        title="Review hostile action evidence"
+        aria-label={`Review repository risk signals for ${r.fullName}`}
+        title="Review repository risk signals"
         onClick={(e) => {
           e.stopPropagation();
           onOpenHostileActions();
