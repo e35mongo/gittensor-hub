@@ -34,7 +34,6 @@ export async function GET(
   }
 
   const db = getReadDb();
-  const writer = getDb();
 
   const source = db
     .prepare(
@@ -81,6 +80,7 @@ export async function GET(
     .get(full) as { c: number }).c;
 
   const updatedAt = new Date().toISOString();
+  const writer = getDb();
   writer.prepare(
     `INSERT INTO repo_badges
        (full_name, issues_count, pulls_count, owner_comments_count,
