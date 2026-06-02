@@ -91,7 +91,7 @@ function countOpenRows(db: ReturnType<typeof getDb>, baselines: BaselineRow[], k
          FROM ${table} ${alias}
          JOIN baselines b ON b.repo = ${alias}.repo_full_name
          WHERE ${openFilter}
-           AND ${activityAtExpr} > b.since
+           AND julianday(${activityAtExpr}) > julianday(b.since)
          GROUP BY ${alias}.repo_full_name`,
       )
       .all(...params) as RepoCountRow[];
