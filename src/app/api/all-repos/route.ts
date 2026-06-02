@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getReadDb } from '@/lib/db';
 import { getLiveReposAsyncServer as getLiveReposAsync } from '@/lib/repos-server';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ export async function GET() {
     sn74Repos.map((r) => [r.fullName, { weight: r.weight }]),
   );
 
-  const db = getDb();
+  const db = getReadDb();
 
   // Per-repo aggregate stats
   const issueRows = db

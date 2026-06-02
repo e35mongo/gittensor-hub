@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getReadDb } from '@/lib/db';
 import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * Cheap because it's pure SQL with `MAX()` over both indexed tables.
  */
 export async function GET(req: NextRequest) {
-  const db = getDb();
+  const db = getReadDb();
 
   // ETag — `repo_meta.last_issues_fetch + last_pulls_fetch` aggregated.
   // When the poller upserts new data anywhere, the latest fetch timestamp

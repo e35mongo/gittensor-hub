@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, type IssueRow, type PullRow } from '@/lib/db';
+import { getDb, getReadDb, type IssueRow, type PullRow } from '@/lib/db';
 import { withRotation, fetchPrsClosingIssuesBatch } from '@/lib/github';
 import { extractLinkedIssues } from '@/lib/pr-linking';
 import { backfillPrIssueLinksIfNeeded, refreshIssueLinkedPrsIfStale } from '@/lib/refresh';
@@ -38,7 +38,7 @@ function issuePayload(row: IssueRow, mergedPRCount: number) {
 }
 
 function mergedPullCountForIssue(repoFullName: string, issueNumber: number): number {
-  const row = getDb()
+  const row = getReadDb()
     .prepare(
       `SELECT COUNT(*) AS c
        FROM pr_issue_links l
@@ -51,7 +51,7 @@ function mergedPullCountForIssue(repoFullName: string, issueNumber: number): num
 
 function selectPull(repoFullName: string, prNumber: number): PullRow | null {
   return (
-    (getDb()
+    (getReadDb()
       .prepare(
         `SELECT id, repo_full_name, number, title, body, body_truncated, state, draft, merged,
                 author_login, author_association, created_at, updated_at, closed_at, merged_at,
@@ -164,7 +164,7 @@ async function fetchAndCacheIssue(owner: string, repo: string, issueNumber: numb
 }
 
 function selectLinkedIssues(repoFullName: string, prNumber: number): IssueRow[] {
-  return getDb()
+  return getReadDb()
     .prepare(
       `SELECT i.id, i.repo_full_name, i.number, i.title, i.body, i.body_truncated, i.state, i.state_reason,
               i.author_login, i.author_association, i.labels, i.comments,
@@ -178,7 +178,7 @@ function selectLinkedIssues(repoFullName: string, prNumber: number): IssueRow[] 
 }
 
 function selectRelatedPulls(repoFullName: string, issueNumber: number): PullRow[] {
-  return getDb()
+  return getReadDb()
     .prepare(
       `SELECT p.id, p.repo_full_name, p.number, p.title, p.body, p.body_truncated, p.state, p.draft, p.merged,
               p.author_login, p.author_association, p.created_at, p.updated_at, p.closed_at, p.merged_at,

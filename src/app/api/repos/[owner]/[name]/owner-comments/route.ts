@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getReadDb } from '@/lib/db';
 import { refreshCommentsIfStale } from '@/lib/refresh';
 import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
@@ -29,7 +29,7 @@ export async function GET(
   const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(1, requestedSize));
   const offset = (page - 1) * pageSize;
 
-  const db = getDb();
+  const db = getReadDb();
 
   const lastUpdated = (db
     .prepare(`SELECT MAX(updated_at) AS u FROM issue_comments WHERE repo_full_name = ?`)

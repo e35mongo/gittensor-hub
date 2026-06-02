@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getReadDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ export interface AuthorTotals {
 }
 
 export async function GET() {
-  const db = getDb();
+  const db = getReadDb();
   const rows = db
     .prepare(
       `SELECT author_login, state, state_reason, COUNT(*) c

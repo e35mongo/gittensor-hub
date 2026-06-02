@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, IssueRow } from '@/lib/db';
+import { getDb, getReadDb, IssueRow } from '@/lib/db';
 import { withRotation } from '@/lib/github';
 import { refreshIssueLinkedPrsIfStale } from '@/lib/refresh';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
@@ -68,8 +68,9 @@ export async function GET(
   // detail open accurate without repeatedly hammering GitHub.
   await refreshIssueLinkedPrsIfStale(owner, name, num);
 
-  // 1. Try cache first.
-  const db = getDb();
+  // 1. Try cache first. Read replica — the cache hit path is by far the most
+  // common and shouldn't queue behind in-flight poller upserts on the writer.
+  const db = getReadDb();
   const cached = db
     .prepare(
       `SELECT id, repo_full_name, number, title, body, body_truncated, state, state_reason,
@@ -109,7 +110,7 @@ export async function GET(
       typeof l === 'string' ? { name: l } : { name: l.name ?? '', color: l.color ?? '' }
     );
 
-    db.prepare(
+    getDb().prepare(
       `INSERT INTO issues
        (repo_full_name, number, title, body, body_truncated, state, state_reason, author_login, author_association,
         labels, comments, created_at, updated_at, closed_at, html_url, raw_json, fetched_at, first_seen_at)

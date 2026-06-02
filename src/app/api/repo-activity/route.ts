@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getReadDb } from '@/lib/db';
 import { getLiveReposAsyncServer } from '@/lib/repos-server';
 
 export const dynamic = 'force-dynamic';
@@ -68,7 +68,7 @@ function buildBaselines(allowedRepos: Map<string, string>, globalSince: string, 
   });
 }
 
-function countOpenRows(db: ReturnType<typeof getDb>, baselines: BaselineRow[], kind: 'issues' | 'pulls'): RepoCountRow[] {
+function countOpenRows(db: ReturnType<typeof getReadDb>, baselines: BaselineRow[], kind: 'issues' | 'pulls'): RepoCountRow[] {
   if (baselines.length === 0) return [];
   const valuesSql = baselines.map(() => '(?, ?)').join(',');
   const params = baselines.flatMap((row) => [row.repo, row.since]);
@@ -104,7 +104,7 @@ function countOpenRows(db: ReturnType<typeof getDb>, baselines: BaselineRow[], k
 async function activityResponse(sinceInput: unknown, viewedInput: unknown) {
   const since = parseIso(sinceInput) ?? defaultSince();
   const viewedAt = normalizeViewedAt(viewedInput);
-  const db = getDb();
+  const db = getReadDb();
   const allowedRepos = await loadAllowedRepos();
 
   if (allowedRepos.size === 0) {

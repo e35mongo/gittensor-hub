@@ -423,8 +423,8 @@ function runPrIssueLinksBackfill(repoFullName: string): number {
   return inserted;
 }
 
-const ISSUE_STALE_MS = 10_000;
-const PULL_STALE_MS = 10_000;
+const ISSUE_STALE_MS = 30_000;
+const PULL_STALE_MS = 30_000;
 
 // Cap how many rows go into a single sync SQLite transaction. Smaller chunks
 // = the JS event loop yields more often, so foreground requests don't block
