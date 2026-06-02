@@ -18,6 +18,8 @@ import { TableRowsSkeleton, CardGridSkeleton } from '@/components/Skeleton';
 import { useMinerLogin } from '@/lib/use-miner';
 import { useTrackedMiners } from '@/lib/tracked-miners';
 import { formatUsd, formatUsdMonthly, formatPercent } from '@/lib/format';
+import ExportButton from '@/components/ExportButton';
+import { toCsv } from '@/lib/export-csv';
 import type { Miner, MinersResponse } from '@/types/entities';
 
 type SortKey = 'score' | 'earnings' | 'issues' | 'credibility';
@@ -173,14 +175,43 @@ export default function MinersPage() {
     };
   }, [data, filtered]);
 
+  // CSV of the currently visible (filtered + sorted) miners — same scope the
+  // table renders, so an Eligible/Ineligible filter or search narrows the export.
+  const minersCsv = useMemo(
+    () =>
+      toCsv(
+        ['Rank', 'Username', 'UID', 'Hotkey', 'IssueEligible', 'DiscoveryScore', 'IssueCredibility', 'MergedPRs', 'OpenIssues', 'SolvedIssues', 'UniqueRepos', 'UsdPerDay'],
+        filtered.map((m) => [
+          rankByScore.get(m.id) ?? '',
+          m.githubUsername,
+          m.uid,
+          m.hotkey ?? '',
+          m.isIssueEligible ? 'yes' : 'no',
+          num(m.issueDiscoveryScore).toFixed(4),
+          num(m.issueCredibility).toFixed(4),
+          m.totalMergedPrs ?? 0,
+          m.totalOpenIssues ?? 0,
+          m.totalSolvedIssues ?? 0,
+          m.uniqueReposCount ?? 0,
+          num(m.usdPerDay).toFixed(2),
+        ]),
+      ),
+    [filtered, rankByScore],
+  );
+
   return (
     <PageLayout containerWidth="full" padding="normal">
       <PageLayout.Header>
-        <Heading sx={{ fontSize: 4, mb: 1 }}>Miners</Heading>
-        <Text sx={{ color: 'fg.muted' }}>
-          SN74 miners — earnings, scoring, eligibility. Discovery rewards filed via quality issues are scored separately
-          from PR rewards.
-        </Text>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 3 }}>
+          <Box>
+            <Heading sx={{ fontSize: 4, mb: 1 }}>Miners</Heading>
+            <Text sx={{ color: 'fg.muted' }}>
+              SN74 miners — earnings, scoring, eligibility. Discovery rewards filed via quality issues are scored separately
+              from PR rewards.
+            </Text>
+          </Box>
+          <ExportButton filename="sn74-miners.csv" csv={minersCsv} disabled={filtered.length === 0} />
+        </Box>
       </PageLayout.Header>
       <PageLayout.Content>
         <Box sx={{ display: ['block', null, 'flex'], gap: 4, alignItems: 'flex-start' }}>
