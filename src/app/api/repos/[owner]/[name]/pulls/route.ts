@@ -5,6 +5,7 @@ import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gittensor-credibility';
 import { getIssueDiscoveryDisabledReposAsyncServer, isTrackedRepoServer } from '@/lib/repos-server';
 import { GITTENSOR_PR_SCORE_TTL_MS, getGittensorPrScoreMap, pullScoreKey } from '@/lib/gittensor-pr-scores';
+import { pullBucketPredicate, pullBucketRankSql, pullBucketSums } from '@/lib/pull-buckets';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,10 +123,10 @@ async function getPullsImpl(req: NextRequest, full: string) {
       args.push(author);
     }
     if (includeState) {
-      if (state === 'open') where.push("state = 'open' AND draft = 0 AND merged = 0");
-      else if (state === 'draft') where.push('draft = 1 AND merged = 0');
-      else if (state === 'merged') where.push('merged = 1');
-      else if (state === 'closed') where.push("state = 'closed' AND merged = 0");
+      if (state === 'open') where.push(pullBucketPredicate('open'));
+      else if (state === 'draft') where.push(pullBucketPredicate('draft'));
+      else if (state === 'merged') where.push(pullBucketPredicate('merged'));
+      else if (state === 'closed') where.push(pullBucketPredicate('closed'));
     }
     return { sql: where.join(' AND '), args };
   };
@@ -135,11 +136,7 @@ async function getPullsImpl(req: NextRequest, full: string) {
   let orderSql: string;
   if (sort === 'state') {
     // Mirror PullStatusBadge's bucketing: merged → draft → open → closed.
-    orderSql = `CASE
-      WHEN merged = 1 THEN 0
-      WHEN draft = 1 THEN 1
-      WHEN state = 'open' THEN 2
-      ELSE 3 END ${dir}, updated_at DESC`;
+    orderSql = `${pullBucketRankSql()} ${dir}, updated_at DESC`;
   } else {
     orderSql = `${SORT_COLUMN[sort] ?? 'updated_at'} ${dir}, id ${dir}`;
   }
@@ -163,11 +160,7 @@ async function getPullsImpl(req: NextRequest, full: string) {
   const { sql: stateLessWhere, args: stateLessArgs } = buildWhere(false);
   const stateCountsRow = db
     .prepare(
-      `SELECT
-         SUM(CASE WHEN state = 'open' AND draft = 0 AND merged = 0 THEN 1 ELSE 0 END) AS open,
-         SUM(CASE WHEN draft = 1 AND merged = 0 THEN 1 ELSE 0 END) AS draft,
-         SUM(CASE WHEN merged = 1 THEN 1 ELSE 0 END) AS merged,
-         SUM(CASE WHEN state = 'closed' AND merged = 0 THEN 1 ELSE 0 END) AS closed
+      `SELECT ${pullBucketSums()}
        FROM pulls WHERE ${stateLessWhere}`
     )
     .get(...stateLessArgs) as { open: number | null; draft: number | null; merged: number | null; closed: number | null };
@@ -181,7 +174,7 @@ async function getPullsImpl(req: NextRequest, full: string) {
   let new_count: number | undefined;
   if (since) {
     new_count = (db
-      .prepare(`SELECT COUNT(*) AS c FROM pulls WHERE repo_full_name = ? AND state = 'open' AND draft = 0 AND merged = 0 AND COALESCE(created_at, '') > ? AND first_seen_at > ?`)
+      .prepare(`SELECT COUNT(*) AS c FROM pulls WHERE repo_full_name = ? AND ${pullBucketPredicate('open')} AND COALESCE(created_at, '') > ? AND first_seen_at > ?`)
       .get(full, since, since) as { c: number }).c;
   }
 
