@@ -197,6 +197,7 @@ async function getIssuesImpl(req: NextRequest, full: string) {
     sort === 'author_open' ||
     sort === 'author_completed' ||
     sort === 'author_not_planned' ||
+    sort === 'author_duplicate' ||
     sort === 'author_closed';
   // EXISTS subquery for "this issue has at least one merged linked PR".
   // Used by every place that classifies an issue as truly Completed.
