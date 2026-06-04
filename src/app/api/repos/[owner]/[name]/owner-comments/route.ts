@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { refreshCommentsIfStale } from '@/lib/refresh';
+import { refreshCommentsIfStale, refreshTtl } from '@/lib/refresh';
 import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
 
@@ -19,9 +19,12 @@ export async function GET(
   if (denied) return denied;
   const full = `${owner}/${name}`;
 
-  // Fire-and-forget cache refresh — first hit pays a slow bootstrap, after
-  // which `refreshCommentsIfStale` short-circuits for COMMENT_STALE_MS.
-  refreshCommentsIfStale(owner, name).catch(() => {});
+  // Fire-and-forget cache refresh. Skip if the shared TTL map shows this repo
+  // is either currently in-flight (another handler is already fetching) or
+  // was just refreshed within the stale window.
+  if (!refreshTtl.isFreshOrInFlight(`${full}:comments`)) {
+    refreshCommentsIfStale(owner, name).catch(() => {});
+  }
 
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);

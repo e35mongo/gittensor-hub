@@ -12,6 +12,7 @@ import {
 } from './github';
 import { extractLinkedIssues } from './pr-linking';
 import { ISSUE_BODY_CAP, PULL_BODY_CAP, capBody } from './body-cap';
+import { TtlMap } from './ttl-map';
 
 /**
  * Add this PR's `pr_issue_links` rows from the body+title regex. Only
@@ -452,6 +453,19 @@ const inFlightPulls = new Map<string, Promise<void>>();
 const inFlightComments = new Map<string, Promise<void>>();
 const lastCommentsFetch = new Map<string, number>();
 
+/**
+ * Shared process-level TTL maps — consulted by BOTH the poller and HTTP-path
+ * callers so a fetch already started by any route deduplicates against any
+ * other concurrent caller for the same repo key.
+ *
+ * Keys follow the pattern `"${owner}/${name}:issues"` etc. so namespaces
+ * cannot collide.
+ *
+ * HTTP handlers import these directly to check `isInFlight` before calling
+ * `refreshIssuesIfStale` / `refreshPullsIfStale` / `refreshCommentsIfStale`.
+ */
+export const refreshTtl = new TtlMap<string>();
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -677,11 +691,18 @@ function upsertComment(repoFullName: string, c: GhComment): void {
 export async function refreshCommentsIfStale(owner: string, name: string, force = false): Promise<void> {
   await yieldEventLoop();
   const full = `${owner}/${name}`;
+  const ttlKey = `${full}:comments`;
+
   const last = lastCommentsFetch.get(full);
   if (!force && last && Date.now() - last < COMMENT_STALE_MS) return;
 
+  // HTTP-path gate: if another handler already started this fetch, join it.
   const existing = inFlightComments.get(full);
   if (existing) return existing;
+
+  // Mark in-flight BEFORE the first await so concurrent HTTP handlers that
+  // enter this function before the promise is stored also see the guard.
+  refreshTtl.markInFlight(ttlKey);
 
   const db = getDb();
   const lastUpdated = (db
@@ -700,6 +721,7 @@ export async function refreshCommentsIfStale(owner: string, name: string, force 
         persistInChunks(items, txFn),
       );
       lastCommentsFetch.set(full, Date.now());
+      refreshTtl.set(ttlKey, COMMENT_STALE_MS);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn(`[comments] ${full} fetch failed: ${msg.slice(0, 200)}`);
@@ -707,6 +729,7 @@ export async function refreshCommentsIfStale(owner: string, name: string, force 
       // because lastCommentsFetch was never set on the failed path.
       lastCommentsFetch.set(full, Date.now());
     } finally {
+      refreshTtl.clearInFlight(ttlKey);
       inFlightComments.delete(full);
     }
   })();
@@ -719,6 +742,7 @@ export async function refreshIssuesIfStale(owner: string, name: string, force = 
   // forget can return without blocking on the writer connection.
   await yieldEventLoop();
   const full = `${owner}/${name}`;
+  const ttlKey = `${full}:issues`;
   const db = getDb();
   const meta = db
     .prepare('SELECT last_issues_fetch, issues_bootstrap_done_at, issues_bootstrap_version FROM repo_meta WHERE full_name = ?')
@@ -736,6 +760,10 @@ export async function refreshIssuesIfStale(owner: string, name: string, force = 
 
   const existing = inFlightIssues.get(full);
   if (existing) return existing;
+
+  // Mark in-flight before the first await so concurrent HTTP handlers that
+  // enter before the Promise is stored in inFlightIssues also see the guard.
+  refreshTtl.markInFlight(ttlKey);
   const since = bootstrapDone ? incrementalSince(meta?.last_issues_fetch ?? null) : undefined;
 
   const p = (async () => {
@@ -753,11 +781,13 @@ export async function refreshIssuesIfStale(owner: string, name: string, force = 
       );
       touchRepoMeta(full, 'last_issues_fetch');
       if (!bootstrapDone) markBootstrapDone(full, 'issues_bootstrap_done_at');
+      refreshTtl.set(ttlKey, ISSUE_STALE_MS);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       touchRepoMeta(full, 'last_issues_fetch', msg);
       throw err;
     } finally {
+      refreshTtl.clearInFlight(ttlKey);
       inFlightIssues.delete(full);
     }
   })();
@@ -769,6 +799,7 @@ export async function refreshIssuesIfStale(owner: string, name: string, force = 
 export async function refreshPullsIfStale(owner: string, name: string, force = false): Promise<void> {
   await yieldEventLoop();
   const full = `${owner}/${name}`;
+  const ttlKey = `${full}:pulls`;
   const db = getDb();
   const meta = db
     .prepare('SELECT last_pulls_fetch, pulls_bootstrap_done_at, pulls_bootstrap_version FROM repo_meta WHERE full_name = ?')
@@ -784,6 +815,10 @@ export async function refreshPullsIfStale(owner: string, name: string, force = f
 
   const existing = inFlightPulls.get(full);
   if (existing) return existing;
+
+  // Mark in-flight before the first await so concurrent HTTP handlers that
+  // enter before the Promise is stored in inFlightPulls also see the guard.
+  refreshTtl.markInFlight(ttlKey);
   const since = bootstrapDone ? incrementalSince(meta?.last_pulls_fetch ?? null) : undefined;
 
   const p = (async () => {
@@ -798,11 +833,13 @@ export async function refreshPullsIfStale(owner: string, name: string, force = f
       );
       touchRepoMeta(full, 'last_pulls_fetch');
       if (!bootstrapDone) markBootstrapDone(full, 'pulls_bootstrap_done_at');
+      refreshTtl.set(ttlKey, PULL_STALE_MS);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       touchRepoMeta(full, 'last_pulls_fetch', msg);
       throw err;
     } finally {
+      refreshTtl.clearInFlight(ttlKey);
       inFlightPulls.delete(full);
     }
   })();

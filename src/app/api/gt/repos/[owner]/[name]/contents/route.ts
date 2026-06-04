@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { withRotation } from '@/lib/github';
+import { cachedWithRotation, withRotation } from '@/lib/github';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
 
 export const dynamic = 'force-dynamic';
@@ -17,11 +17,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ owner: string; 
   const params = await ctx.params;
   const denied = await assertTrackedRepo(params.owner, params.name);
   if (denied) return denied;
+  const { owner, name } = params;
   const { searchParams } = new URL(req.url);
   const path = searchParams.get('path') ?? '';
   try {
-    const r = await withRotation((octokit) =>
-      octokit.rest.repos.getContent({ owner: params.owner, repo: params.name, path }),
+    const r = await cachedWithRotation(`contents:${owner}/${name}:${path}`, () =>
+      withRotation((octokit) =>
+        octokit.rest.repos.getContent({ owner, repo: name, path }),
+      ),
     );
     const data = r.data;
 
@@ -88,8 +91,10 @@ export async function GET(req: Request, ctx: { params: Promise<{ owner: string; 
     // Latest commit on this path — surfaced in the "Code" tab header.
     let lastCommit: { sha: string; message: string; author: string; committedAt: string } | null = null;
     try {
-      const commits = await withRotation((octokit) =>
-        octokit.rest.repos.listCommits({ owner: params.owner, repo: params.name, path: path || undefined, per_page: 1 }),
+      const commits = await cachedWithRotation(`commits:${owner}/${name}:${path}`, () =>
+        withRotation((octokit) =>
+          octokit.rest.repos.listCommits({ owner, repo: name, path: path || undefined, per_page: 1 }),
+        ),
       );
       const c = commits.data[0];
       if (c) {

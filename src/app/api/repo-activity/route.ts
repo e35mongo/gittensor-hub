@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getLiveReposAsyncServer } from '@/lib/repos-server';
+import { TtlMap } from '@/lib/ttl-map';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,30 @@ type ActivityRequestPayload = {
   since?: unknown;
   viewed_at?: unknown;
 };
+
+// Process-level dedup for the live-repo list fetch — concurrent requests
+// share one inflight call instead of each spawning their own.
+const liveReposTtl = new TtlMap<string>();
+const LIVE_REPOS_CACHE_KEY = 'live-repos';
+const LIVE_REPOS_TTL_MS = 60_000;
+let liveReposInFlight: Promise<Map<string, string>> | null = null;
+let liveReposCache: Map<string, string> | null = null;
+
+async function loadAllowedReposCached(): Promise<Map<string, string>> {
+  if (liveReposTtl.has(LIVE_REPOS_CACHE_KEY) && liveReposCache) return liveReposCache;
+  if (liveReposInFlight) return liveReposInFlight;
+  liveReposInFlight = (async () => {
+    try {
+      const map = await loadAllowedRepos();
+      liveReposCache = map;
+      liveReposTtl.set(LIVE_REPOS_CACHE_KEY, LIVE_REPOS_TTL_MS);
+      return map;
+    } finally {
+      liveReposInFlight = null;
+    }
+  })();
+  return liveReposInFlight;
+}
 
 function defaultSince(): string {
   return new Date(Date.now() - 24 * 3600 * 1000).toISOString();
@@ -114,7 +139,7 @@ async function activityResponse(sinceInput: unknown, viewedInput: unknown) {
   const since = parseIso(sinceInput) ?? defaultSince();
   const viewedAt = normalizeViewedAt(viewedInput);
   const db = getDb();
-  const allowedRepos = await loadAllowedRepos();
+  const allowedRepos = await loadAllowedReposCached();
 
   if (allowedRepos.size === 0) {
     return NextResponse.json({ since, baselines: {}, activity: {} });

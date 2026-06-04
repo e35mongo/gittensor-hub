@@ -1,3 +1,12 @@
+/** Seconds the client should wait before retrying a request that hit an
+ *  in-flight deduplication guard (HTTP 202). */
+export const IN_FLIGHT_RETRY_SECONDS = 5;
+
+/** Response body shape for HTTP 202 "fetch already in progress" responses. */
+export interface RetryAfterResponse {
+  retryAfter: number;
+}
+
 export interface IssueLinkedPrDto {
   number: number;
   title: string;

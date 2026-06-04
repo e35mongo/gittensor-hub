@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { withRotation } from '@/lib/github';
+import { cachedWithRotation, withRotation } from '@/lib/github';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
 
 export const dynamic = 'force-dynamic';
@@ -8,59 +8,63 @@ export async function GET(_req: Request, ctx: { params: Promise<{ owner: string;
   const params = await ctx.params;
   const denied = await assertTrackedRepo(params.owner, params.name);
   if (denied) return denied;
+  const { owner, name } = params;
   try {
-    const [profileR, repoR] = await Promise.all([
-      withRotation((octokit) => octokit.rest.repos.getCommunityProfileMetrics({ owner: params.owner, repo: params.name })).catch(() => null),
-      withRotation((octokit) => octokit.rest.repos.get({ owner: params.owner, repo: params.name })).catch(() => null),
-    ]);
-
-    let goodFirstIssues = 0;
-    let helpWanted = 0;
-    try {
-      const [gfi, hw] = await Promise.all([
-        withRotation(
-          (octokit) => octokit.request('GET /search/issues', {
-            q: `repo:${params.owner}/${params.name} is:issue is:open label:"good first issue"`,
-            per_page: 1,
-          }),
-          { kind: 'search' },
-        ).catch(() => ({ data: { total_count: 0 } })),
-        withRotation(
-          (octokit) => octokit.request('GET /search/issues', {
-            q: `repo:${params.owner}/${params.name} is:issue is:open label:"help wanted"`,
-            per_page: 1,
-          }),
-          { kind: 'search' },
-        ).catch(() => ({ data: { total_count: 0 } })),
+    const payload = await cachedWithRotation(`health:${owner}/${name}`, async () => {
+      const [profileR, repoR] = await Promise.all([
+        withRotation((octokit) => octokit.rest.repos.getCommunityProfileMetrics({ owner, repo: name })).catch(() => null),
+        withRotation((octokit) => octokit.rest.repos.get({ owner, repo: name })).catch(() => null),
       ]);
-      goodFirstIssues = gfi.data.total_count ?? 0;
-      helpWanted = hw.data.total_count ?? 0;
-    } catch {
-      // already defaulted to 0
-    }
 
-    const profile = profileR?.data;
-    const files = profile?.files ?? null;
-    return NextResponse.json({
-      healthPercentage: profile?.health_percentage ?? 0,
-      openIssues: repoR?.data.open_issues_count ?? 0,
-      forks: repoR?.data.forks_count ?? 0,
-      stars: repoR?.data.stargazers_count ?? 0,
-      goodFirstIssues,
-      helpWanted,
-      pushedAt: repoR?.data.pushed_at ?? null,
-      createdAt: repoR?.data.created_at ?? null,
-      isArchived: repoR?.data.archived ?? false,
-      standards: {
-        license: !!files?.license,
-        readme: !!files?.readme,
-        contributing: !!files?.contributing,
-        codeOfConduct: !!files?.code_of_conduct,
-        pullRequestTemplate: !!files?.pull_request_template,
-        issueTemplates: !!files?.issue_template,
-        securityPolicy: files ? 'security' in files : false,
-      },
+      let goodFirstIssues = 0;
+      let helpWanted = 0;
+      try {
+        const [gfi, hw] = await Promise.all([
+          withRotation(
+            (octokit) => octokit.request('GET /search/issues', {
+              q: `repo:${owner}/${name} is:issue is:open label:"good first issue"`,
+              per_page: 1,
+            }),
+            { kind: 'search' },
+          ).catch(() => ({ data: { total_count: 0 } })),
+          withRotation(
+            (octokit) => octokit.request('GET /search/issues', {
+              q: `repo:${owner}/${name} is:issue is:open label:"help wanted"`,
+              per_page: 1,
+            }),
+            { kind: 'search' },
+          ).catch(() => ({ data: { total_count: 0 } })),
+        ]);
+        goodFirstIssues = gfi.data.total_count ?? 0;
+        helpWanted = hw.data.total_count ?? 0;
+      } catch {
+        // already defaulted to 0
+      }
+
+      const profile = profileR?.data;
+      const files = profile?.files ?? null;
+      return {
+        healthPercentage: profile?.health_percentage ?? 0,
+        openIssues: repoR?.data.open_issues_count ?? 0,
+        forks: repoR?.data.forks_count ?? 0,
+        stars: repoR?.data.stargazers_count ?? 0,
+        goodFirstIssues,
+        helpWanted,
+        pushedAt: repoR?.data.pushed_at ?? null,
+        createdAt: repoR?.data.created_at ?? null,
+        isArchived: repoR?.data.archived ?? false,
+        standards: {
+          license: !!files?.license,
+          readme: !!files?.readme,
+          contributing: !!files?.contributing,
+          codeOfConduct: !!files?.code_of_conduct,
+          pullRequestTemplate: !!files?.pull_request_template,
+          issueTemplates: !!files?.issue_template,
+          securityPolicy: files ? 'security' in files : false,
+        },
+      };
     });
+    return NextResponse.json(payload);
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 502 });
   }

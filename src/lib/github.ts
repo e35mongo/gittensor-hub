@@ -1,4 +1,5 @@
 import { Octokit } from '@octokit/rest';
+import { TtlMap } from './ttl-map';
 
 interface PatClient {
   index: number;
@@ -752,4 +753,68 @@ export async function fetchRateLimit() {
     used: limit - remaining,
     pat_count: clients.length,
   };
+}
+
+/**
+ * Process-level response cache for "passthrough" GitHub REST calls (health,
+ * readme, contents, contributing). Keyed on a caller-supplied string (e.g.
+ * `"readme:owner/name"`). Values are the raw resolved return value of the
+ * Octokit callback.
+ *
+ * Using a separate Map from TtlMap so values can store arbitrary objects
+ * without a second generic parameter on TtlMap. The TtlMap tracks expiry
+ * and in-flight state; this map holds the cached payload.
+ */
+export const passthroughTtl = new TtlMap<string>();
+const passthroughCache = new Map<string, unknown>();
+
+export const PASSTHROUGH_TTL_MS = 90_000; // 90 s
+
+/**
+ * Wrap a `withRotation` call with a short-lived process-level cache. If a
+ * fresh value for `cacheKey` is in the cache, return it immediately. If a
+ * fetch is already in-flight for `cacheKey`, wait for it by polling the
+ * shared in-flight flag (the deduplication is coarse but sufficient — the
+ * caller retries at most a few times over ~90 ms before the first fetch
+ * resolves and populates the cache).
+ *
+ * Usage:
+ *   const data = await cachedWithRotation('readme:owner/name', () =>
+ *     withRotation((octokit) => octokit.rest.repos.getReadme({ ... }))
+ *   );
+ */
+export async function cachedWithRotation<T>(
+  cacheKey: string,
+  fn: () => Promise<T>,
+  ttlMs = PASSTHROUGH_TTL_MS,
+): Promise<T> {
+  // Cache hit — return immediately without touching Octokit.
+  if (passthroughTtl.has(cacheKey)) {
+    return passthroughCache.get(cacheKey) as T;
+  }
+
+  // Another handler already started this fetch; wait for it to finish.
+  if (passthroughTtl.isInFlight(cacheKey)) {
+    // Poll at 50 ms intervals until the in-flight fetch completes (or the
+    // cache is populated by whoever holds the lock). Cap at 30 s to avoid
+    // an infinite loop if the fetch crashes without clearing the flag.
+    const deadline = Date.now() + 30_000;
+    while (passthroughTtl.isInFlight(cacheKey) && Date.now() < deadline) {
+      await new Promise<void>((r) => setTimeout(r, 50));
+    }
+    if (passthroughTtl.has(cacheKey)) {
+      return passthroughCache.get(cacheKey) as T;
+    }
+    // If the in-flight fetch failed, fall through and try again ourselves.
+  }
+
+  passthroughTtl.markInFlight(cacheKey);
+  try {
+    const result = await fn();
+    passthroughCache.set(cacheKey, result);
+    passthroughTtl.set(cacheKey, ttlMs);
+    return result;
+  } finally {
+    passthroughTtl.clearInFlight(cacheKey);
+  }
 }
