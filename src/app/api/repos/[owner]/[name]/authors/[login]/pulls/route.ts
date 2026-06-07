@@ -5,6 +5,7 @@ import { getIssueDiscoveryDisabledReposAsyncServer } from '@/lib/repos-server';
 import { positiveInt } from '@/lib/api-utils';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
 import { pullBucketSums } from '@/lib/pull-buckets';
+import { hydrateAuthorPullsFromGithub } from '@/lib/refresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,13 @@ export async function GET(
   ) || LIMIT_DEFAULT;
   const limit = Math.min(LIMIT_MAX, Math.max(1, requestedLimit));
   const offset = (page - 1) * limit;
+
+  try {
+    await hydrateAuthorPullsFromGithub(owner, name, login);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[author-pulls] ${full} repair failed for @${login}: ${msg.slice(0, 160)}`);
+  }
 
   const db = getReadDb();
   const stats = db
