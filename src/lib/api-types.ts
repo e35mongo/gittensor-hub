@@ -128,6 +128,9 @@ export interface AuthorOption {
   open?: number;
   completed?: number;
   not_planned?: number;
+  /** Closed + state_reason='duplicate'. Its own bucket — never folded into
+   * `closed` — so author badges match the repo-wide `IssueStateCounts`. */
+  duplicate?: number;
   closed?: number;
 }
 
@@ -135,6 +138,8 @@ export interface AuthorIssueStats {
   open: number;
   completed: number;
   not_planned: number;
+  /** Closed + state_reason='duplicate'. See `AuthorOption.duplicate`. */
+  duplicate: number;
   closed: number;
 }
 
@@ -158,8 +163,11 @@ export interface PullsMetaResponse {
 export type PullStatus = 'open' | 'draft' | 'merged' | 'closed';
 
 export function pullStatus(p: PullDto): PullStatus {
+  // Precedence: merged → closed → draft → open. A closed unmerged draft counts
+  // as `closed` (see pullStatus in src/types/entities.ts and the SQL buckets in
+  // src/lib/pull-buckets.ts — all three stay in lockstep).
   if (p.merged) return 'merged';
+  if (p.state === 'closed') return 'closed';
   if (p.draft) return 'draft';
-  if (p.state === 'open') return 'open';
-  return 'closed';
+  return 'open';
 }
