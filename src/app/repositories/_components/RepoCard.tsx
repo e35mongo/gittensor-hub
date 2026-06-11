@@ -326,10 +326,9 @@ export default function RepoCard({
             {maintCut > 0 ? (
               <span
                 className={`${styles.badge} ${styles.badgeMaint}`}
-                title={`${(maintCut * 100).toFixed(0)}% maintainer cut${r.demoMaint ? ' — demo value, not yet set by validators' : ''}`}
+                title={`${(maintCut * 100).toFixed(0)}% maintainer cut`}
               >
                 {(maintCut * 100).toFixed(0)}% maintainer cut
-                {r.demoMaint ? <span style={{ opacity: 0.6, marginLeft: 2 }}>·demo</span> : null}
               </span>
             ) : null}
           </div>
@@ -425,12 +424,11 @@ export default function RepoCard({
           </div>
           {maintPct > 0 ? (
             <div style={{ marginTop: 6, fontSize: 10, color: 'var(--fg-subtle)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ width: 6, height: 6, borderRadius: 2, background: 'var(--color-moss-400)' }} />
+              <span style={{ width: 6, height: 6, borderRadius: 2, background: 'var(--color-maint)' }} />
               <span>
                 {(maintCut * 100).toFixed(0)}% maintainer cut → {r.maintainerCount} maintainer{r.maintainerCount === 1 ? '' : 's'} ·{' '}
                 <span className={`mono ${styles.textMoss}`}>{formatTAO(perMaintTAO)} τ/d each</span>
               </span>
-              {r.demoMaint ? <span className={styles.demoTag} title="Placeholder value. Real maintainer_cut will be set by validators in master_repositories.json.">demo</span> : null}
             </div>
           ) : null}
         </div>

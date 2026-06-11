@@ -40,12 +40,14 @@ import CompareModal from './_components/CompareModal';
 import Drawer from './_components/Drawer';
 import Palette from './_components/Palette';
 import RefPanels from './_components/RefPanels';
+import MaintainersBoard from './_components/MaintainersBoard';
 
 const EMPTY_GT: GtRepo[] = [];
 const EMPTY_PRS: GtPrSummary[] = [];
 
 type SortKey = 'strategy' | 'tao' | 'share' | 'velocity' | 'name';
 type ViewMode = 'card' | 'list';
+type ListLens = 'activity' | 'performance';
 
 const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
   { key: 'strategy', label: 'Best for strategy' },
@@ -87,18 +89,29 @@ export default function RepositoriesPage() {
 
   /* Per-repo description + language breakdown, fetched server-side via the
    * GitHub API. Cached for an hour upstream — metadata is slow-changing. */
-  const { data: metaResp } = useQuery<{ repos: Record<string, RepoMeta> }>({
+  interface ReposMetadataResponse {
+    fetched_at?: string;
+    repos: Record<string, RepoMeta>;
+  }
+  const metadataReady = (resp: ReposMetadataResponse | undefined): resp is ReposMetadataResponse => {
+    const fetchedAt = Date.parse(resp?.fetched_at ?? '');
+    return Number.isFinite(fetchedAt) && fetchedAt > 0;
+  };
+  const { data: metaResp } = useQuery<ReposMetadataResponse>({
     queryKey: ['repos-metadata'],
     queryFn: async ({ signal }) => {
       const r = await fetch('/api/repos/metadata', { signal });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json() as Promise<{ repos: Record<string, RepoMeta> }>;
+      return r.json() as Promise<ReposMetadataResponse>;
+    },
+    refetchInterval: (query) => {
+      return metadataReady(query.state.data) ? false : 2_000;
     },
     staleTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const metadata = metaResp?.repos ?? null;
-  const metadataLoaded = metaResp != null;
+  const metadataLoaded = metadataReady(metaResp);
+  const metadata = metadataLoaded ? metaResp.repos : null;
 
   /* Hydration gate: TanStack Query returns empty data on the server (no
    * fetch) but may have warm data on the client (re-mount, navigation
@@ -198,6 +211,9 @@ export default function RepositoriesPage() {
   const [strategy, setStrategy] = useState<StrategyKey>('none');
   const [sortKey, setSortKey] = useState<SortKey>('strategy');
   const [view, setView] = useState<ViewMode>('card');
+  // In list view, swap the right-hand columns between repo activity and the
+  // maintainer-performance leaderboard (grade + responsiveness).
+  const [listLens, setListLens] = useState<ListLens>('activity');
   const [compare, setCompare] = useState<Set<string>>(() => new Set());
   const [drawerKey, setDrawerKey] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -343,6 +359,10 @@ export default function RepositoriesPage() {
     <>
       Add up to <span className={styles.textMine}>4 to compare</span> · click cards for full detail
     </>
+  ) : listLens === 'performance' ? (
+    <>
+      Every maintainer <span className={styles.textMine}>graded &amp; ranked</span> · click a column to sort, a row for detail
+    </>
   ) : (
     <>
       Click any row for full detail · use <span className={styles.textMine}>+</span> to compare
@@ -478,6 +498,29 @@ export default function RepositoriesPage() {
             </button>
           </div>
 
+          {/* List lens — activity vs maintainer performance. Only meaningful for
+            * the list table; hidden in card view. */}
+          {view === 'list' ? (
+            <div className={styles.viewToggleGroup} role="group" aria-label="List columns">
+              <button
+                type="button"
+                className={`${styles.viewToggle} ${listLens === 'activity' ? styles.active : ''}`}
+                onClick={() => setListLens('activity')}
+                title="Show repo activity columns (merged, merge rate, submissions)"
+              >
+                <span className={styles.viewToggleLabel}>Activity</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.viewToggle} ${listLens === 'performance' ? styles.active : ''}`}
+                onClick={() => setListLens('performance')}
+                title="Grade & compare all maintainers — review speed, acceptance, backlog"
+              >
+                <span className={styles.viewToggleLabel}>Performance</span>
+              </button>
+            </div>
+          ) : null}
+
           {/* Search trigger — matches HTML's header search button (cmd+K hint).
             * On mobile we render the icon-only variant; on md+ the full pill. */}
           <button
@@ -581,7 +624,7 @@ export default function RepositoriesPage() {
                 </div>
               ) : null}
             </div>
-          ) : (
+          ) : listLens === 'activity' ? (
             <div>
               <div className={styles.repoList}>
                 <div className={styles.repoListHeader}>
@@ -648,6 +691,16 @@ export default function RepositoriesPage() {
                 </div>
               </div>
             </div>
+          ) : (
+            <MaintainersBoard
+              rows={sortedRows}
+              compare={compare}
+              subnetTAO={subnetTAO}
+              strategy={strategy}
+              metadataLoaded={metadataLoaded}
+              onOpen={openDrawer}
+              onToggleCompare={toggleCompare}
+            />
           )}
         </div>
       </section>
