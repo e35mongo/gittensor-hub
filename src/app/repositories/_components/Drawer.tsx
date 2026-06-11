@@ -259,7 +259,7 @@ export default function Drawer({
                     <div style={{ fontSize: 10.5, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
                       PR slice
                     </div>
-                    <div className={`mono ${styles.numM} tnum ${styles.textPr}`}>{formatTAO(repoPRTAO(r, subnetTAO))} τ/d</div>
+                    <div className={`mono ${styles.numM} tnum`} style={{ color: '#22c55e' }}>{formatTAO(repoPRTAO(r, subnetTAO))} τ/d</div>
                     <div style={{ fontSize: 10, color: 'var(--border-strong)', marginTop: 2 }}>
                       {(r.maintCut || 0) > 0
                         ? `${((1 - r.maintCut) * (1 - r.issue) * 100).toFixed(0)}% of slice (after the cut)`
@@ -271,7 +271,7 @@ export default function Drawer({
                   <div style={{ fontSize: 10.5, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
                     Issue discovery slice
                   </div>
-                  <div className={`mono ${styles.numM} tnum ${styles.textIssue}`}>{formatTAO(repoIssueTAO(r, subnetTAO))} τ/d</div>
+                  <div className={`mono ${styles.numM} tnum`} style={{ color: '#6366f1' }}>{formatTAO(repoIssueTAO(r, subnetTAO))} τ/d</div>
                   <div style={{ fontSize: 10, color: 'var(--border-strong)', marginTop: 2 }}>
                     {(r.maintCut || 0) > 0
                       ? `${((1 - r.maintCut) * r.issue * 100).toFixed(0)}% of slice (after the cut)`
@@ -1069,6 +1069,7 @@ function MaintainerSection({ owner, name }: { owner: string; name: string }) {
           medianH={prHead.hours}
           p90H={prHead.p90Hours}
           verdict={reviewSpeedVerdict(prHead.hours)}
+          barColor="#22c55e"
           valueLabel="typical merge time"
           subline={
             <>
@@ -1085,6 +1086,7 @@ function MaintainerSection({ owner, name }: { owner: string; name: string }) {
           medianH={issueHead.hours}
           p90H={issueHead.p90Hours}
           verdict={issueResponseVerdict(issueHead.hours)}
+          barColor="#6366f1"
           valueLabel="typical close time"
           subline={
             <>
@@ -1117,12 +1119,16 @@ function SpeedGauge({
   verdict,
   valueLabel,
   subline,
+  barColor,
 }: {
   medianH: number | null;
   p90H: number | null;
   verdict: { label: string; color: string };
   valueLabel: string;
   subline: React.ReactNode;
+  /** Stream-identity colour for the bar (green = PR, indigo = issue) — distinct
+   *  from the verdict colour on the number/chip, which signals speed. */
+  barColor: string;
 }) {
   const posMed = reviewSpeedGaugePos(medianH);
   const posP90 = reviewSpeedGaugePos(p90H);
@@ -1143,19 +1149,19 @@ function SpeedGauge({
       {posMed != null ? (
         <div style={{ margin: '14px 0 6px' }}>
           <div style={{ position: 'relative', height: 6, borderRadius: 3, background: 'var(--bg-inset)' }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${posMed * 100}%`, borderRadius: 3, background: verdict.color }} />
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${posMed * 100}%`, borderRadius: 3, background: barColor }} />
             {posP90 != null && posP90 > posMed ? (
               <div
-                style={{ position: 'absolute', top: 0, bottom: 0, left: `${posMed * 100}%`, width: `${(posP90 - posMed) * 100}%`, background: `${verdict.color}22`, borderRadius: 3 }}
+                style={{ position: 'absolute', top: 0, bottom: 0, left: `${posMed * 100}%`, width: `${(posP90 - posMed) * 100}%`, background: `${barColor}22`, borderRadius: 3 }}
                 title={`90th percentile · ${formatDurationHours(p90H)}`}
               />
             ) : null}
             <div
-              style={{ position: 'absolute', left: `${posMed * 100}%`, top: -3, width: 12, height: 12, marginLeft: -6, borderRadius: '50%', background: verdict.color, border: '2px solid var(--bg-subtle)' }}
+              style={{ position: 'absolute', left: `${posMed * 100}%`, top: -3, width: 12, height: 12, marginLeft: -6, borderRadius: '50%', background: barColor, border: '2px solid var(--bg-subtle)' }}
               title={`median · ${formatDurationHours(medianH)}`}
             />
             {posP90 != null && posP90 > posMed ? (
-              <div style={{ position: 'absolute', left: `${posP90 * 100}%`, top: -2, width: 2, height: 10, marginLeft: -1, background: `${verdict.color}aa` }} />
+              <div style={{ position: 'absolute', left: `${posP90 * 100}%`, top: -2, width: 2, height: 10, marginLeft: -1, background: `${barColor}aa` }} />
             ) : null}
           </div>
           <div style={{ position: 'relative', height: 11, marginTop: 5 }}>

@@ -1195,6 +1195,7 @@ function MaintenanceTab({ owner, name }: { owner: string; name: string }) {
           title="Review speed"
           head={prHead}
           verdict={reviewSpeedVerdict(prHead.hours)}
+          barColor="#22c55e"
           valueLabel="typical merge time"
           sampleNoun="miner PRs"
           verb="merged"
@@ -1207,6 +1208,7 @@ function MaintenanceTab({ owner, name }: { owner: string; name: string }) {
           title="Issue response"
           head={issueHead}
           verdict={issueResponseVerdict(issueHead.hours)}
+          barColor="#6366f1"
           valueLabel="typical close time"
           sampleNoun="miner issues"
           verb="closed"
@@ -1322,6 +1324,7 @@ function SpeedGaugeHero({
   sampleNoun,
   verb,
   extra,
+  barColor,
 }: {
   icon: Icon;
   title: string;
@@ -1331,6 +1334,8 @@ function SpeedGaugeHero({
   sampleNoun: string;
   verb: string;
   extra?: { label: string; value: number | null };
+  /** Stream-identity colour for the bar (green = PR, indigo = issue). */
+  barColor: string;
 }) {
   const posMed = reviewSpeedGaugePos(head.hours);
   const posP90 = reviewSpeedGaugePos(head.p90Hours);
@@ -1375,13 +1380,13 @@ function SpeedGaugeHero({
         {posMed != null && (
           <Box sx={{ mt: 3 }}>
             <Box sx={{ position: 'relative', height: '8px', borderRadius: 6, bg: 'border.default' }}>
-              <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${posMed * 100}%`, borderRadius: 6, bg: verdict.color }} />
+              <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${posMed * 100}%`, borderRadius: 6, bg: barColor }} />
               {posP90 != null && posP90 > posMed && (
-                <Box sx={{ position: 'absolute', top: 0, bottom: 0, left: `${posMed * 100}%`, width: `${(posP90 - posMed) * 100}%`, borderRadius: 6, bg: `${verdict.color}22` }} />
+                <Box sx={{ position: 'absolute', top: 0, bottom: 0, left: `${posMed * 100}%`, width: `${(posP90 - posMed) * 100}%`, borderRadius: 6, bg: `${barColor}22` }} />
               )}
-              <Box sx={{ position: 'absolute', left: `${posMed * 100}%`, top: '-4px', width: '16px', height: '16px', ml: '-8px', borderRadius: '50%', bg: verdict.color, border: '2px solid', borderColor: 'canvas.default' }} />
+              <Box sx={{ position: 'absolute', left: `${posMed * 100}%`, top: '-4px', width: '16px', height: '16px', ml: '-8px', borderRadius: '50%', bg: barColor, border: '2px solid', borderColor: 'canvas.default' }} />
               {posP90 != null && posP90 > posMed && (
-                <Box sx={{ position: 'absolute', left: `${posP90 * 100}%`, top: '-2px', width: '2px', height: '12px', ml: '-1px', bg: `${verdict.color}aa` }} />
+                <Box sx={{ position: 'absolute', left: `${posP90 * 100}%`, top: '-2px', width: '2px', height: '12px', ml: '-1px', bg: `${barColor}aa` }} />
               )}
             </Box>
             <Box sx={{ position: 'relative', height: '14px', mt: 1 }}>
