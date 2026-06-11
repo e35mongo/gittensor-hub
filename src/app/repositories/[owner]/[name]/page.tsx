@@ -1253,52 +1253,17 @@ function RateRow({ label, hint, pct, color }: { label: string; hint?: string; pc
 }
 
 /** Mini log-scale bar: median dot, faded band to p90, optional secondary marker. */
-function SpreadBar({ medianH, p90H, color, markerH }: { medianH: number | null; p90H: number | null; color: string; markerH?: number | null }) {
-  const pMed = reviewSpeedGaugePos(medianH);
-  const pP90 = reviewSpeedGaugePos(p90H);
-  const pMark = reviewSpeedGaugePos(markerH);
-  if (pMed == null) return null;
-  return (
-    <Box sx={{ position: 'relative', height: '6px', borderRadius: 6, bg: 'border.default', mt: 2, mb: 1 }}>
-      <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pMed * 100}%`, borderRadius: 6, bg: color }} />
-      {pP90 != null && pP90 > pMed ? (
-        <Box sx={{ position: 'absolute', top: 0, bottom: 0, left: `${pMed * 100}%`, width: `${(pP90 - pMed) * 100}%`, borderRadius: 6, bg: `${color}22` }} />
-      ) : null}
-      <Box sx={{ position: 'absolute', left: `${pMed * 100}%`, top: '-3px', width: '12px', height: '12px', ml: '-6px', borderRadius: '50%', bg: color, border: '2px solid', borderColor: 'canvas.default' }} />
-      {pP90 != null && pP90 > pMed ? (
-        <Box sx={{ position: 'absolute', left: `${pP90 * 100}%`, top: '-1px', width: '2px', height: '8px', ml: '-1px', bg: `${color}aa` }} />
-      ) : null}
-      {pMark != null ? (
-        <Box sx={{ position: 'absolute', left: `${pMark * 100}%`, top: '-1px', width: '2px', height: '8px', ml: '-1px', bg: 'fg.muted' }} title="decision time" />
-      ) : null}
-    </Box>
-  );
-}
-
-// ── Detail panels: meters + spread bars ─────────────────────────────────────
+// ── Detail panels: volume / backlog / rates (the gauge owns the speed story) ─
 function MetersDetail({ data }: { data: MaintainerStats }) {
-  const rs = data.reviewSpeed, ir = data.issueResponse, tp = data.throughput, bl = data.backlog, rp = data.responsiveness;
+  const tp = data.throughput, bl = data.backlog, rp = data.responsiveness;
   const decHead = headlineDecisionSpeed(data);
   const hasPr = data.issueDiscoveryShare < 1, hasIssue = data.issueDiscoveryShare > 0;
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', '1fr 1fr'], gap: 3 }}>
-      {hasPr ? (
-        <Panel><Box sx={{ p: 3 }}>
-          <PanelHeader icon={StopwatchIcon} title="Review Speed" />
-          <SpreadBar medianH={rs.medianHoursToMerge} p90H={rs.p90HoursToMerge} markerH={decHead.hours} color={PR_GREEN} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'mono', fontSize: 0, color: 'fg.subtle', mb: 2 }}>
-            <span>median {formatDurationHours(rs.medianHoursToMerge)}</span>
-            <span>decision {formatDurationHours(decHead.hours)}</span>
-            <span>p90 {formatDurationHours(rs.p90HoursToMerge)}</span>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <MetricRow label="Typical (all-time)" value={formatDurationHours(rs.allTimeMedianHoursToMerge)} />
-            <MetricRow label="Miner PRs in window" value={rs.sampleSize.toLocaleString()} last />
-          </Box>
-        </Box></Panel>
-      ) : null}
-      {hasPr ? (
-        <Panel><Box sx={{ p: 3 }}>
+
+  const panels: React.ReactNode[] = [];
+  if (hasPr) {
+    panels.push(
+      <Panel key="thr">
+        <Box sx={{ p: 3 }}>
           <PanelHeader icon={GitMergeIcon} title="PR Throughput" />
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
             <CountBox label="Merged · 30d" value={tp.mergedPrs30d} />
@@ -1306,10 +1271,15 @@ function MetersDetail({ data }: { data: MaintainerStats }) {
           </Box>
           <RateRow label="Merge rate" hint="merged of resolved" pct={tp.mergeRate} color={PR_GREEN} />
           <RateRow label="Miner share of merges" hint="vs all contributors" pct={tp.minerMergeShare} color={PR_GREEN} />
-        </Box></Panel>
-      ) : null}
-      {hasPr ? (
-        <Panel><Box sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', mt: 1 }}>
+            <MetricRow label="Decision time" hint="merged or closed" value={formatDurationHours(decHead.hours)} last />
+          </Box>
+        </Box>
+      </Panel>,
+    );
+    panels.push(
+      <Panel key="bl">
+        <Box sx={{ p: 3 }}>
           <PanelHeader icon={InboxIcon} title="PR Backlog" />
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <MetricRow label="Open PRs" value={bl.openPrs.toLocaleString()} />
@@ -1317,23 +1287,39 @@ function MetersDetail({ data }: { data: MaintainerStats }) {
             <MetricRow label="Oldest open PR" value={formatDurationDays(bl.oldestOpenPrDays)} />
             <MetricRow label={`Stale PRs (>${bl.staleThresholdDays}d)`} value={<Text sx={{ color: bl.stalePrs > 0 ? 'danger.fg' : 'success.fg' }}>{bl.stalePrs.toLocaleString()}</Text>} last />
           </Box>
-        </Box></Panel>
-      ) : null}
-      {hasIssue ? (
-        <Panel><Box sx={{ p: 3 }}>
-          <PanelHeader icon={IssueOpenedIcon} title="Issue Response" />
-          <SpreadBar medianH={ir.medianHoursToClose} p90H={ir.p90HoursToClose} color={ISSUE_INDIGO} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'mono', fontSize: 0, color: 'fg.subtle', mb: 2 }}>
-            <span>median {formatDurationHours(ir.medianHoursToClose)}</span>
-            <span>p90 {formatDurationHours(ir.p90HoursToClose)}</span>
-          </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+        </Box>
+      </Panel>,
+    );
+  }
+  if (hasIssue) {
+    panels.push(
+      <Panel key="iss">
+        <Box sx={{ p: 3 }}>
+          <PanelHeader icon={IssueOpenedIcon} title="Issue Volume" />
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 2 }}>
             <CountBox label="Closed · 30d" value={tp.issuesClosed30d} />
+            <CountBox label="Closed · all-time" value={rp.closedIssues} />
             <CountBox label="Open issues" value={bl.openIssues} />
           </Box>
           <RateRow label="Close rate" hint="closed of all issues" pct={rp.issueCloseRate} color={ISSUE_INDIGO} />
-        </Box></Panel>
-      ) : null}
+        </Box>
+      </Panel>,
+    );
+  }
+
+  // 1 panel → full width; 3 → two side-by-side with the third spanning full.
+  if (panels.length === 1) {
+    return <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>{panels}</Box>;
+  }
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', '1fr 1fr'], gap: 3 }}>
+      {panels.map((p, i) =>
+        panels.length === 3 && i === 2 ? (
+          <Box key="iss-span" sx={{ gridColumn: ['auto', '1 / -1'] }}>{p}</Box>
+        ) : (
+          p
+        ),
+      )}
     </Box>
   );
 }

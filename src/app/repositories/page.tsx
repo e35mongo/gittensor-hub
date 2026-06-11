@@ -87,26 +87,18 @@ export default function RepositoriesPage() {
 
   /* Per-repo description + language breakdown, fetched server-side via the
    * GitHub API. Cached for an hour upstream — metadata is slow-changing. */
-  interface ReposMetadataResponse {
-    fetched_at?: string;
-    repos: Record<string, RepoMeta>;
-  }
-  const { data: metaResp } = useQuery<ReposMetadataResponse>({
+  const { data: metaResp } = useQuery<{ repos: Record<string, RepoMeta> }>({
     queryKey: ['repos-metadata'],
     queryFn: async ({ signal }) => {
       const r = await fetch('/api/repos/metadata', { signal });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json() as Promise<ReposMetadataResponse>;
-    },
-    refetchInterval: (query) => {
-      const fetchedAt = query.state.data?.fetched_at;
-      return !fetchedAt || Date.parse(fetchedAt) <= 0 ? 2_000 : false;
+      return r.json() as Promise<{ repos: Record<string, RepoMeta> }>;
     },
     staleTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const metadataLoaded = metaResp != null && Date.parse(metaResp.fetched_at ?? '') > 0;
-  const metadata = metadataLoaded ? metaResp.repos : null;
+  const metadata = metaResp?.repos ?? null;
+  const metadataLoaded = metaResp != null;
 
   /* Hydration gate: TanStack Query returns empty data on the server (no
    * fetch) but may have warm data on the client (re-mount, navigation
