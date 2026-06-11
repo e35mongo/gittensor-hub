@@ -51,6 +51,7 @@ import {
   REVIEW_SPEED_GAUGE_TICKS,
   type MaintainerStats,
 } from '@/lib/api-types';
+import { maintainerStatsQuery } from '../../_lib/maintainer-stats-query';
 
 type TabKey = 'readme' | 'code' | 'issues' | 'pulls' | 'contributing' | 'maintenance' | 'check';
 
@@ -1126,12 +1127,7 @@ function ageTone(days: number | null, warn = 14, bad = 30): string {
 
 function MaintenanceTab({ owner, name }: { owner: string; name: string }) {
   const { data, isLoading, isError } = useQuery<MaintainerStats>({
-    queryKey: ['repo-maintainer-stats', owner, name],
-    queryFn: async () => {
-      const r = await fetch(`/api/repos/${owner}/${name}/maintainer-stats`);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    },
+    ...maintainerStatsQuery(owner, name),
     staleTime: 5 * 60_000,
   });
 
@@ -1205,10 +1201,10 @@ function MaintenanceTab({ owner, name }: { owner: string; name: string }) {
           head={issueHead}
           verdict={issueResponseVerdict(issueHead.hours)}
           barColor="#6366f1"
-          valueLabel="typical close time"
+          valueLabel="typical solve time"
           sampleNoun="miner issues"
-          verb="closed"
-          extra={{ label: 'of these issues are now closed', value: rp.issueCloseRate }}
+          verb="solved"
+          extra={{ label: 'of discovered issues get solved', value: rp.completionRate }}
         />
       ) : null}
 
@@ -1297,11 +1293,11 @@ function MetersDetail({ data }: { data: MaintainerStats }) {
         <Box sx={{ p: 3 }}>
           <PanelHeader icon={IssueOpenedIcon} title="Issue Volume" />
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 2 }}>
-            <CountBox label="Closed · 30d" value={tp.issuesClosed30d} />
+            <CountBox label="Completed · all-time" value={rp.completedIssues} />
             <CountBox label="Closed · all-time" value={rp.closedIssues} />
             <CountBox label="Open issues" value={bl.openIssues} />
           </Box>
-          <RateRow label="Close rate" hint="closed of all issues" pct={rp.issueCloseRate} color={ISSUE_INDIGO} />
+          <RateRow label="Completion rate" hint="solved of all issues" pct={rp.completionRate} color={ISSUE_INDIGO} />
         </Box>
       </Panel>,
     );

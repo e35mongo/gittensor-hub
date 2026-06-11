@@ -37,7 +37,7 @@ export async function GET(
     .prepare('SELECT last_issues_fetch, last_pulls_fetch FROM repo_meta WHERE full_name = ?')
     .get(full) as { last_issues_fetch: string | null; last_pulls_fetch: string | null } | undefined;
   const etag = buildEtag([
-    'maintainer-stats-v3',
+    'maintainer-stats-v4',
     full,
     meta?.last_issues_fetch,
     meta?.last_pulls_fetch,

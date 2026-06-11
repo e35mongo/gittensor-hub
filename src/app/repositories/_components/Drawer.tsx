@@ -28,6 +28,7 @@ import {
   REVIEW_SPEED_GAUGE_TICKS,
   type MaintainerStats,
 } from '@/lib/api-types';
+import { maintainerStatsQuery } from '../_lib/maintainer-stats-query';
 
 interface DrawerProps {
   open: boolean;
@@ -978,19 +979,7 @@ function ageColor(days: number | null): string {
 }
 
 function MaintainerSection({ owner, name }: { owner: string; name: string }) {
-  const { data, isLoading, isError } = useQuery<MaintainerStats>({
-    queryKey: ['repo-maintainer-stats', owner, name],
-    queryFn: async ({ signal }) => {
-      const res = await fetch(
-        `/api/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/maintainer-stats`,
-        { signal },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json() as Promise<MaintainerStats>;
-    },
-    staleTime: 120_000,
-    refetchOnWindowFocus: false,
-  });
+  const { data, isLoading, isError } = useQuery<MaintainerStats>(maintainerStatsQuery(owner, name));
 
   const containerStyle = {
     padding: '16px 20px',
@@ -1038,7 +1027,7 @@ function MaintainerSection({ owner, name }: { owner: string; name: string }) {
   const mergeRate: PerfStatItem = { value: pct01(tp.mergeRate), label: 'merge rate', color: 'var(--fg-default)' };
   const grid: PerfStatItem[] =
     hasPr && hasIssue
-      ? [medianWait, stalePrs, mergeRate, { value: pct01(rp.issueCloseRate), label: 'close rate', color: 'var(--fg-default)' }]
+      ? [medianWait, stalePrs, mergeRate, { value: pct01(rp.completionRate), label: 'completion rate', color: 'var(--fg-default)' }]
       : hasIssue
         ? []
         : [medianWait, { value: formatDurationHours(decHead.hours), label: 'decision time', hint: 'merge or close', color: 'var(--fg-default)' }, stalePrs, mergeRate];
@@ -1085,12 +1074,12 @@ function MaintainerSection({ owner, name }: { owner: string; name: string }) {
           p90H={issueHead.p90Hours}
           verdict={issueResponseVerdict(issueHead.hours)}
           barColor="#6366f1"
-          valueLabel="typical close time"
+          valueLabel="typical solve time"
           subline={
             <>
-              {issueHead.scope === 'window' ? `Based on issues closed in the last ${issueHead.windowDays} days` : 'Based on all cached issues'}
-              {issueHead.p90Hours != null ? <> · Most closed in <span className={styles.textFgDim}>{formatDurationHours(issueHead.p90Hours)}</span> or less</> : null}
-              {rp.issueCloseRate != null ? <> · <span className={styles.textFgDim}>{pct01(rp.issueCloseRate)}</span> of these issues are now closed</> : null}
+              {issueHead.scope === 'window' ? `Based on issues solved in the last ${issueHead.windowDays} days` : 'Based on all solved issues'}
+              {issueHead.p90Hours != null ? <> · Most solved in <span className={styles.textFgDim}>{formatDurationHours(issueHead.p90Hours)}</span> or less</> : null}
+              {rp.completionRate != null ? <> · <span className={styles.textFgDim}>{pct01(rp.completionRate)}</span> of discovered issues get solved</> : null}
             </>
           }
         />
@@ -1226,20 +1215,7 @@ function SectionNote({ children }: { children: React.ReactNode }) {
  *  Performance section uses). */
 function ActivitySection({ r }: { r: RepoRow }) {
   const issueOnly = r.issue >= 1;
-  const { data: stats } = useQuery<MaintainerStats>({
-    queryKey: ['repo-maintainer-stats', r.owner, r.name],
-    queryFn: async ({ signal }) => {
-      const res = await fetch(
-        `/api/repos/${encodeURIComponent(r.owner)}/${encodeURIComponent(r.name)}/maintainer-stats`,
-        { signal },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json() as Promise<MaintainerStats>;
-    },
-    enabled: issueOnly,
-    staleTime: 120_000,
-    refetchOnWindowFocus: false,
-  });
+  const { data: stats } = useQuery<MaintainerStats>({ ...maintainerStatsQuery(r.owner, r.name), enabled: issueOnly });
 
   const sectionStyle = { padding: '16px 20px', borderBottom: '1px solid var(--soft-border, rgba(255,255,255,0.06))' } as const;
 

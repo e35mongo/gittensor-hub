@@ -4,9 +4,8 @@ import React from 'react';
 import { StarFillIcon, StarIcon } from '@primer/octicons-react';
 import styles from '../page.module.css';
 import Avatar from './Avatar';
-import { LABEL_COLORS, LANG_COLORS, LANG_NAME_ICONS, formatLangPct } from '../_lib/colors';
-import LangIcon from './LangIcon';
-import { effectiveLabelMult, formatTAO, repoDailyTAO, type RepoRow, type StrategyKey } from '../_lib/incentives';
+import { StreamBar, LangPills, MultCell } from './RepoCells';
+import { formatTAO, repoDailyTAO, type RepoRow, type StrategyKey } from '../_lib/incentives';
 
 interface RepoListRowProps {
   row: RepoRow;
@@ -39,86 +38,6 @@ export default function RepoListRow({
 }: RepoListRowProps) {
   const r = row;
   const dailyTAO = repoDailyTAO(r, subnetTAO);
-  // Stream split — matches RepoCard exactly: maintainer cut comes off the
-  // top, the remainder splits PR vs issue-discovery. Skip 0% entries so
-  // pure-PR repos read "100% PR" instead of "100% PR · 0% issue discovery".
-  const maintCut = r.maintCut || 0;
-  const afterCut = 1 - maintCut;
-  const maintPct = maintCut * 100;
-  const prPct = afterCut * (1 - r.issue) * 100;
-  const issPct = afterCut * r.issue * 100;
-  const streamLabel = (() => {
-    const parts: string[] = [];
-    if (maintPct > 0) parts.push(`${maintPct.toFixed(0)}% maintainer cut`);
-    if (prPct > 0)    parts.push(`${prPct.toFixed(0)}% PR`);
-    if (issPct > 0)   parts.push(`${issPct.toFixed(0)}% issue discovery`);
-    return parts.join(' · ');
-  })();
-
-  // Mult cell — varies by active strategy
-  let multCell: React.ReactNode;
-  if (strategy === 'issue') {
-    multCell =
-      r.issue > 0 ? (
-        <div style={{ textAlign: 'right' }}>
-          <span className={`mono ${styles.numM} tnum ${styles.textIssue}`}>{(r.issue * 100).toFixed(0)}%</span>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'right', color: 'var(--border-strong)' }} className="mono">—</div>
-      );
-  } else if (strategy !== 'none') {
-    const m = effectiveLabelMult(r, strategy);
-    const color =
-      m >= 1.3 ? 'var(--color-feat)' :
-      m >= 1.0 ? 'var(--color-enh)' :
-      m >= 0.5 ? 'var(--fg-subtle)' :
-      'var(--color-refact)';
-    multCell = (
-      <div style={{ textAlign: 'right' }}>
-        <span className={`mono ${styles.numM} tnum`} style={{ color }}>×{m.toFixed(2)}</span>
-      </div>
-    );
-  } else {
-    // No strategy: show highest configured mult, or "—" if no labels
-    if (r.labels && Object.keys(r.labels).length > 0) {
-      const entries = Object.entries(r.labels);
-      const [topLabel, topVal] = entries.reduce((a, b) => (a[1] >= b[1] ? a : b));
-      const c = LABEL_COLORS[topLabel] ?? { fg: 'var(--fg-subtle)', soft: '' };
-      multCell = (
-        <div style={{ textAlign: 'right' }}>
-          <div className="mono tnum" style={{ fontSize: 13, color: c.fg }}>×{topVal.toFixed(2)}</div>
-          <div style={{ fontSize: 9.5, color: 'var(--border-strong)', marginTop: 2 }}>{topLabel.slice(0, 8)}</div>
-        </div>
-      );
-    } else {
-      multCell = (
-        <div style={{ textAlign: 'right', color: 'var(--border-strong)', fontSize: 12 }} className="mono">—</div>
-      );
-    }
-  }
-
-  // Languages — top 2 in list mode, each as a full pill badge with
-  // Devicon icon + name + percentage (matches the card view's chrome).
-  const langsHtml = r.langs.slice(0, 2).map(([n, p]) => {
-    const color = LANG_COLORS[n] ?? 'var(--fg-subtle)';
-    const spec = LANG_NAME_ICONS[n.toLowerCase()];
-    return (
-      <span
-        key={n}
-        className={styles.langPill}
-        style={{ fontSize: 10, padding: '1px 5px', flexShrink: 0 }}
-      >
-        <LangIcon
-          spec={spec}
-          color={color}
-          fallbackLetter={n.slice(0, n.length <= 2 ? 1 : 2).toUpperCase()}
-          size={11}
-          title={n}
-        />
-        {n} <span className={styles.textFgMute}>{formatLangPct(p)}</span>
-      </span>
-    );
-  });
 
   // Mini sparkline
   const maxSpark = Math.max(...r.activity.spark, 1);
@@ -239,26 +158,10 @@ export default function RepoListRow({
         <div style={{ fontSize: 9.5, color: 'var(--fg-subtle)', marginTop: 2 }}>{(r.share * 100).toFixed(2)}% pool</div>
       </div>
 
-      <div className={styles.listColMult}>{multCell}</div>
+      <div className={styles.listColMult}><MultCell row={r} strategy={strategy} /></div>
 
       <div className={styles.listColStream}>
-        {r.share > 0 ? (
-          <>
-            <div className={styles.miniStream} style={{ marginBottom: 4 }}>
-              {prPct > 0 ? <span className={styles.splitPr} style={{ width: `${prPct}%` }} /> : null}
-              {issPct > 0 ? <span className={styles.splitIss} style={{ width: `${issPct}%` }} /> : null}
-            </div>
-            <div
-              style={{ fontSize: 10, color: 'var(--fg-subtle)' }}
-              className="mono"
-              title="Repo emission split (protocol terms: maintainer_cut + PR + issue_discovery)."
-            >
-              {streamLabel}
-            </div>
-          </>
-        ) : (
-          <div style={{ fontSize: 10, color: 'var(--border-strong)' }}>—</div>
-        )}
+        <StreamBar row={r} showLabel />
       </div>
 
       <div
@@ -271,13 +174,7 @@ export default function RepoListRow({
           minWidth: 0,
         }}
       >
-        {langsHtml.length > 0 ? (
-          langsHtml
-        ) : !metadataLoaded ? (
-          <span style={{ fontSize: 10, color: 'var(--border-strong)', fontStyle: 'italic' }}>loading…</span>
-        ) : (
-          <span style={{ fontSize: 10, color: 'var(--border-strong)' }}>—</span>
-        )}
+        <LangPills langs={r.langs} metadataLoaded={metadataLoaded} />
       </div>
 
       <div className={styles.listColAct} style={{ textAlign: 'right' }}>

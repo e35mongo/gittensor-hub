@@ -7,6 +7,7 @@ import Avatar from './Avatar';
 import { LABEL_COLORS, LABEL_KEYS, LANG_COLORS, formatLangPct } from '../_lib/colors';
 import { formatDurationHours } from '@/lib/format';
 import { headlineReviewSpeed, reviewSpeedVerdict, type MaintainerStats } from '@/lib/api-types';
+import { maintainerStatsQuery } from '../_lib/maintainer-stats-query';
 import {
   competitionLevel,
   decisionScore,
@@ -63,18 +64,8 @@ export default function CompareModal({ open, repos, subnetTAO, strategy, onClose
   // placeholder that forced the "Time to merge" row to read "demo".
   const statsResults = useQueries({
     queries: repos.map((r) => ({
-      queryKey: ['repo-maintainer-stats', r.owner, r.name],
-      queryFn: async ({ signal }: { signal: AbortSignal }) => {
-        const res = await fetch(
-          `/api/repos/${encodeURIComponent(r.owner)}/${encodeURIComponent(r.name)}/maintainer-stats`,
-          { signal },
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<MaintainerStats>;
-      },
+      ...maintainerStatsQuery(r.owner, r.name),
       enabled: open,
-      staleTime: 120_000,
-      refetchOnWindowFocus: false,
     })),
   });
   const statsByFull = new Map<string, MaintainerStats>();

@@ -154,20 +154,30 @@ export function computeMaintainerStats(
   }
 
   // --- Issues (miner-opened — the issue-discovery contributions) --------------
+  // For issue-discovery the *scored* work is an issue closed as `completed`
+  // (resolved by a merged PR), not merely closed: a `not_planned`/`duplicate`
+  // close is the maintainer rejecting the discovery. So the headline speed
+  // (time-to-close) is measured over completed issues only, and the success
+  // signal is a completion rate (completed / all), distinct from the raw close
+  // rate. Mixing rejections in would (a) drag the median toward how fast junk
+  // gets bounced and (b) make a high "% closed" read as healthy when half of it
+  // is "no, not planned". See verify against entrius/allways.
   const issueRows = db
     .prepare(
-      `SELECT author_login AS login, state, created_at AS createdAt, closed_at AS closedAt
+      `SELECT author_login AS login, state, state_reason AS reason,
+              created_at AS createdAt, closed_at AS closedAt
        FROM issues WHERE repo_full_name = ?`,
     )
-    .all(repo) as Array<{ login: string | null; state: string; createdAt: string | null; closedAt: string | null }>;
+    .all(repo) as Array<{ login: string | null; state: string; reason: string | null; createdAt: string | null; closedAt: string | null }>;
 
   let minerIssueRows = 0;
-  let closedIssues = 0;
+  let closedIssues = 0; // every closed miner issue (any reason) — volume context
+  let completedIssues = 0; // closed as `completed` — the scored discoveries
   let openIssues = 0;
   let issuesClosed30 = 0;
-  const issueCloseDays: number[] = [];
-  const allCloseHours: number[] = [];
-  const windowCloseHours: number[] = [];
+  const issueCloseDays: number[] = []; // completed-only
+  const allCloseHours: number[] = []; // completed-only
+  const windowCloseHours: number[] = []; // completed-only
 
   for (const it of issueRows) {
     if (!isMiner(it.login)) continue;
@@ -176,9 +186,11 @@ export function computeMaintainerStats(
       closedIssues++;
       const closedMs = parseMs(it.closedAt);
       const createdMs = parseMs(it.createdAt);
-      if (Number.isFinite(closedMs)) {
-        if (closedMs >= day30Start) issuesClosed30++;
-        if (Number.isFinite(createdMs)) {
+      if (closedMs >= day30Start) issuesClosed30++;
+      // Only `completed` closes count toward the time-to-resolve headline.
+      if (it.reason === 'completed') {
+        completedIssues++;
+        if (Number.isFinite(closedMs) && Number.isFinite(createdMs)) {
           const hours = Math.max(0, (closedMs - createdMs) / HOUR_MS);
           issueCloseDays.push(hours / 24);
           allCloseHours.push(hours);
@@ -242,8 +254,13 @@ export function computeMaintainerStats(
     },
     responsiveness: {
       closedIssues,
+      completedIssues,
       medianIssueCloseDays: median(issueCloseDays),
       issueCloseRate: ratio(closedIssues, closedIssues + openIssues),
+      // Of every miner-discovered issue, the share that became real solved work.
+      // The honest success signal — a fast `not_planned` close inflates closeRate
+      // but not this.
+      completionRate: ratio(completedIssues, closedIssues + openIssues),
     },
   };
 }
