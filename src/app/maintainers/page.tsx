@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 // credit an individual merge to one maintainer; a repo's throughput is credited
 // to each of its maintainers. Reward (τ/day) is exact, split among a repo's
 // registered miner-maintainers.
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Heading, Text, TextInput } from '@primer/react';
 import { SearchIcon, ChevronRightIcon, ChevronDownIcon, VerifiedIcon, InfoIcon } from '@primer/octicons-react';
@@ -71,18 +72,21 @@ function fmtTao(v: number): string {
 const GRID = '24px minmax(220px,1fr) 64px 168px 96px 80px 104px';
 const MIN_WIDTH = 880;
 
-// What the A–F grade means — shown as the Grade-column tooltip. Mirrors
-// maintainerGrade() in api-types, and is honest that the speed signal reflects
-// the repo's merge/close activity (which a bot or merge-app can drive), not
-// necessarily the named maintainers.
-const GRADE_HELP =
-  'Grade (A–F): how responsive the repo is to miner work.\n' +
-  '• PR repos — merge speed 50%, acceptance rate 30%, backlog health 20%\n' +
-  '• Issue-discovery repos — resolve speed 60%, completion rate 40%\n' +
-  '• Mixed repos blend the two by issue-discovery share\n' +
-  '“*” marks a provisional grade (fewer than 5 resolved items).\n' +
-  'Based on the repo’s merge/close activity, which can be driven by a bot or ' +
-  'app with merge rights — not necessarily the listed maintainers.';
+// Concise Grade-column tooltip (the full breakdown lives in the GradeGuide
+// panel). Honest that the speed signal reflects the repo's merge/close
+// activity — which a bot or merge-app can drive — not the named maintainers.
+const GRADE_TIP = (
+  <>
+    <Text sx={{ display: 'block', fontWeight: 600, color: 'fg.default', mb: 1 }}>Grade · responsiveness to miner work</Text>
+    <Text sx={{ display: 'block', color: 'fg.muted' }}>
+      Blends merge / resolve speed, acceptance and backlog health, weighted by the repo&apos;s PR vs
+      issue-discovery split. A&nbsp;90+ · B&nbsp;80+ · C&nbsp;70+ · D&nbsp;60+ · F&nbsp;&lt;60.
+    </Text>
+    <Text sx={{ display: 'block', color: 'fg.subtle', mt: 1 }}>
+      Repo-attributed, and can reflect a bot/app with merge rights. See “How grading works”.
+    </Text>
+  </>
+);
 
 /** Stable per-maintainer key — id when present, else login. Used for both the
  *  React list key and the expanded-row set, so two people who happen to share a
@@ -242,6 +246,71 @@ export default function MaintainersPage() {
   );
 }
 
+/** Linear-style hover tooltip — dark elevated surface, hairline border, soft
+ *  shadow, short open delay. Portaled to <body> so the table's overflow:hidden
+ *  can't clip it, and right-aligned to the trigger so right-edge columns don't
+ *  push it off-screen. Opens on hover and keyboard focus. */
+function Tooltip({ content, children, maxWidth = 320 }: { content: React.ReactNode; children: React.ReactNode; maxWidth?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, []);
+
+  const open = (delay: number) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setPos({ top: r.bottom + 8, left: Math.min(r.right, window.innerWidth - 8) });
+    }, delay);
+  };
+  const close = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setPos(null);
+  };
+
+  return (
+    <Box
+      as="span"
+      ref={ref}
+      tabIndex={0}
+      onMouseEnter={() => open(250)}
+      onMouseLeave={close}
+      onFocus={() => open(0)}
+      onBlur={close}
+      sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, cursor: 'help', outline: 'none' }}
+    >
+      {children}
+      {mounted && pos
+        ? createPortal(
+            <Box
+              role="tooltip"
+              sx={{
+                position: 'fixed', top: pos.top, left: pos.left, transform: 'translateX(-100%)',
+                zIndex: 1000, maxWidth, pointerEvents: 'none',
+                bg: 'canvas.overlay', color: 'fg.default',
+                border: '1px solid', borderColor: 'border.muted', borderRadius: 2,
+                boxShadow: '0 8px 28px rgba(0,0,0,0.36), 0 1px 3px rgba(0,0,0,0.28)',
+                px: '12px', py: '10px', fontSize: 0, lineHeight: 1.5,
+                letterSpacing: '-0.003em', whiteSpace: 'normal',
+                animation: 'tooltipIn 90ms ease-out',
+              }}
+            >
+              {content}
+            </Box>,
+            document.body,
+          )
+        : null}
+    </Box>
+  );
+}
+
 function HeaderRow({ first, count }: { first: string; count: string }) {
   return (
     <Box
@@ -256,12 +325,10 @@ function HeaderRow({ first, count }: { first: string; count: string }) {
       <span style={{ textAlign: 'right' }}>{count}</span>
       <span style={{ textAlign: 'right' }}>Shipping · 30d</span>
       <span style={{ textAlign: 'right' }}>All-time</span>
-      <Box
-        as="span"
-        title={GRADE_HELP}
-        sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, cursor: 'help', color: 'fg.muted' }}
-      >
-        Grade <InfoIcon size={11} />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', color: 'fg.muted' }}>
+        <Tooltip content={GRADE_TIP}>
+          Grade <Box as="span" sx={{ display: 'inline-flex', color: 'fg.subtle' }}><InfoIcon size={11} /></Box>
+        </Tooltip>
       </Box>
       <span style={{ textAlign: 'right' }}>τ / day</span>
     </Box>
