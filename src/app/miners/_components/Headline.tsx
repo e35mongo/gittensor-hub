@@ -201,17 +201,18 @@ function Treemap({
           } else {
             tileStyle.background = `color-mix(in srgb, ${tone} ${Math.round(intensity * 100)}%, var(--bg-canvas))`;
           }
+          const tileTitle =
+            data.kind === 'miner'
+              ? `${data.label} · ${data.sub} · ${formatUsd(data.usd)}/day · ${shareText(data.tao, fullPool)} of pool`
+              : `${data.label} · ${data.count} miners · ${formatUsd(data.usd)}/day · ${shareText(data.tao, fullPool)} of pool`;
           return (
             <button
               key={data.key}
               type="button"
               className={`${styles.treeTile} ${useAvatar || useMosaic ? styles.treeTileAvatarBg : ''} ${data.kind !== 'miner' && !useMosaic ? styles.treeSink : ''}`}
               style={tileStyle}
-              title={
-                data.kind === 'miner'
-                  ? `${data.label} · ${data.sub} · ${formatUsd(data.usd)}/day · ${shareText(data.tao, fullPool)} of pool`
-                  : `${data.label} · ${data.count} miners · ${formatUsd(data.usd)}/day · ${shareText(data.tao, fullPool)} of pool`
-              }
+              title={tileTitle}
+              aria-label={tileTitle}
               onMouseEnter={() => setHoveredKey(data.key)}
               onFocus={() => setHoveredKey(data.key)}
               onClick={() => onTileClick(data)}

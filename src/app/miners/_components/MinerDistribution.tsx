@@ -59,7 +59,7 @@ export default function MinerDistribution({ views, onSelectMiner }: { views: Min
               tabIndex={has ? 0 : -1}
               onMouseEnter={() => has && setHover(i)}
               onFocus={() => has && setHover(i)}
-              onBlur={() => setHover(null)}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHover(null); }}
               aria-label={has ? `${BUCKET_RANGES[i]} per day: ${miners.length} miners` : undefined}
             >
               {hover === i && has ? (

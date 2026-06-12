@@ -192,7 +192,7 @@ export function ActivityLineChart({ points }: { points: DayPoint[] }) {
                   width={Math.max(12, plotWidth / Math.max(1, points.length))}
                   height={plotHeight}
                   fill="transparent"
-                  tabIndex={0}
+                  tabIndex={-1}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onFocus={() => setHoveredIndex(idx)}
                   onBlur={() => setHoveredIndex(null)}
