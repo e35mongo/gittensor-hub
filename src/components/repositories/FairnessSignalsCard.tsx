@@ -87,7 +87,7 @@ export function FairnessSignalsCard({ repositoryFullName, mode }: { repositoryFu
             <Box sx={{ flexShrink: 0, width: ['100%', 'auto'], minWidth: [0, 170], maxWidth: ['none', 240], mt: [1, 0] }}>
               {/* The takeaway: how many miners beat the repo median */}
               <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: ['flex-start', 'flex-end'], gap: 1 }}>
-                <Text sx={{ fontSize: 4, fontWeight: 700, fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', lineHeight: 1, color: fastCount > 0 ? accent : 'fg.default' }}>
+                <Text sx={{ fontSize: 4, fontWeight: 590, fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1, color: fastCount > 0 ? accent : 'fg.default' }}>
                   {fastCount}
                 </Text>
                 <Text sx={{ fontSize: 1, fontFamily: 'mono', color: 'fg.muted' }}>/ {data.minerCount}</Text>
@@ -138,6 +138,11 @@ export function FairnessSignalsCard({ repositoryFullName, mode }: { repositoryFu
               </Box>
             )}
 
+            {!data.minerFiltered && (
+              <Text sx={{ display: 'block', fontSize: '10px', color: 'attention.fg', mt: 2 }}>
+                Miner list unavailable — counting all contributors, not just registered miners.
+              </Text>
+            )}
             {!data.maintainerFiltered && (
               <Text sx={{ display: 'block', fontSize: '10px', color: 'fg.subtle', mt: 2 }}>
                 Maintainer list unavailable — maintainers not excluded.
@@ -158,10 +163,11 @@ function PageBtn({ disabled, onClick, label }: { disabled: boolean; onClick: () 
       onClick={onClick}
       disabled={disabled}
       sx={{
-        px: 2, py: '3px', fontSize: 0, fontFamily: 'inherit', borderRadius: 1, whiteSpace: 'nowrap',
-        border: '1px solid', borderColor: 'border.default', bg: 'canvas.subtle',
-        color: disabled ? 'fg.subtle' : 'fg.default', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
-        '&:hover': disabled ? {} : { bg: 'canvas.default', borderColor: 'border.muted' },
+        px: 2, py: '3px', fontSize: 0, fontFamily: 'inherit', borderRadius: '6px', whiteSpace: 'nowrap',
+        border: '1px solid', borderColor: 'rgba(255,255,255,0.08)', bg: 'transparent',
+        color: disabled ? 'fg.subtle' : 'fg.muted', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
+        transition: 'border-color 100ms ease, color 100ms ease',
+        '&:hover': disabled ? {} : { bg: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.16)', color: 'fg.default' },
       }}
     >
       {label}
@@ -186,8 +192,9 @@ function MinerLane({ miner, maxScale, baselinePos, resolvedWord, accent }: { min
         alignItems: 'center',
         py: '7px',
         px: 1,
-        borderRadius: 2,
-        '&:hover': { bg: 'canvas.subtle' },
+        borderRadius: '8px',
+        transition: 'background 100ms ease',
+        '&:hover': { bg: 'rgba(255,255,255,0.03)' },
       }}
     >
       {/* identity */}
@@ -231,7 +238,7 @@ function MinerLane({ miner, maxScale, baselinePos, resolvedWord, accent }: { min
 
       {/* value + delta */}
       <Box sx={{ gridArea: 'val', textAlign: 'right' }}>
-        <Text sx={{ display: 'block', fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 1, lineHeight: 1.2, color: fast ? accent : 'fg.default' }}>
+        <Text sx={{ display: 'block', fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', fontWeight: 590, letterSpacing: '-0.01em', fontSize: 1, lineHeight: 1.2, color: fast ? accent : 'fg.default' }}>
           {formatDurationHours(miner.medianTtmHours)}
         </Text>
         <Text sx={{ display: 'block', fontFamily: 'mono', fontSize: '10px', color: fast ? accent : 'fg.subtle' }}>

@@ -196,6 +196,9 @@ export interface FairnessSignals {
   resolvedSample: number;
   /** Distinct non-maintainer miners with ≥1 resolved item. */
   minerCount: number;
+  /** Whether rows were restricted to registered miners. False = miner feed was
+   *  unavailable, so every contributor is counted (graceful fallback). */
+  minerFiltered: boolean;
   /** Maintainer logins filtered out (for transparency in the UI). */
   maintainersExcluded: number;
   /** Whether maintainer filtering was applied (false = mirror unavailable). */

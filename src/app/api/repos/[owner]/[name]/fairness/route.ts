@@ -72,7 +72,9 @@ export async function GET(
     // cache.db stores canonical-case repo names (e.g. MkDev11/gittensor-hub), so
     // query with `full` as-is — matching computeMaintainerStats.
     const signals = computeFairnessSignals(db, full, {
-      minerLogins: minerLogins ?? new Set<string>(),
+      // Pass null through on a feed outage so the lib counts every contributor
+      // instead of returning an empty card.
+      minerLogins,
       maintainerLogins,
       mode,
     });

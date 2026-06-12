@@ -103,9 +103,9 @@ export function MaintainerScorecard({ owner, name }: { owner: string; name: stri
           <Box
             as="span"
             sx={{
-              px: 2, py: '3px', borderRadius: 6, fontSize: 0, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.04em', border: '1px solid', whiteSpace: 'nowrap', flexShrink: 0,
-              color: primary.verdict.color, bg: `${primary.verdict.color}1a`, borderColor: `${primary.verdict.color}44`,
+              px: '8px', py: '3px', borderRadius: '6px', fontSize: '11px', fontWeight: 500,
+              border: '1px solid', whiteSpace: 'nowrap', flexShrink: 0, lineHeight: 1.4,
+              color: primary.verdict.color, bg: `${primary.verdict.color}14`, borderColor: `${primary.verdict.color}33`,
             }}
           >
             {primary.verdict.label}
@@ -133,15 +133,27 @@ export function MaintainerScorecard({ owner, name }: { owner: string; name: stri
 
 function Kpi({ value, label, sub, color }: { value: React.ReactNode; label: string; sub?: React.ReactNode; color?: string }) {
   return (
-    <Box sx={{ border: '1px solid', borderColor: 'border.muted', borderRadius: 2, px: '10px', py: '8px', minWidth: 0, bg: 'canvas.subtle' }}>
-      <Text sx={{ display: 'block', fontSize: 3, fontWeight: 700, fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, color: color ?? 'fg.default', whiteSpace: 'nowrap' }}>
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'rgba(255,255,255,0.06)',
+        borderRadius: '8px',
+        px: '12px',
+        py: '10px',
+        minWidth: 0,
+        bg: 'rgba(255,255,255,0.018)',
+        transition: 'border-color 120ms ease, background 120ms ease',
+        '&:hover': { borderColor: 'rgba(255,255,255,0.11)', bg: 'rgba(255,255,255,0.03)' },
+      }}
+    >
+      <Text sx={{ display: 'block', fontSize: 3, fontWeight: 590, fontFamily: 'mono', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1.1, color: color ?? 'fg.default', whiteSpace: 'nowrap' }}>
         {value}
       </Text>
-      <Text sx={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'fg.muted', mt: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <Text sx={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'fg.muted', mt: '7px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {label}
       </Text>
       {sub != null && (
-        <Text sx={{ display: 'block', fontSize: '10px', color: 'fg.subtle', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</Text>
+        <Text sx={{ display: 'block', fontSize: '11px', color: 'fg.subtle', mt: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</Text>
       )}
     </Box>
   );

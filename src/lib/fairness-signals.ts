@@ -33,8 +33,10 @@ function median(values: number[]): number | null {
 const ratio = (n: number, d: number): number | null => (d > 0 ? n / d : null);
 
 export interface FairnessOptions {
-  /** Lowercased registered miner logins — only their items are counted. */
-  minerLogins: Set<string>;
+  /** Lowercased registered miner logins — only their items are counted. `null`
+   *  when the upstream feed is unavailable: fall back to counting every
+   *  contributor rather than showing an empty card (matches computeMaintainerStats). */
+  minerLogins: Set<string> | null;
   /** Lowercased maintainer logins — excluded from rows AND the baseline.
    *  Null when the mirror was unavailable (no exclusion applied). */
   maintainerLogins: Set<string> | null;
@@ -56,6 +58,8 @@ export function computeFairnessSignals(
   opts: FairnessOptions,
 ): FairnessSignals {
   const { minerLogins, maintainerLogins, mode } = opts;
+  // Null miner set = upstream feed unavailable → count every contributor.
+  const isMiner = (lc: string): boolean => (minerLogins ? minerLogins.has(lc) : true);
   const isMaintainer = (lc: string): boolean => (maintainerLogins ? maintainerLogins.has(lc) : false);
   const parseMs = (iso: string | null): number => (iso ? Date.parse(iso) : NaN);
 
@@ -99,7 +103,7 @@ export function computeFairnessSignals(
 
   for (const it of items) {
     const lc = (it.login ?? '').toLowerCase();
-    if (!lc || !minerLogins.has(lc) || isMaintainer(lc)) continue;
+    if (!lc || !isMiner(lc) || isMaintainer(lc)) continue;
     let a = byAuthor.get(lc);
     if (!a) { a = { login: it.login as string, ttms: [], rejected: 0 }; byAuthor.set(lc, a); }
     if (it.resolved) {
@@ -140,6 +144,7 @@ export function computeFairnessSignals(
     repoMedianTtmHours,
     resolvedSample: pooled.length,
     minerCount: miners.length,
+    minerFiltered: minerLogins != null,
     maintainersExcluded: maintainerLogins ? maintainerLogins.size : 0,
     maintainerFiltered: maintainerLogins != null,
     miners,
