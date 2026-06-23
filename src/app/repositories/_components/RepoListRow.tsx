@@ -5,7 +5,7 @@ import { StarFillIcon, StarIcon } from '@primer/octicons-react';
 import styles from '../page.module.css';
 import Avatar from './Avatar';
 import { StreamBar, LangPills, MultCell } from './RepoCells';
-import { formatTAO, repoDailyTAO, type RepoRow, type StrategyKey } from '../_lib/incentives';
+import { formatLookbackDays, formatTAO, lookbackPolicyTitle, repoDailyTAO, type RepoRow, type StrategyKey } from '../_lib/incentives';
 
 interface RepoListRowProps {
   row: RepoRow;
@@ -132,6 +132,15 @@ export default function RepoListRow({
             {r.share === 0 ? <span className={`${styles.badge} ${styles.badgeZero}`} style={{ fontSize: 9.5, padding: '0 4px' }}>benchmark</span> : null}
             {r.issue === 1 ? <span className={`${styles.badge} ${styles.badgeIssue}`} style={{ fontSize: 9.5, padding: '0 4px' }}>issues only</span> : null}
             {r.issue > 0 && r.issue < 1 ? <span className={`${styles.badge} ${styles.badgeMixed}`} style={{ fontSize: 9.5, padding: '0 4px' }}>mixed</span> : null}
+            {r.prLookbackDays != null ? (
+              <span
+                className={styles.badge}
+                style={{ fontSize: 9.5, padding: '0 4px' }}
+                title={lookbackPolicyTitle(r.prLookbackDays)}
+              >
+                PR lookback {formatLookbackDays(r.prLookbackDays)}
+              </span>
+            ) : null}
             {r.eligibility ? <span className={`${styles.badge} ${styles.badgeOverrides}`} style={{ fontSize: 9.5, padding: '0 4px' }}>elig</span> : null}
             {(r.maintCut || 0) > 0 ? (
               <span

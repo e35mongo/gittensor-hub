@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReadDb, IssueRow } from '@/lib/db';
-import { getIssueDiscoveryDisabledReposAsyncServer } from '@/lib/repos-server';
+import { getIssueDiscoveryDisabledReposAsyncServer, getPrLookbackDaysByRepoAsyncServer } from '@/lib/repos-server';
 import { backfillPrIssueLinksIfNeeded } from '@/lib/refresh';
 import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gittensor-credibility';
 import { chunk, createRequestTimer, normalizeRepoList, positiveInt, resolveRepoScope } from '@/lib/api-utils';
@@ -347,12 +347,13 @@ export async function GET(req: NextRequest) {
 
   const rowRepoNames = rows.map((r) => r.repo_full_name);
   const rowRepoCount = new Set(rowRepoNames.map((r) => r.toLowerCase())).size;
-  const [credibilityIndex, issueDiscoveryDisabledRepos] = rows.length > 0
+  const [credibilityIndex, issueDiscoveryDisabledRepos, prLookbackDaysByRepo] = rows.length > 0
     ? await Promise.all([
         timer.time('enrich.credibility', () => getGittensorCredibilityIndex(rowRepoNames), { repos: rowRepoCount }),
         timer.time('enrich.issueDiscovery', () => getIssueDiscoveryDisabledReposAsyncServer(rowRepoNames), { repos: rowRepoCount }),
+        timer.time('enrich.lookback', () => getPrLookbackDaysByRepoAsyncServer(rowRepoNames), { repos: rowRepoCount }),
       ])
-    : [null, new Set<string>()];
+    : [null, new Set<string>(), new Map<string, number>()];
   const totalPages = windowMode ? 1 : Math.max(1, Math.ceil(totals.count / pageSize));
 
   timer.done({ repos: repos.length, rows: rows.length, count: totals.count });
@@ -375,6 +376,7 @@ export async function GET(req: NextRequest) {
         closed_pr_count: linkedPrs.filter((pr) => pr.merged !== 1 && !pr.merged_at && pr.state.toLowerCase() === 'closed').length,
         author_credibility: authorCredibilityForRepo(credibilityIndex, r.author_login, r.repo_full_name, {
           issueDiscoveryDisabled: issueDiscoveryDisabledRepos.has(r.repo_full_name.toLowerCase()),
+          prLookbackDays: prLookbackDaysByRepo.get(r.repo_full_name.toLowerCase()) ?? null,
         }),
       };
     }),

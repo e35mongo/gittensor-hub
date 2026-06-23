@@ -70,9 +70,9 @@ const FORMULA_FACTORS: FormulaFactor[] = [
   },
   {
     key: 'cred', value: '0.80 – 1.0',
-    tag: 'per-repo gate + multiplier',
-    rule: 'credibility = merged / (merged + closed)  ·  gates at ≥ 0.80, multiplies as itself',
-    desc: <>Computed per-repo from only that repo&apos;s PRs. Two roles: (1) a hard gate — below 0.80, earn nothing from that repo; (2) a continuous multiplier above 0.80 — the credibility value itself (e.g. 0.85, 0.92, 1.0) multiplies every earned_score on that repo. Closed PRs hurt twice: lower the ratio AND don&apos;t earn directly.</>,
+    tag: 'per-repo eligibility gate',
+    rule: 'credibility = merged / (merged + closed)  ·  gates at ≥ 0.80',
+    desc: <>Computed per-repo from only that repo&apos;s PRs inside its configured PR lookback window. It is an eligibility gate for PR rewards: below 0.80, earn nothing from that repo; at or above 0.80, eligible PRs keep their normal earned_score. Closed PRs hurt the ratio and don&apos;t earn directly.</>,
   },
   {
     key: 'review', value: '0 – 1.0',
@@ -115,7 +115,7 @@ function ShareFormulaPanel() {
           <EligCard
             iconBg="var(--success-subtle)" iconColor="var(--color-stream-pr)"
             iconPath={<><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M6 9v12"/></>}
-            value="≥ 3" label="merged PRs / 30d"
+            value="≥ 3" label="merged PRs / lookback"
           />
           <EligCard
             iconBg="rgba(95,200,223,0.15)" iconColor="var(--color-stream-issue)"

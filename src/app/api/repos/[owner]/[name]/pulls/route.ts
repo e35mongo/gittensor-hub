@@ -3,7 +3,7 @@ import { getReadDb, PullRow } from '@/lib/db';
 import { hydrateAuthorPullsFromGithub, refreshPullsIfStale } from '@/lib/refresh';
 import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gittensor-credibility';
-import { getIssueDiscoveryDisabledReposAsyncServer, isTrackedRepoServer } from '@/lib/repos-server';
+import { getIssueDiscoveryDisabledReposAsyncServer, getPrLookbackDaysByRepoAsyncServer, isTrackedRepoServer } from '@/lib/repos-server';
 import { GITTENSOR_PR_SCORE_TTL_MS, getGittensorPrScoreMap, pullScoreKey } from '@/lib/gittensor-pr-scores';
 import { pullBucketPredicate, pullBucketRankSql, pullBucketSums } from '@/lib/pull-buckets';
 
@@ -264,14 +264,16 @@ async function getPullsImpl(req: NextRequest, full: string) {
     }
   }
 
-  const [credibilityIndex, issueDiscoveryDisabledRepos, scoreMap] = rows.length > 0
+  const [credibilityIndex, issueDiscoveryDisabledRepos, scoreMap, prLookbackDaysByRepo] = rows.length > 0
     ? await Promise.all([
         getGittensorCredibilityIndex([full]),
         getIssueDiscoveryDisabledReposAsyncServer([full]),
         getGittensorPrScoreMap(),
+        getPrLookbackDaysByRepoAsyncServer([full]),
       ])
-    : [null, new Set<string>(), null];
+    : [null, new Set<string>(), null, new Map<string, number>()];
   const issueDiscoveryDisabled = issueDiscoveryDisabledRepos.has(full.toLowerCase());
+  const prLookbackDays = prLookbackDaysByRepo.get(full.toLowerCase()) ?? null;
 
   return NextResponse.json(
     {
@@ -286,6 +288,7 @@ async function getPullsImpl(req: NextRequest, full: string) {
         score: scoreMap?.get(pullScoreKey(r.repo_full_name, r.number)) ?? null,
         author_credibility: authorCredibilityForRepo(credibilityIndex, r.author_login, r.repo_full_name, {
           issueDiscoveryDisabled,
+          prLookbackDays,
         }),
       })),
       linked_issues_by_pull,

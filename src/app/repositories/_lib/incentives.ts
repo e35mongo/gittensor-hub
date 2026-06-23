@@ -37,6 +37,8 @@ export interface RepoRow {
   defaultLabel: number;
   /** Custom eligibility overrides — null means use protocol defaults. */
   eligibility: Record<string, number> | null;
+  /** Validator PR scoring / repo-credibility rolling window in days. */
+  prLookbackDays: number | null;
   fixedBase: number | null;
   /** Whether this repo is the user's "self" repo (highlighted across the UI). */
   isSelf: boolean;
@@ -127,6 +129,17 @@ export function formatTAO(n: number): string {
   if (n >= 1) return n.toFixed(2);
   if (n >= 0.01) return n.toFixed(3);
   return n.toFixed(4);
+}
+
+export function formatLookbackDays(days: number | null | undefined): string {
+  return typeof days === 'number' && Number.isFinite(days) ? `${Math.round(days)}d` : 'unknown';
+}
+
+export function lookbackPolicyTitle(days: number | null | undefined): string {
+  const window = typeof days === 'number' && Number.isFinite(days)
+    ? `the last ${Math.round(days)} days`
+    : 'the current configured lookback window';
+  return `Gittensor PR scoring and repo-scoped PR credibility use ${window}. Merged or closed PRs outside that window do not count toward miner credibility.`;
 }
 
 /* =========== Decision helpers (used in compare modal) =========== */

@@ -9,7 +9,9 @@ import LangIcon from './LangIcon';
 import {
   OSS_POOL,
   effectiveLabelMult,
+  formatLookbackDays,
   formatTAO,
+  lookbackPolicyTitle,
   repoDailyTAO,
   repoIssueTAO,
   repoMaintainerTAO,
@@ -322,6 +324,11 @@ export default function RepoCard({
             {r.share === 0 ? <span className={`${styles.badge} ${styles.badgeZero}`}>benchmark</span> : null}
             {r.issue === 1 ? <span className={`${styles.badge} ${styles.badgeIssue}`}>issues only</span> : null}
             {r.issue > 0 && r.issue < 1 ? <span className={`${styles.badge} ${styles.badgeMixed}`}>mixed</span> : null}
+            {r.prLookbackDays != null ? (
+              <span className={styles.badge} title={lookbackPolicyTitle(r.prLookbackDays)}>
+                PR lookback {formatLookbackDays(r.prLookbackDays)}
+              </span>
+            ) : null}
             {r.eligibility ? <span className={`${styles.badge} ${styles.badgeOverrides}`}>elig override</span> : null}
             {maintCut > 0 ? (
               <span

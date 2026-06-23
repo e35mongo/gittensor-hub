@@ -4,7 +4,7 @@ import { refreshIssuesIfStale, backfillPrIssueLinksIfNeeded } from '@/lib/refres
 import { buildEtag, etagNotModified, withEtagHeaders } from '@/lib/etag';
 import { getSessionFromCookies } from '@/lib/auth';
 import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gittensor-credibility';
-import { getIssueDiscoveryDisabledReposAsyncServer, isTrackedRepoServer } from '@/lib/repos-server';
+import { getIssueDiscoveryDisabledReposAsyncServer, getPrLookbackDaysByRepoAsyncServer, isTrackedRepoServer } from '@/lib/repos-server';
 import { hasMergedLinkedPrSql, issueBucketSums } from '@/lib/issue-buckets';
 
 export const dynamic = 'force-dynamic';
@@ -389,13 +389,15 @@ async function getIssuesImpl(req: NextRequest, full: string) {
     for (const r of rows2) user_validations[r.issue_number] = r.status;
   }
 
-  const [credibilityIndex, issueDiscoveryDisabledRepos] = rows.length > 0
+  const [credibilityIndex, issueDiscoveryDisabledRepos, prLookbackDaysByRepo] = rows.length > 0
     ? await Promise.all([
         getGittensorCredibilityIndex([full]),
         getIssueDiscoveryDisabledReposAsyncServer([full]),
+        getPrLookbackDaysByRepoAsyncServer([full]),
       ])
-    : [null, new Set<string>()];
+    : [null, new Set<string>(), new Map<string, number>()];
   const issueDiscoveryDisabled = issueDiscoveryDisabledRepos.has(full.toLowerCase());
+  const prLookbackDays = prLookbackDaysByRepo.get(full.toLowerCase()) ?? null;
 
   return NextResponse.json(
     {
@@ -410,6 +412,7 @@ async function getIssuesImpl(req: NextRequest, full: string) {
         labels: r.labels ? JSON.parse(r.labels) : [],
         author_credibility: authorCredibilityForRepo(credibilityIndex, r.author_login, r.repo_full_name, {
           issueDiscoveryDisabled,
+          prLookbackDays,
         }),
       })),
       linked_prs_by_issue,

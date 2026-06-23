@@ -7,7 +7,9 @@ import Avatar from './Avatar';
 import { LABEL_COLORS, LANG_COLORS, LANG_NAME_ICONS, formatLangPct } from '../_lib/colors';
 import LangIcon from './LangIcon';
 import {
+  formatLookbackDays,
   formatTAO,
+  lookbackPolicyTitle,
   repoDailyTAO,
   repoIssueTAO,
   repoMaintainerTAO,
@@ -132,6 +134,11 @@ export default function Drawer({
                     {r.isSelf ? <span className={`${styles.badge} ${styles.badgeSelf}`}>your repository</span> : null}
                     {r.trusted ? <span className={`${styles.badge} ${styles.badgeTrusted}`}>trusted pipeline</span> : null}
                     {r.share === 0 ? <span className={`${styles.badge} ${styles.badgeZero}`}>benchmark · no emissions</span> : null}
+                    {r.prLookbackDays != null ? (
+                      <span className={styles.badge} title={lookbackPolicyTitle(r.prLookbackDays)}>
+                        PR lookback {formatLookbackDays(r.prLookbackDays)}
+                      </span>
+                    ) : null}
                     {r.eligibility ? <span className={`${styles.badge} ${styles.badgeOverrides}`}>eligibility override</span> : null}
                     {(r.maintCut || 0) > 0 ? (
                       <span className={`${styles.badge} ${styles.badgeMaint}`}>
