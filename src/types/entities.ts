@@ -377,6 +377,13 @@ export interface MinerRepoEvaluation {
 export interface AuthorCredibility {
   credibility: number | null;
   issue_credibility: number | null;
+  /** Repo-scoped PR counts from the current Gittensor scoring/lookback window. */
+  total_merged_prs?: number | null;
+  total_closed_prs?: number | null;
+  total_open_prs?: number | null;
+  total_prs?: number | null;
+  /** Repo-scoped PR scoring window in days, when known from master_repositories. */
+  pr_lookback_days?: number | null;
   issue_discovery_disabled?: boolean;
 }
 

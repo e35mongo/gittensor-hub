@@ -14,7 +14,9 @@ import {
   effectiveLabelMult,
   eligibilityRisk,
   expectedTAOPerPR,
+  formatLookbackDays,
   formatTAO,
+  lookbackPolicyTitle,
   mergeSpeedLevel,
   openSlotPressure,
   repoDailyTAO,
@@ -769,6 +771,11 @@ function CompareMobile({
                       {r.share === 0 ? <span className={`${styles.badge} ${styles.badgeZero}`}>benchmark</span> : null}
                       {r.issue === 1 ? <span className={`${styles.badge} ${styles.badgeIssue}`}>issues only</span> : null}
                       {r.issue > 0 && r.issue < 1 ? <span className={`${styles.badge} ${styles.badgeMixed}`}>mixed</span> : null}
+                      {r.prLookbackDays != null ? (
+                        <span className={styles.badge} title={lookbackPolicyTitle(r.prLookbackDays)}>
+                          PR lookback {formatLookbackDays(r.prLookbackDays)}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>

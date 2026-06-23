@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReadDb, type IssueRow } from '@/lib/db';
 import { authorCredibilityForRepo, getGittensorCredibilityIndex } from '@/lib/gittensor-credibility';
-import { getIssueDiscoveryDisabledReposAsyncServer } from '@/lib/repos-server';
+import { getIssueDiscoveryDisabledReposAsyncServer, getPrLookbackDaysByRepoAsyncServer } from '@/lib/repos-server';
 import { positiveInt } from '@/lib/api-utils';
 import { assertTrackedRepo } from '@/lib/assert-tracked-repo';
 import { hasMergedLinkedPrSql, issueBucketSums } from '@/lib/issue-buckets';
@@ -96,13 +96,16 @@ export async function GET(
     .all(full, login, limit, offset) as Array<IssueRow & { merged_pr_count: number }>;
 
   const total = stats?.total ?? 0;
-  const [credibilityIndex, issueDiscoveryDisabledRepos] = await Promise.all([
+  const [credibilityIndex, issueDiscoveryDisabledRepos, prLookbackDaysByRepo] = await Promise.all([
     getGittensorCredibilityIndex([full]),
     getIssueDiscoveryDisabledReposAsyncServer([full]),
+    getPrLookbackDaysByRepoAsyncServer([full]),
   ]);
   const issueDiscoveryDisabled = issueDiscoveryDisabledRepos.has(full.toLowerCase());
+  const prLookbackDays = prLookbackDaysByRepo.get(full.toLowerCase()) ?? null;
   const authorCredibility = authorCredibilityForRepo(credibilityIndex, login, full, {
     issueDiscoveryDisabled,
+    prLookbackDays,
   });
 
   return NextResponse.json({
@@ -132,6 +135,7 @@ export async function GET(
       merged_pr_count: r.merged_pr_count,
       author_credibility: authorCredibilityForRepo(credibilityIndex, r.author_login, r.repo_full_name, {
         issueDiscoveryDisabled,
+        prLookbackDays,
       }),
     })),
   });

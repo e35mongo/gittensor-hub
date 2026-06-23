@@ -65,6 +65,10 @@ function credibilityFrom(source: JsonObject): AuthorCredibility {
   return {
     credibility: nullableNumber(source.credibility),
     issue_credibility: nullableNumber(source.issueCredibility ?? source.issue_credibility),
+    total_merged_prs: nullableNumber(source.totalMergedPrs ?? source.total_merged_prs),
+    total_closed_prs: nullableNumber(source.totalClosedPrs ?? source.total_closed_prs),
+    total_open_prs: nullableNumber(source.totalOpenPrs ?? source.total_open_prs),
+    total_prs: nullableNumber(source.totalPrs ?? source.total_prs),
   };
 }
 
@@ -174,17 +178,21 @@ export function authorCredibilityForRepo(
   index: AuthorCredibilityIndex | null,
   login: string | null,
   repoFullName: string | null,
-  options?: { issueDiscoveryDisabled?: boolean },
+  options?: { issueDiscoveryDisabled?: boolean; prLookbackDays?: number | null },
 ): AuthorCredibility | null {
   const disabled = options?.issueDiscoveryDisabled === true;
+  const withPolicy = (credibility: AuthorCredibility): AuthorCredibility => ({
+    ...credibility,
+    pr_lookback_days: options?.prLookbackDays ?? credibility.pr_lookback_days ?? null,
+  });
   if (!index || !login) {
-    return disabled ? { credibility: null, issue_credibility: null, issue_discovery_disabled: true } : null;
+    return disabled ? withPolicy({ credibility: null, issue_credibility: null, issue_discovery_disabled: true }) : null;
   }
   if (repoFullName) {
     const scoped = index.byRepoLogin.get(repoKey(repoFullName, login));
     if (scoped) {
-      return disabled ? { ...scoped, issue_discovery_disabled: true } : scoped;
+      return withPolicy(disabled ? { ...scoped, issue_discovery_disabled: true } : scoped);
     }
   }
-  return disabled ? { credibility: null, issue_credibility: null, issue_discovery_disabled: true } : null;
+  return disabled ? withPolicy({ credibility: null, issue_credibility: null, issue_discovery_disabled: true }) : null;
 }

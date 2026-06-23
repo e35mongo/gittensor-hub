@@ -456,3 +456,14 @@ export async function getIssueDiscoveryDisabledReposAsyncServer(repoFullNames: I
   }
   return disabled;
 }
+
+export async function getPrLookbackDaysByRepoAsyncServer(repoFullNames: Iterable<string>): Promise<Map<string, number>> {
+  await refreshLiveIfStale();
+  const byRepo = new Map<string, number>();
+  for (const repoFullName of repoFullNames) {
+    const key = repoFullName.toLowerCase();
+    const days = liveByLc.get(key)?.scoring.prLookbackDays;
+    if (typeof days === 'number' && Number.isFinite(days)) byRepo.set(key, days);
+  }
+  return byRepo;
+}

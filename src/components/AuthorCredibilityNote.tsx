@@ -7,6 +7,16 @@ function percent(value: number | null): string {
   return `${Math.round(value * 100)}%`;
 }
 
+function count(value: number | null | undefined): string {
+  return value === null || value === undefined || !Number.isFinite(value) ? '-' : `${Math.round(value)}`;
+}
+
+function lookbackText(days: number | null | undefined): string {
+  return days === null || days === undefined || !Number.isFinite(days)
+    ? 'the current Gittensor lookback window'
+    : `the last ${Math.round(days)} days`;
+}
+
 function tone(value: number | null): string {
   if (value === null) return 'var(--neutral-emphasis)';
   if (value >= 0.8) return 'var(--success-emphasis)';
@@ -29,13 +39,17 @@ export default function AuthorCredibilityNote({
   if (value === null) return null;
   const color = tone(value);
   const issueDiscoveryDisabled = variant === 'issues' && credibility.issue_discovery_disabled;
-  const title = issueDiscoveryDisabled
-    ? `Issue discovery is disabled for this repo · PR credibility ${percent(credibility.credibility)} · Issue credibility ${percent(credibility.issue_credibility)}`
-    : `PR credibility ${percent(credibility.credibility)} · Issue credibility ${percent(credibility.issue_credibility)}`;
+  const windowText = lookbackText(credibility.pr_lookback_days);
+  const title = variant === 'pulls'
+    ? `Repo PR credibility ${percent(credibility.credibility)} over ${windowText} · ${count(credibility.total_merged_prs)} merged / ${count(credibility.total_closed_prs)} closed in window · ${count(credibility.total_open_prs)} open · Older PRs do not count toward this badge.`
+    : issueDiscoveryDisabled
+      ? `Issue discovery is disabled for this repo · PR credibility ${percent(credibility.credibility)} over ${windowText} · Issue credibility ${percent(credibility.issue_credibility)}`
+      : `Issue credibility ${percent(credibility.issue_credibility)} · PR credibility ${percent(credibility.credibility)} over ${windowText}`;
 
   return (
     <span
       title={title}
+      aria-label={title}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

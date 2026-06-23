@@ -100,6 +100,11 @@ function formatPolicyThreshold(value: number | null): string {
   return trimNumber(value, 1);
 }
 
+function formatPolicyDays(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return 'Not set';
+  return `${Math.round(value)}d`;
+}
+
 function policyTooltip(label: string, value: string, detail: string): string {
   return `${label}: ${value}. ${detail}`;
 }
@@ -260,6 +265,15 @@ function RepoPolicyPanel({ repo }: { repo: Sn74Repo }) {
           'Minimum PR credibility',
           formatPolicyPercent(minPrCredibility),
           'Minimum merged-versus-closed PR credibility required for a contributor to receive PR rewards in this repository.',
+        )}
+      />
+      <RepoPolicyChip
+        label="PR lookback"
+        value={formatPolicyDays(repo.scoring.prLookbackDays)}
+        title={policyTooltip(
+          'PR lookback',
+          formatPolicyDays(repo.scoring.prLookbackDays),
+          'Rolling window used by Gittensor for PR scoring and repo-scoped PR credibility. Merged or closed PRs outside this window do not count toward the credibility badge.',
         )}
       />
       <RepoPolicyChip

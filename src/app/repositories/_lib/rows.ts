@@ -127,6 +127,7 @@ export function buildRows(
       labels,
       defaultLabel: policy.defaultLabelMultiplier ?? 1.0,
       eligibility: pickEligibilityOverrides(policy),
+      prLookbackDays: policy.scoring.prLookbackDays,
       fixedBase: policy.fixedBaseScore ?? null,
       isSelf: self != null && key === self,
       activity: {
@@ -201,6 +202,7 @@ export function buildRows(
         labels: null,
         defaultLabel: 1.0,
         eligibility: null,
+        prLookbackDays: null,
         fixedBase: null,
         isSelf: self != null && key === self,
         activity: {
