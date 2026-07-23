@@ -29,7 +29,7 @@ git clone https://github.com/MkDev11/gittensor-hub.git
 cd gittensor-hub
 pnpm install
 cp .env.local.example .env.local   # then fill in the values (see below)
-pnpm dev                           # http://localhost:12074
+pnpm dev                           # http://localhost:12074 (prod) / 12075 (dev worktree)
 ```
 
 Requires Node 20.19+ (or 22.13+ / 24+) and pnpm.
