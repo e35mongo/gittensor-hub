@@ -38,7 +38,7 @@ body:
     attributes:
       label: Contributor rules
       options:
-        - label: I will link this issue from my PR and keep at most 2 open PRs on this repo.
+        - label: I will link this issue from my PR and keep at most 5 open PRs on this repo.
           required: true
         - label: I will not submit AI-generated drive-by refactors unrelated to this scope.
           required: true

@@ -13,7 +13,7 @@ Detailed `pr:*` labels for triage. jagtensor applies/clears the **auto** ones on
 | `pr:protected-paths` | Workflows / scripts / lockfiles / Next config |
 | `pr:oversized` | Above size hold threshold |
 | `pr:large` | Above size warn threshold |
-| `pr:too-many-open` | Author > 2 open PRs |
+| `pr:too-many-open` | Author > 5 open PRs |
 | `pr:needs-tests` | `src/` changed, no tests in diff |
 | `pr:needs-work` | Any jagtensor finding still open |
 | `pr:flagged` | Any **major** finding |

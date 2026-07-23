@@ -25,7 +25,7 @@ const LEGACY_MARKERS = [
   '<!-- gittensor-hub:jaguar-policy -->',
   '<!-- gittensor-hub:pr-ui-scope-review -->',
 ];
-const MAX_OPEN_PRS = 2;
+const MAX_OPEN_PRS = 5;
 const SIZE_WARN_FILES = 25;
 const SIZE_WARN_LINES = 600;
 const SIZE_HOLD_FILES = 45;

@@ -30,7 +30,7 @@ One sticky PR comment (`<!-- gittensor-hub:jagtensor-policy -->`).
 | `protected-paths` | major | Workflows / `scripts/*` / lockfiles / Next config without write access |
 | `oversized-pr` | major | Too many files/lines → `manual-review` |
 | `large-pr` | minor | Getting large — prefer slices |
-| `too-many-open-prs` | major | Author over the ≤2 open PR limit |
+| `too-many-open-prs` | major | Author over the ≤5 open PR limit |
 | `src-without-tests` | minor | Src changed, no tests in diff |
 | `ui-wanted-missing-frontend-label` | minor | Wanted issue missing `frontend` label |
 

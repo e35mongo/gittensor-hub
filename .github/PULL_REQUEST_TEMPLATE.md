@@ -23,7 +23,7 @@ Closes #
 - [ ] Diff is focused — no drive-by README/typo farms, unrelated refactors, or **unrelated UI** on backend/docs issues
 - [ ] Includes proof of understanding (repro, design note, or test) in issue or PR body
 - [ ] UI changes include a screenshot / before-after in this PR body
-- [ ] I have **≤ 2** open PRs on this repository (including this one)
+- [ ] I have **≤ 5** open PRs on this repository (including this one)
 
 ## Testing
 
