@@ -18,7 +18,7 @@ Detailed PR taxonomy (size, surface, jagtensor findings, review lifecycle): [doc
 
 | Milestone | Purpose |
 | --- | --- |
-| Presence & Re-list | Landing, changelog, social proof, weight evidence |
+| Presence & Re-list | Landing, changelog, `/presence` SLA, social proof, weight evidence |
 | Platform Foundation | Chatbot, docs, status, My Work |
 | Multi-subnet Wedge | Registry + SN66 + generic metagraph |
 | Contribution Network | Hub Scores, enrolled repos, wanted board |

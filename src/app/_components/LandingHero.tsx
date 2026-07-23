@@ -104,6 +104,12 @@ export default function LandingHero({ snapshot }: { snapshot: Sn74Snapshot }) {
               <span aria-hidden className={styles.ctaDot}>
                 ·
               </span>
+              <Link href="/presence" prefetch={false}>
+                Presence
+              </Link>
+              <span aria-hidden className={styles.ctaDot}>
+                ·
+              </span>
               <a href={DOCS_URL} target="_blank" rel="noreferrer">
                 Docs
               </a>

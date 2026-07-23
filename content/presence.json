@@ -1,0 +1,36 @@
+{
+  "sla_hours": 48,
+  "sla_started": "2026-07-23",
+  "active_hours": "UTC weekdays 14:00–02:00 (approx.) — still aim for ≤48h outside that window",
+  "channels": [
+    {
+      "id": "github",
+      "label": "GitHub",
+      "handle": "e35mongo/gittensor-hub",
+      "url": "https://github.com/e35mongo/gittensor-hub/issues",
+      "role": "Issues, PRs, and wanted-board discussion"
+    },
+    {
+      "id": "x",
+      "label": "X",
+      "handle": null,
+      "url": null,
+      "role": "Weekly ship-note posts (fill handle to publish)"
+    },
+    {
+      "id": "discord",
+      "label": "Bittensor / Gittensor chat",
+      "handle": null,
+      "url": null,
+      "role": "Community replies ≤48h (fill server/channel + handle)"
+    }
+  ],
+  "evidence": [
+    {
+      "date": "2026-07-23",
+      "kind": "ops",
+      "summary": "Presence SLA clock started. Landing + /changelog live; chat/social handles pending fill.",
+      "url": "https://github.com/e35mongo/gittensor-hub/issues/284"
+    }
+  ]
+}

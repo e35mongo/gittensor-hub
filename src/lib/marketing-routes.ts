@@ -10,6 +10,7 @@ export const PUBLIC_PATHS = new Set([
   '/sign-in',
   '/',
   '/changelog',
+  '/presence',
 ]);
 
 export const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/public/'] as const;
@@ -18,6 +19,7 @@ export const CHROMELESS_PATHS = new Set([
   '/sign-in',
   '/',
   '/changelog',
+  '/presence',
 ]);
 
 export function isPublicPath(pathname: string): boolean {

@@ -82,7 +82,11 @@ When this repo is Gittensor-listed, validator `label_multipliers` should mirror 
 
 ### Weekly changelog (maintainers)
 
-Public ship notes: [`/changelog`](https://github.com/e35mongo/gittensor-hub/blob/main/docs/changelog.md). Add a markdown file under `content/changelog/` — see [docs/changelog.md](./docs/changelog.md).
+Public ship notes: [`/changelog`](./docs/changelog.md). Add a markdown file under `content/changelog/` — see [docs/changelog.md](./docs/changelog.md).
+
+### Community presence (maintainers)
+
+Chat/social SLA ≤48h. Public page: `/presence`. Fill handles + evidence in `content/presence.json` — see [docs/presence.md](./docs/presence.md).
 
 ### Branches
 
