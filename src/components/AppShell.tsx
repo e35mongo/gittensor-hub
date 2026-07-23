@@ -5,9 +5,7 @@ import { usePathname } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
 import AppSidebar from '@/components/AppSidebar';
 import { useSettings } from '@/lib/settings';
-
-// Routes that render full-bleed without any chrome (pre-auth).
-const HIDE_ROUTES = new Set(['/sign-in']);
+import { isChromelessPath } from '@/lib/marketing-routes';
 
 /**
  * Renders both chrome variants and lets CSS pick the active one based on
@@ -21,7 +19,7 @@ const HIDE_ROUTES = new Set(['/sign-in']);
 export default function AppShell() {
   const pathname = usePathname();
   const { settings, hydrated } = useSettings();
-  const hideChrome = HIDE_ROUTES.has(pathname);
+  const hideChrome = isChromelessPath(pathname);
   const showSidebar = !hideChrome && settings.layout === 'sidebar';
   const topNav = !hideChrome && settings.layout === 'top-nav';
 

@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/session-token';
 import { getUserById } from '@/lib/auth';
-
-// Routes accessible without any session.
-const PUBLIC_PATHS = new Set(['/sign-in']);
-const PUBLIC_API_PREFIXES = ['/api/auth/'];
-
-function isPublic(pathname: string): boolean {
-  if (PUBLIC_PATHS.has(pathname)) return true;
-  if (PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) return true;
-  return false;
-}
+import { isPublicPath } from '@/lib/marketing-routes';
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (isPublic(pathname)) return NextResponse.next();
+  if (isPublicPath(pathname)) return NextResponse.next();
 
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);

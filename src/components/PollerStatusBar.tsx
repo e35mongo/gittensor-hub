@@ -6,9 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Text } from '@primer/react';
 import { SyncIcon, DatabaseIcon } from '@primer/octicons-react';
 import { formatRelativeTime } from '@/lib/format';
-
-// Pre-auth routes where polling would just rack up 401s and the bar shouldn't show.
-const NO_POLL_ROUTES = new Set(['/sign-in']);
+import { isChromelessPath } from '@/lib/marketing-routes';
 
 interface PollerStatus {
   repos_cached: number;
@@ -24,7 +22,7 @@ function compactCount(value: number): string {
 
 export default function PollerStatusBar() {
   const pathname = usePathname();
-  const enabled = !NO_POLL_ROUTES.has(pathname);
+  const enabled = !isChromelessPath(pathname);
   const { data } = useQuery<PollerStatus>({
     queryKey: ['poller-status'],
     queryFn: async () => {

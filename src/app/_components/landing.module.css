@@ -1,0 +1,208 @@
+.root {
+  --landing-ink: #07110f;
+  --landing-fog: #0c1a17;
+  --landing-mist: #14302a;
+  --landing-line: rgba(120, 200, 180, 0.18);
+  --landing-fg: #e8f5f0;
+  --landing-muted: #8fb3a8;
+  --landing-accent: #3dd6c6;
+  --landing-accent-deep: #1fa896;
+  --landing-glow: rgba(61, 214, 198, 0.22);
+
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: var(--landing-fg);
+  background: var(--landing-ink);
+  font-family: var(--font-landing-body), 'DM Sans', sans-serif;
+}
+
+.atmosphere {
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 70%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, var(--landing-glow), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 15% 30%, rgba(31, 168, 150, 0.18), transparent 50%),
+    radial-gradient(ellipse 45% 35% at 85% 20%, rgba(232, 245, 240, 0.06), transparent 45%);
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(var(--landing-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--landing-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 20%, transparent 75%);
+  animation: gridPulse 12s ease-in-out infinite;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 4vw, 2rem) 3rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font-family: var(--font-landing-display), Syne, sans-serif;
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--landing-fg);
+  animation: rise 0.7s ease-out both;
+}
+
+.brandMark {
+  display: block;
+  width: clamp(32px, 5vw, 40px);
+  height: clamp(32px, 5vw, 40px);
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.headline {
+  margin: 0;
+  max-width: 16ch;
+  font-family: var(--font-landing-display), Syne, sans-serif;
+  font-size: clamp(2.25rem, 7vw, 3.75rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--landing-fg);
+  animation: rise 0.8s ease-out 0.08s both;
+}
+
+.support {
+  margin: 0;
+  max-width: 36rem;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--landing-muted);
+  animation: rise 0.85s ease-out 0.16s both;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  animation: rise 0.9s ease-out 0.24s both;
+}
+
+.ctaPrimary,
+.ctaGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ctaPrimary {
+  background: var(--landing-accent);
+  color: #04221e;
+  border: 1px solid transparent;
+}
+
+.ctaPrimary:hover {
+  background: #5ee0d2;
+  transform: translateY(-1px);
+}
+
+.ctaGhost {
+  background: transparent;
+  color: var(--landing-fg);
+  border: 1px solid var(--landing-line);
+}
+
+.ctaGhost:hover {
+  border-color: rgba(61, 214, 198, 0.45);
+  background: rgba(61, 214, 198, 0.08);
+  transform: translateY(-1px);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(0, 18px, 0) scale(1.04);
+  }
+}
+
+@keyframes gridPulse {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.42;
+  }
+}
+
+@media (max-width: 520px) {
+  .ctas {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ctaPrimary,
+  .ctaGhost {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere,
+  .grid,
+  .brand,
+  .headline,
+  .support,
+  .ctas {
+    animation: none;
+  }
+}
