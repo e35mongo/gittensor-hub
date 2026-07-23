@@ -12,7 +12,7 @@ export const PUBLIC_PATHS = new Set([
   '/changelog',
 ]);
 
-export const PUBLIC_API_PREFIXES = ['/api/auth/'] as const;
+export const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/public/'] as const;
 
 export const CHROMELESS_PATHS = new Set([
   '/sign-in',
