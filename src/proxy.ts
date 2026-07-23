@@ -5,7 +5,27 @@ import { isPublicPath } from '@/lib/marketing-routes';
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (isPublicPath(pathname)) return NextResponse.next();
+
+  // Public routes skip auth — except signed-in users should not see /sign-in.
+  if (isPublicPath(pathname)) {
+    if (pathname === '/sign-in') {
+      const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+      const session = await verifySessionToken(token);
+      if (session) {
+        const user = getUserById(session.uid);
+        if (user && user.status !== 'rejected') {
+          const next = req.nextUrl.searchParams.get('next');
+          const safeNext =
+            next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+          const url = req.nextUrl.clone();
+          url.pathname = safeNext;
+          url.search = '';
+          return NextResponse.redirect(url);
+        }
+      }
+    }
+    return NextResponse.next();
+  }
 
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);

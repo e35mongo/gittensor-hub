@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { DM_Sans } from 'next/font/google';
 import styles from './landing.module.css';
@@ -18,25 +18,6 @@ const DOCS_URL =
   'https://github.com/e35mongo/gittensor-hub/blob/main/CONTRIBUTING.md';
 
 export default function LandingHero() {
-  const [authed, setAuthed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/whoami', { credentials: 'same-origin' })
-      .then((r) => {
-        if (!cancelled) setAuthed(r.ok);
-      })
-      .catch(() => {
-        if (!cancelled) setAuthed(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const primaryHref = authed ? '/dashboard' : '/sign-in?next=/dashboard';
-  const primaryLabel = 'Dashboard';
-
   return (
     <div className={`${styles.root} ${dmSans.variable}`}>
       <div className={styles.mesh} aria-hidden />
@@ -55,8 +36,8 @@ export default function LandingHero() {
         </p>
 
         <div className={styles.ctas}>
-          <Link href={primaryHref} className={styles.ctaPrimary} prefetch={false}>
-            {primaryLabel}
+          <Link href="/dashboard" className={styles.ctaPrimary} prefetch={false}>
+            Dashboard
           </Link>
           <a href={DOCS_URL} className={styles.ctaSecondary} target="_blank" rel="noreferrer">
             Explore docs
