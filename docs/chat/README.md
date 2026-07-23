@@ -32,4 +32,4 @@ If nothing relevant: `refused: true`, empty `citations`, clear refusal text. Sti
 
 - Answers are **only** from retrieved knowledge-pack chunks.
 - Do not invent emission numbers; pack text already caveats per-repo overrides.
-- Next slice (#271) is the `/chat` UI that calls this API.
+- Next slice (#271) is a floating chat button + modal that calls this API (not a `/chat` page).

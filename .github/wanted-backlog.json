@@ -80,10 +80,10 @@
     },
     {
       "id": "chat-ui",
-      "title": "gittensor-hub:wanted — Chat UI page /chat with citations and disclaimer",
+      "title": "gittensor-hub:wanted — Floating chat button + modal (citations + disclaimer)",
       "milestone": "Platform Foundation",
       "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
-      "body": "Parent epic: #256\n"
+      "body": "Parent epic: #256\nNo /chat page — floating circle chat button opens a modal calling POST /api/public/chat.\n"
     },
     {
       "id": "subnet-registry",
