@@ -35,6 +35,9 @@ export default function ChangelogPage() {
             Gittensor Hub
           </Link>
           <nav className={styles.nav}>
+            <Link href="/presence" prefetch={false}>
+              Presence
+            </Link>
             <Link href="/dashboard" prefetch={false}>
               Dashboard
             </Link>

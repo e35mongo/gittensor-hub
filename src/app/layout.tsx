@@ -46,7 +46,7 @@ export default function RootLayout({
          * instead of briefly falling back to server defaults. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var h=document.documentElement;var t=localStorage.getItem('gittensor.theme');if(t==='light'||t==='dark'){h.setAttribute('data-theme',t);h.setAttribute('data-color-mode',t);h.style.colorScheme=t;}var p=location.pathname;if(p==='/sign-in'||p==='/'||p==='/changelog'){h.setAttribute('data-no-sidebar','');h.removeAttribute('data-top-header');return;}var s=JSON.parse(localStorage.getItem('gittensor.settings')||'{}');if(s.layout==='top-nav'){h.setAttribute('data-no-sidebar','');h.setAttribute('data-top-header','');}}catch(e){}})();`,
+            __html: `(function(){try{var h=document.documentElement;var t=localStorage.getItem('gittensor.theme');if(t==='light'||t==='dark'){h.setAttribute('data-theme',t);h.setAttribute('data-color-mode',t);h.style.colorScheme=t;}var p=location.pathname;if(p==='/sign-in'||p==='/'||p==='/changelog'||p==='/presence'){h.setAttribute('data-no-sidebar','');h.removeAttribute('data-top-header');return;}var s=JSON.parse(localStorage.getItem('gittensor.settings')||'{}');if(s.layout==='top-nav'){h.setAttribute('data-no-sidebar','');h.setAttribute('data-top-header','');}}catch(e){}})();`,
           }}
         />
         <StyledComponentsRegistry>
