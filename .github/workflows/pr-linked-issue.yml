@@ -1,0 +1,46 @@
+name: PR linked-issue gate
+
+# Score-eligible work must reference a currently-open issue. Warns loudly;
+# does not auto-close (maintainers may close as slop).
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  linked-issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check for linked issue reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          BODY: ${{ github.event.pull_request.body }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          text="${TITLE}"$'\n'"${BODY}"
+          if echo "$text" | grep -Eiq '(close[sd]?|fix(e[sd])?|resolve[sd]?)\s*:?\s*#([0-9]+)|(?:^|[^a-z])#([0-9]+)\b'; then
+            echo "Linked issue reference found."
+            exit 0
+          fi
+          body="$(cat <<'EOF'
+          ## Linked issue required for score-eligible work
+
+          This PR does not appear to reference a GitHub issue (`#N` / `Closes #N`).
+
+          For Hub Score / Gittensor-eligible contributions, link a **currently-open** issue — prefer [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted).
+
+          Drive-by AI refactors without a wanted issue may be labeled `slop` and closed.
+
+          See [CONTRIBUTING.md](https://github.com/MkDev11/gittensor-hub/blob/main/CONTRIBUTING.md) and [docs/github-os.md](https://github.com/MkDev11/gittensor-hub/blob/main/docs/github-os.md).
+          EOF
+          )"
+          gh pr comment "$PR" --repo "$REPO" --body "$body"
+          echo "Warned: no linked issue reference."

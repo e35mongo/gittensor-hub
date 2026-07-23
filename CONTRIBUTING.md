@@ -2,114 +2,91 @@
 
 ### Getting Started
 
-Before contributing, please:
-
-1. Read the [README](./README.md) to understand the project
-2. Familiarize yourself with the tech stack (Next.js 15, TypeScript, Primer React, SQLite)
-3. Check existing issues, PRs, and discussions to avoid duplicate work
+1. Read the [README](./README.md)
+2. Stack: **Next.js 16**, React 19, TypeScript, Primer React, SQLite (`better-sqlite3`)
+3. Check [wanted issues](https://github.com/MkDev11/gittensor-hub/issues?q=is%3Aissue+is%3Aopen+label%3Ahub%3Awanted) before inventing work
+4. Read [docs/github-os.md](./docs/github-os.md) for labels, milestones, and issue views
 
 ### Local Development
 
-1. Ensure you have Node 20.19+ (or 22.13+ / 24+) and [pnpm](https://pnpm.io/) installed
-2. Clone the repo and run `pnpm install`
-3. Copy `.env.local.example` to `.env.local` and fill in the values (see the [Setup section in the README](./README.md#github-setup) for GitHub OAuth + PAT instructions)
-4. (Optional but recommended) Seed the local cache so you have realistic data without waiting for the poller to bootstrap:
-   ```
-   ./scripts/seed-db.sh
-   ```
-   This downloads a sanitized snapshot (issues / PRs / metadata for the top SN74 repos, last 30 days) from the latest GitHub Release. It contains **no user data** — only public GitHub content. Skip this step if you'd rather start with an empty cache and let the poller fill it (~10 minutes for the bootstrap).
-5. Run `pnpm dev` to start the development server on `http://localhost:12074`
+1. Node 20.19+ (or 22.13+ / 24+) and [pnpm](https://pnpm.io/)
+2. `pnpm install`
+3. Copy `.env.local.example` → `.env.local` (see README for OAuth + PATs)
+4. Optional: `./scripts/seed-db.sh` for a sanitized cache snapshot
+5. `pnpm dev` → `http://localhost:12075` (dev worktree default; prod often `12074`)
 
-> **Never connect your local app to the production database.** Each contributor's `data/cache.db` is local and isolated by design — sharing the prod DB would expose other users' data and risk corruption from dev experiments.
+> **Never connect local to the production database.**
+
+### Where to start (anti-slop)
+
+Most low-value PRs are agent-generated without deep thinking. We only want work that compounds the product.
+
+**Do this:**
+
+* Pick an open [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted) or [`help wanted`](https://github.com/MkDev11/gittensor-hub/labels/help%20wanted) issue
+* Or [`good first issue`](https://github.com/MkDev11/gittensor-hub/labels/good%20first%20issue)
+* Link that **currently-open** issue from your PR (`Closes #N`)
+
+**Do not do this:**
+
+* Unsolicited AI refactors, typo farms, or “improve README” spam → labeled `slop`, score **0**, usually closed
+* Work labeled [`maintainer-only`](https://github.com/MkDev11/gittensor-hub/labels/maintainer-only) — **no** miner / Hub Score points
+* Opening a 3rd concurrent PR (max **2** open PRs per author)
+* Plagiarism or alt/sockpuppet farming → `banned`
 
 ### Creating Issues
 
-Click **New issue** on GitHub and one of these templates will load automatically:
+Blank issues are **disabled**. Use a form:
 
-* **[Bug Report](./.github/ISSUE_TEMPLATE/bug_report.md)** — Report bugs or unexpected behavior. Include steps to reproduce, expected vs. actual behavior, and environment details.
-* **[Feature Request](./.github/ISSUE_TEMPLATE/feature_request.md)** — Suggest new features or improvements. Explain the motivation and the proposed solution.
-* **Open a blank issue** — For issues that don't fit the above templates.
+* **Bug Report** — reproduction + proof required (`gittensor:bug` path)
+* **Feature Request** — design note required; may become `hub:wanted` or `maintainer-only`
+* **Claim wanted work** — only if you need a new wanted-scoped tracker
 
-For security vulnerabilities, **do not create a public issue**. Report them privately via [GitHub Security Advisories](https://github.com/MkDev11/gittensor-hub/security/advisories/new) — see [SECURITY.md](./SECURITY.md).
+Security: use [Security Advisories](https://github.com/MkDev11/gittensor-hub/security/advisories/new) — see [SECURITY.md](./SECURITY.md).
 
-### Lifecycle of a Pull Request
+### Labels that matter for scoring
 
-#### 1. Create Your Branch
+| Label | Meaning |
+| --- | --- |
+| `hub:wanted` | Maintainer-requested — high-score eligible gate |
+| `gittensor:bug` | Bug fix path (when accepted / merged with policy) |
+| `gittensor:feature` | Feature path tied to a real issue |
+| `gittensor:priority` | Maintainer-only grant for outstanding work |
+| `slop` | Zero score |
+| `maintainer-only` | Owner work — zero miner score |
+| `help wanted` / `good first issue` | Community-takeable |
 
-* Fork the repository, then branch off of `main` and target `main` with your PR
-* Use a descriptive branch name (e.g. `fix/issue-42-rate-limit`, `feat/issue-stale-filter`)
-* Ensure there are no conflicts with `main` before submitting
+When this repo is Gittensor-listed, validator `label_multipliers` should mirror these names. **A merge is not a promise of TAO.**
 
-#### 2. Make Your Changes
+### Pull requests
 
-* Write clean, well-documented code
-* Follow existing code patterns and architecture
-* Update documentation if applicable
-* Do NOT add comments that are over-explanatory or redundant
-* When making your changes, ask yourself: will this raise the value of the repository?
-* Ensure `pnpm build` passes before submitting
+1. Branch from `main`, PR into `main`
+2. Fill the PR template — linked open issue is required for score-eligible work
+3. Keep the diff focused
+4. Ensure `pnpm run lint` and `pnpm build` pass
 
-#### 3. Submit Pull Request
+#### Review norms
 
-1. Push your branch to your fork
-2. Open a PR targeting the `main` branch of `MkDev11/gittensor-hub`
-3. The [PR template](./.github/PULL_REQUEST_TEMPLATE.md) loads automatically — fill in:
-   * **Summary** — Clear description of changes
-   * **Related Issues** — Link issues using `Fixes #123` or `Closes #456`
-   * **Type of Change** — Bug fix, new feature, refactor, documentation, or other
-   * **Testing** — Confirm manual testing performed (browser smoke test if UI, build pass otherwise)
-   * **Checklist** — Self-review, no unrelated changes, docs updated if needed
-
-#### 4. Code Review
-
-* Maintainers will review and may request changes
-* Address review comments by pushing additional commits to the same branch (no force-push during review unless asked)
-
-### PR Labels
-
-Apply appropriate labels to help categorize and track your contribution:
-
-* `bug` — Bug fixes
-* `feature` — New feature additions
-* `enhancement` — Improvements to existing features
-* `refactor` — Code refactoring without functionality changes
-* `documentation` — Documentation updates
+* Prefer **merge-as-is or close with reason** for drive-by / off-scope PRs (open a fresh corrected PR)
+* Do not DM or spam @mentions to chase review — it slows you down
+* Address requested changes with new commits on the same branch
 
 ### Code Standards
 
-#### Quality Expectations
-
-* Follow repository conventions (commenting style, variable naming, file layout)
-* Use sensible component decomposition to keep files manageable
-* Write clean, readable, maintainable code
-* Avoid modifying unrelated files
-* Avoid adding unnecessary dependencies
-* Ensure `pnpm build` passes (TypeScript compilation + Next.js build)
-
-#### Pre-submission check
-
-Make sure the project still builds — this covers TypeScript and Next.js compilation:
-
-```
-pnpm build
-```
+* Follow existing patterns; no drive-by dependency adds
+* Meaningful changes > cosmetic churn
+* `pnpm build` must pass
 
 ### Branches
 
 #### `main`
 
-**Purpose**: Production-ready code — runs the live dashboard
-
-**Restrictions**:
-
-* Requires pull request
-* Requires build to pass
-* Requires maintainer approval before merge
+Production dashboard. PR required; CI must pass; maintainer approval required.
 
 ### License
 
-By contributing to Gittensor Hub, you agree that your contributions will be licensed under the project's license (MIT).
+Contributions are licensed under the project license (MIT).
 
 ---
 
-Thank you for contributing to Gittensor Hub and helping advance open source software development!
+Thank you for helping build Gittensor Hub without the slop.

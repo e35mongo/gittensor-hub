@@ -4,7 +4,9 @@ A dashboard for miners on **Bittensor Subnet 74 (SN74)** — the subnet that rew
 
 It polls GitHub for issues and PRs across the 200+ SN74 repos (plus any you add), caches them in SQLite, and surfaces them in Dashboard, Explorer, Miners, Repositories, Issues, and Pull Requests views.
 
-Built with Next.js 15 (App Router), TypeScript, Primer React, and `better-sqlite3`.
+Built with Next.js 16 (App Router), React 19, TypeScript, Primer React, and `better-sqlite3`.
+
+Contributor OS (labels, milestones, wanted board): [docs/github-os.md](./docs/github-os.md) · [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Main views
 
@@ -27,7 +29,7 @@ git clone https://github.com/MkDev11/gittensor-hub.git
 cd gittensor-hub
 pnpm install
 cp .env.local.example .env.local   # then fill in the values (see below)
-pnpm dev                           # http://localhost:12074
+pnpm dev                           # http://localhost:12074 (prod) / 12075 (dev worktree)
 ```
 
 Requires Node 20.19+ (or 22.13+ / 24+) and pnpm.

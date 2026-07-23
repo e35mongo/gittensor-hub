@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report a bug with reproduction steps. Required for gittensor:bug score eligibility.
+title: "bug: "
+labels:
+  - bug
+  - gittensor:bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bugs that earn Hub / Gittensor score must be **reproducible**. Drive-by “AI found a smell” reports without steps will be closed as `slop`.
+
+        Prefer picking an existing [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted) issue when one already covers the bug.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is broken?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a clean state.
+      placeholder: |
+        1. Sign in
+        2. Open /dashboard
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser / OS / Node (if server-side).
+      placeholder: "Chrome 131 · Linux · Node 22"
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Proof of understanding
+      description: Failing observation, screenshot, or log snippet that shows you hit the bug (not a generic rewrite).
+    validations:
+      required: true

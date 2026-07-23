@@ -1,0 +1,53 @@
+name: Feature Request
+description: Propose a feature with design note. Maintainer may retarget to hub:wanted or maintainer-only.
+title: "feat: "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests are **intake**, not an automatic score grant. Maintainers may label `hub:wanted` (community eligible) or `maintainer-only` (no miner points).
+
+        Unsolicited AI feature dumps without a concrete problem statement will be closed as `slop`.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should exist that does not today?
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Who is blocked and what outcome do they need?
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Design note
+      description: Proposed UX / API shape, risks, and how you would test it.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches and why they are worse.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - frontend
+        - backend
+        - docs
+        - multi-subnet
+        - contributions / scoring
+        - other
+    validations:
+      required: true
