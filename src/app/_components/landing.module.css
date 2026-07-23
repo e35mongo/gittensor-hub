@@ -1,13 +1,9 @@
 .root {
   --landing-ink: #07110f;
-  --landing-fog: #0c1a17;
-  --landing-mist: #14302a;
-  --landing-line: rgba(120, 200, 180, 0.18);
+  --landing-line: rgba(120, 200, 180, 0.12);
   --landing-fg: #e8f5f0;
   --landing-muted: #8fb3a8;
   --landing-accent: #3dd6c6;
-  --landing-accent-deep: #1fa896;
-  --landing-glow: rgba(61, 214, 198, 0.22);
 
   position: relative;
   isolation: isolate;
@@ -19,31 +15,16 @@
   font-family: var(--font-landing-body), 'DM Sans', sans-serif;
 }
 
-.atmosphere {
-  position: absolute;
-  inset: -20% -10% auto;
-  height: 70%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, var(--landing-glow), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 15% 30%, rgba(31, 168, 150, 0.18), transparent 50%),
-    radial-gradient(ellipse 45% 35% at 85% 20%, rgba(232, 245, 240, 0.06), transparent 45%);
-  animation: drift 18s ease-in-out infinite alternate;
-}
-
 .grid {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.4;
   background-image:
     linear-gradient(var(--landing-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--landing-line) 1px, transparent 1px);
   background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 20%, transparent 75%);
-  animation: gridPulse 12s ease-in-out infinite;
 }
 
 .hero {
@@ -164,25 +145,6 @@
   }
 }
 
-@keyframes drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(0, 18px, 0) scale(1.04);
-  }
-}
-
-@keyframes gridPulse {
-  0%,
-  100% {
-    opacity: 0.28;
-  }
-  50% {
-    opacity: 0.42;
-  }
-}
-
 @media (max-width: 520px) {
   .ctas {
     width: 100%;
@@ -197,8 +159,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .atmosphere,
-  .grid,
   .brand,
   .headline,
   .support,

@@ -46,7 +46,6 @@ export default function LandingHero() {
 
   return (
     <div className={`${styles.root} ${syne.variable} ${dmSans.variable}`}>
-      <div className={styles.atmosphere} aria-hidden />
       <div className={styles.grid} aria-hidden />
 
       <main className={styles.hero}>
