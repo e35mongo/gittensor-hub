@@ -20,7 +20,7 @@
     "better-sqlite3": "^11.7.0",
     "isomorphic-dompurify": "^3.19.0",
     "marked": "^18.0.6",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-is": "19.2.4",
