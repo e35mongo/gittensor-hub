@@ -93,59 +93,53 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem 1.35rem;
-  margin-top: 0.4rem;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
   animation: rise 0.9s ease-out 0.2s both;
 }
 
-.ctaPrimary {
+.ctaPrimary,
+.ctaSecondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  padding: 0 1.4rem;
-  border-radius: 8px;
-  font-size: 0.98rem;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-radius: 6px;
+  font-size: 0.94rem;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.01em;
   text-decoration: none;
-  background: var(--landing-accent);
-  color: #04221e;
-  border: 1px solid transparent;
-  transition: transform 0.15s ease, background 0.15s ease;
+  /* Kill any inherited button/link washes from global styles */
+  background-image: none !important;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ctaPrimary {
+  background-color: #2bb3a4;
+  color: #041412;
+  border: 1px solid #2bb3a4;
 }
 
 .ctaPrimary:hover {
-  background: #5ee0d2;
-  transform: translateY(-1px);
+  background-color: #34c4b4;
+  border-color: #34c4b4;
+  color: #041412;
 }
 
-.ctaLinks {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.ctaLink {
-  color: var(--landing-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.ctaLink:hover {
+.ctaSecondary {
+  background-color: transparent;
   color: var(--landing-fg);
-  border-bottom-color: rgba(61, 214, 198, 0.55);
+  border: 1px solid rgba(232, 245, 240, 0.22);
 }
 
-.ctaSep {
-  color: rgba(155, 184, 175, 0.45);
-  font-size: 0.95rem;
-  user-select: none;
+.ctaSecondary:hover {
+  background-color: rgba(232, 245, 240, 0.06);
+  border-color: rgba(61, 214, 198, 0.4);
+  color: var(--landing-fg);
 }
 
 @keyframes rise {
