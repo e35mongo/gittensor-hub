@@ -15,6 +15,9 @@ import {
   GearIcon,
   BellIcon,
   EyeIcon,
+  PersonIcon,
+  PeopleIcon,
+  ShieldIcon,
 } from '@primer/octicons-react';
 
 interface Section {
@@ -27,15 +30,17 @@ const SECTIONS: Section[] = [
   { id: 'overview', title: 'Overview', icon: <BookIcon size={16} /> },
   { id: 'dashboard', title: 'Dashboard', icon: <ChecklistIcon size={16} /> },
   { id: 'explorer', title: 'Explorer', icon: <GlobeIcon size={16} /> },
+  { id: 'miners', title: 'Miners', icon: <PersonIcon size={16} /> },
+  { id: 'maintainers', title: 'Maintainers', icon: <PeopleIcon size={16} /> },
   { id: 'repositories', title: 'Repositories', icon: <StackIcon size={16} /> },
   { id: 'issues', title: 'Issues', icon: <IssueOpenedIcon size={16} /> },
   { id: 'pulls', title: 'Pull Requests', icon: <GitPullRequestIcon size={16} /> },
+  { id: 'contributing', title: 'Contributing & anti-slop', icon: <ShieldIcon size={16} /> },
   { id: 'manage', title: 'Manage Repositories', icon: <RepoIcon size={16} /> },
   { id: 'notifications', title: 'Notifications', icon: <BellIcon size={16} /> },
   { id: 'settings', title: 'Settings', icon: <GearIcon size={16} /> },
   { id: 'shortcuts', title: 'Keyboard Shortcuts', icon: <EyeIcon size={16} /> },
 ];
-
 export default function DocsPage() {
   const [section, setSection] = useState<string>('overview');
   const tocRef = useRef<HTMLDivElement | null>(null);
@@ -104,7 +109,8 @@ export default function DocsPage() {
           <Heading sx={{ fontSize: [3, null, 4], lineHeight: 1.2 }}>Gittensor Hub Documentation</Heading>
         </Box>
         <Text sx={{ color: 'fg.muted', display: 'block', maxWidth: 720 }}>
-          How the dashboard, explorer, pipelines, and SN74 scoring views work.
+          How the dashboard, miners / maintainers boards, pipelines, and SN74 scoring views work — plus how to
+          contribute without AI slop.
         </Text>
       </PageLayout.Header>
       <PageLayout.Content>
@@ -196,12 +202,19 @@ export default function DocsPage() {
               </P>
               <H3>Tech stack</H3>
               <Ul>
-                <Li>Next.js 15 (App Router) + TypeScript + Primer React</Li>
+                <Li>
+                  <strong>Next.js 16</strong> (App Router) + <strong>React 19</strong> + TypeScript + Primer React
+                </Li>
                 <Li>SQLite cache for issues / PRs / linked-issue map</Li>
                 <Li>TanStack Query for client-side polling and cache</Li>
                 <Li>Gittensor live APIs for repo, PR, and miner score data</Li>
                 <Li>GitHub REST polling for issue, PR, and linked-issue metadata</Li>
               </Ul>
+              <P>
+                Public pages without sign-in: <Code>/</Code> (landing), <Code>/changelog</Code>,{' '}
+                <Code>/presence</Code>, <Code>/status</Code>. In-app help lives here at <Code>/docs</Code>. Ask Hub
+                (floating chat) answers SN74 / Hub FAQ questions from the knowledge pack with citations.
+              </P>
             </Article>
 
             <Article id="dashboard" title="Dashboard">
@@ -281,6 +294,66 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
               <P>Both side rails are <strong>resizable</strong> — drag the vertical separators.</P>
             </Article>
 
+            <Article id="miners" title="Miners">
+              <P>
+                <Code>/miners</Code> — SN74 miner leaderboard and reward-stream breakdown. Use it to see who is
+                earning from pull requests, issue discovery, and maintainer cut across the live listed repos.
+              </P>
+              <Ul>
+                <Li>
+                  <strong>Streams</strong>: filter by Pull requests, Issue discovery, or Maintainer cut (or show all)
+                </Li>
+                <Li>
+                  <strong>Card / list views</strong>: activity, estimated τ/day context, and per-stream share where
+                  available
+                </Li>
+                <Li>
+                  <strong>Tracked miners</strong>: star miners to keep a personal watchlist (stored locally)
+                </Li>
+                <Li>
+                  <strong>Detail modal</strong>: open a miner for repo-level contribution detail
+                </Li>
+              </Ul>
+              <P>
+                Hub Score on this product is <strong>not</strong> the same as Gittensor TAO emissions. Scores and
+                reward shares shown here mirror allocator math for visibility; validators decide emissions from{' '}
+                <Code>master_repositories.json</Code>.
+              </P>
+            </Article>
+
+            <Article id="maintainers" title="Maintainers">
+              <P>
+                <Code>/maintainers</Code> — board for repository maintainers on tracked SN74 repos: throughput,
+                grades, and how maintainer cut is shared when registered maintainer miners exist.
+              </P>
+              <Ul>
+                <Li>
+                  <strong>Maintainer view</strong>: each maintainer across repos they serve, with grade / activity
+                  signals
+                </Li>
+                <Li>
+                  <strong>Repo view</strong>: each listed repo and its maintainers (count + contribution modes)
+                </Li>
+                <Li>
+                  <strong>Reward context</strong>: τ/day style splits among registered miner-maintainers when the
+                  allocator applies <Code>maintainer_cut</Code>
+                </Li>
+              </Ul>
+              <P>
+                Hub maintainers (this repo) also run presence ops: ≤48h replies on GitHub / Discord, weekly{' '}
+                <Code>/changelog</Code> notes, and the wanted board — see <Code>/presence</Code> and{' '}
+                <a
+                  href="https://github.com/e35mongo/gittensor-hub/blob/main/docs/presence.md"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: 'var(--accent-fg)' }}
+                >
+                  docs/presence.md
+                </a>
+                .
+              </P>
+            </Article>
+
             <Article id="repositories" title="Repositories">
               <P>
                 <Code>/repositories</Code> — a strategy-oriented SN74 repository catalog. It combines the live
@@ -339,6 +412,72 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
                 <Li><strong>Linked issues</strong>: issue chips mirror Explorer and open the issue detail view directly</Li>
                 <Li><strong>Sorting</strong>: server-backed sort controls keep large PR sets responsive</Li>
               </Ul>
+            </Article>
+
+            <Article id="contributing" title="Contributing & anti-slop">
+              <P>
+                Contributions to <strong>gittensor-hub</strong> itself go through a curated wanted board. Unsolicited
+                AI drive-bys are labeled <Code>slop</Code> and score <strong>0</strong>.
+              </P>
+              <H3>Do this</H3>
+              <Ul>
+                <Li>
+                  Pick an open{' '}
+                  <a
+                    href="https://github.com/e35mongo/gittensor-hub/labels/gittensor-hub%3Awanted"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: 'var(--accent-fg)' }}
+                  >
+                    gittensor-hub:wanted
+                  </a>{' '}
+                  or help-wanted issue
+                </Li>
+                <Li>
+                  Link that <strong>currently open</strong> issue from the PR (<Code>Closes #N</Code>)
+                </Li>
+                <Li>Keep the diff focused on that slice; include a screenshot for user-visible UI</Li>
+                <Li>Stay at ≤ 5 open PRs per author</Li>
+              </Ul>
+              <H3>Do not do this</H3>
+              <Ul>
+                <Li>Unsolicited refactors, typo farms, or README spam → <Code>slop</Code></Li>
+                <Li>
+                  <Code>maintainer-only</Code> / roadmap epics — no miner / Hub Score points
+                </Li>
+                <Li>UI changes on a backend/docs-only issue (jagtensor flags <Code>pr:ui-scope</Code>)</Li>
+                <Li>Plagiarism or alt accounts → <Code>banned</Code></Li>
+              </Ul>
+              <P>
+                Full rules:{' '}
+                <a
+                  href="https://github.com/e35mongo/gittensor-hub/blob/main/CONTRIBUTING.md"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: 'var(--accent-fg)' }}
+                >
+                  CONTRIBUTING.md
+                </a>
+                . Linked-issue gate + examples:{' '}
+                <a
+                  href="https://github.com/e35mongo/gittensor-hub/blob/main/docs/github-os.md#linked-issue-gate"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: 'var(--accent-fg)' }}
+                >
+                  docs/github-os.md
+                </a>
+                . Bot codes:{' '}
+                <a
+                  href="https://github.com/e35mongo/gittensor-hub/blob/main/docs/bots.md"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: 'var(--accent-fg)' }}
+                >
+                  docs/bots.md
+                </a>
+                . A merge is <strong>not</strong> a promise of Hub Score or TAO.
+              </P>
             </Article>
 
             <Article id="manage" title="Manage Repositories">
