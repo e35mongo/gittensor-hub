@@ -37,8 +37,27 @@ Majors add `pr:flagged` + `manual-review` plus granular labels (`pr:missing-issu
 
 Also: `wanted-buffer.yml` weekly tops up `gittensor-hub:wanted` issues.
 
-## 3) Verify
+## 3) Maintainer slash commands
+
+Workflow: `jagtensor-commands.yml` → `scripts/jagtensor-commands.mjs`  
+Triggers on PR comments only. **Maintainer-only** (`OWNER` / `MEMBER` / `COLLABORATOR`). Everyone else who tries gets a short denial — no policy re-run.
+
+| Command | Effect |
+| --- | --- |
+| `@jagtensor /review` (or `/policy`) | Re-run policy sticky comment + labels |
+| `@jagtensor /help` | List commands |
+
+Examples:
+
+```text
+@jagtensor /review
+```
+
+Policy still runs automatically on every PR `opened` / `synchronize` — slash commands are for on-demand maintainer re-checks.
+
+## 4) Verify
 
 1. PR without `#N` → jagtensor sticky comment with `missing-linked-issue`.
 2. UI on a backend-only wanted issue → `ui-outside-issue-scope`.
 3. Job summary shows `Identity: jagtensor` when secrets + install are set.
+4. Maintainer comments `@jagtensor /review` → policy re-runs; a non-maintainer gets a denial reply.

@@ -52,6 +52,7 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 | --- | --- |
 | `wanted-buffer.yml` | Weekly: ensure open `gittensor-hub:wanted` count meets the floor from `.github/wanted-backlog.json` |
 | `pr-jagtensor-policy.yml` | jagtensor gates: linked issue, UI scope, screenshots, size, protected paths, ≤5 open PRs |
+| `jagtensor-commands.yml` | Maintainer-only `@jagtensor /review` (and `/help`) on PR comments |
 | `build.yml` | Lint / typecheck / build |
 
 Bot identity: see [docs/bots.md](./bots.md). Policy comments speak as **jagtensor[bot]** once `JAGTENSOR_APP_*` secrets are set.

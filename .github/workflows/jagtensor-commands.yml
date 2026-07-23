@@ -1,0 +1,98 @@
+name: jagtensor commands
+
+# Maintainer-only slash commands on PR comments, e.g. `@jagtensor /review`.
+# Non-maintainers who try get a short denial (no policy re-run).
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: jagtensor-cmd-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  command:
+    if: >
+      github.event.issue.pull_request != null &&
+      (
+        contains(github.event.comment.body, '@jagtensor') ||
+        startsWith(github.event.comment.body, '/review') ||
+        startsWith(github.event.comment.body, '/policy') ||
+        startsWith(github.event.comment.body, '/help')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Mint jagtensor token
+        id: jagtensor
+        uses: ./.github/actions/jagtensor-token
+        with:
+          app-id: ${{ secrets.JAGTENSOR_APP_ID || secrets.JAGUAR_APP_ID }}
+          private-key: ${{ secrets.JAGTENSOR_APP_PRIVATE_KEY || secrets.JAGUAR_APP_PRIVATE_KEY }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Parse command + authz
+        id: parse
+        env:
+          GH_TOKEN: ${{ steps.jagtensor.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_ASSOCIATION: ${{ github.event.comment.author_association }}
+          COMMENT_LOGIN: ${{ github.event.comment.user.login }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          node scripts/jagtensor-commands.mjs --write | tee jagtensor-cmd.json
+          action=$(node -e "const j=require('./jagtensor-cmd.json'); process.stdout.write(j.action||'ignore')")
+          echo "action=${action}" >> "$GITHUB_OUTPUT"
+
+      - name: Re-run policy (/review)
+        if: steps.parse.outputs.action == 'review'
+        env:
+          GH_TOKEN: ${{ steps.jagtensor.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          node scripts/pr-jagtensor-policy.mjs \
+            --pr "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --write | tee jagtensor-policy.json
+          gh api \
+            -X POST \
+            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content='+1' || true
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo '## jagtensor command'
+            echo "Identity: \`${{ steps.jagtensor.outputs.identity }}\`"
+            echo "Actor: \`${{ github.event.comment.user.login }}\` (\`${{ github.event.comment.author_association }}\`)"
+            echo '```json'
+            cat jagtensor-cmd.json 2>/dev/null || echo '{}'
+            echo '```'
+            if [ -f jagtensor-policy.json ]; then
+              echo
+              echo '### Policy result'
+              echo '```json'
+              cat jagtensor-policy.json
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
