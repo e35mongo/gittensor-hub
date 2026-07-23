@@ -1,0 +1,185 @@
+.root {
+  --landing-ink: #07110f;
+  --landing-line: rgba(120, 200, 180, 0.1);
+  --landing-fg: #e8f5f0;
+  --landing-muted: #9bb8af;
+  --landing-accent: #3dd6c6;
+
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: var(--landing-fg);
+  background: var(--landing-ink);
+  font-family: var(--font-landing), 'DM Sans', sans-serif;
+}
+
+/* Quiet structure — not a fake loading skeleton. */
+.mesh {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(var(--landing-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--landing-line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  animation: meshIn 1s ease-out both;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(0.9rem, 2vw, 1.35rem);
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: min(640px, 100%);
+  padding: clamp(2rem, 7vw, 5rem) clamp(1.5rem, 6vw, 4rem);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0;
+  font-family: var(--font-landing), 'DM Sans', sans-serif;
+  font-size: clamp(2rem, 5.5vw, 3.15rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--landing-fg);
+  white-space: nowrap;
+  animation: rise 0.7s ease-out both;
+}
+
+.brandMark {
+  display: block;
+  width: clamp(42px, 5.5vw, 52px);
+  height: clamp(42px, 5.5vw, 52px);
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.headline {
+  margin: 0;
+  max-width: 15ch;
+  font-family: var(--font-landing), 'DM Sans', sans-serif;
+  font-size: clamp(1.45rem, 3.4vw, 1.95rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--landing-fg);
+  animation: rise 0.8s ease-out 0.08s both;
+}
+
+.support {
+  margin: 0;
+  max-width: 34rem;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--landing-muted);
+  animation: rise 0.85s ease-out 0.14s both;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+  animation: rise 0.9s ease-out 0.2s both;
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-radius: 6px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  /* Kill any inherited button/link washes from global styles */
+  background-image: none !important;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ctaPrimary {
+  background-color: #2bb3a4;
+  color: #041412;
+  border: 1px solid #2bb3a4;
+}
+
+.ctaPrimary:hover {
+  background-color: #34c4b4;
+  border-color: #34c4b4;
+  color: #041412;
+}
+
+.ctaSecondary {
+  background-color: transparent;
+  color: var(--landing-fg);
+  border: 1px solid rgba(232, 245, 240, 0.22);
+}
+
+.ctaSecondary:hover {
+  background-color: rgba(232, 245, 240, 0.06);
+  border-color: rgba(61, 214, 198, 0.4);
+  color: var(--landing-fg);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes meshIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.55;
+  }
+}
+
+@media (max-width: 520px) {
+  .ctas {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ctaPrimary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh,
+  .brand,
+  .headline,
+  .support,
+  .ctas {
+    animation: none;
+  }
+}

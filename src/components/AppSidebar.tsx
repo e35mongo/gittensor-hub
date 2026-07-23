@@ -17,6 +17,7 @@ import type { Icon } from '@primer/octicons-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import UserMenu from '@/components/UserMenu';
 import PriceTicker from '@/components/PriceTicker';
+import { isChromelessPath } from '@/lib/marketing-routes';
 
 interface NavItem {
   href: string;
@@ -40,9 +41,6 @@ const PRIMARY: NavItem[] = [
 const SECONDARY: NavItem[] = [
   { href: '/docs', label: 'Docs', icon: BookIcon },
 ];
-
-// Routes that should render full-bleed without the sidebar (pre-auth screens).
-const HIDE_ROUTES = new Set(['/sign-in']);
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');
@@ -105,7 +103,7 @@ export default function AppSidebar() {
   // AppShell handles route-based hiding + the body `data-no-sidebar`
   // attribute. We keep the route guard here too in case the component is
   // ever rendered outside AppShell.
-  if (HIDE_ROUTES.has(pathname)) return null;
+  if (isChromelessPath(pathname)) return null;
 
   return (
     <aside

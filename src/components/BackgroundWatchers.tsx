@@ -2,13 +2,11 @@
 
 import { usePathname } from 'next/navigation';
 import NewIssuesWatcher from './NewIssuesWatcher';
-
-// Pre-auth routes where the polling widgets would just rack up 401s.
-const NO_POLL_ROUTES = new Set(['/sign-in']);
+import { isChromelessPath } from '@/lib/marketing-routes';
 
 export default function BackgroundWatchers() {
   const pathname = usePathname();
-  if (NO_POLL_ROUTES.has(pathname)) return null;
+  if (isChromelessPath(pathname)) return null;
 
   return (
     <>

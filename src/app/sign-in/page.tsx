@@ -40,7 +40,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 function SignInBody() {
   const search = useSearchParams();
-  const next = search.get('next') || '/';
+  const next = search.get('next') || '/dashboard';
   const error = search.get('error');
   const href = `/api/auth/github/login?next=${encodeURIComponent(next)}`;
   const errorMsg = error ? ERROR_MESSAGES[error] ?? `Sign-in failed (${error}).` : null;

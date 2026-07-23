@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/session-token';
 import { getUserById } from '@/lib/auth';
-
-// Routes accessible without any session.
-const PUBLIC_PATHS = new Set(['/sign-in']);
-const PUBLIC_API_PREFIXES = ['/api/auth/'];
-
-function isPublic(pathname: string): boolean {
-  if (PUBLIC_PATHS.has(pathname)) return true;
-  if (PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) return true;
-  return false;
-}
+import { isPublicPath } from '@/lib/marketing-routes';
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (isPublic(pathname)) return NextResponse.next();
+
+  // Public routes skip auth — except signed-in users should not see /sign-in.
+  if (isPublicPath(pathname)) {
+    if (pathname === '/sign-in') {
+      const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+      const session = await verifySessionToken(token);
+      if (session) {
+        const user = getUserById(session.uid);
+        if (user && user.status !== 'rejected') {
+          const next = req.nextUrl.searchParams.get('next');
+          const safeNext =
+            next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+          const url = req.nextUrl.clone();
+          url.pathname = safeNext;
+          url.search = '';
+          return NextResponse.redirect(url);
+        }
+      }
+    }
+    return NextResponse.next();
+  }
 
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);

@@ -19,6 +19,7 @@ import type { Icon } from '@primer/octicons-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import UserMenu from '@/components/UserMenu';
 import PriceTicker from '@/components/PriceTicker';
+import { isChromelessPath } from '@/lib/marketing-routes';
 
 interface NavItem {
   href: string;
@@ -48,14 +49,12 @@ const mobileOverflowItems = [
   ...navItems.filter((item) => !mobilePrimaryHrefSet.has(item.href) && !mobileOverflowHrefs.includes(item.href)),
 ];
 
-// Routes that should render full-bleed without the nav header (pre-auth screens).
-const HIDE_HEADER_ROUTES = new Set(['/sign-in']);
-
 export default function AppHeader() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
+  const hideChrome = isChromelessPath(pathname);
 
   const isActive = (href: string) => pathname === href || (href !== '/' && pathname.startsWith(href));
   const moreActive = mobileOverflowItems.some((item) => isActive(item.href));
@@ -83,7 +82,7 @@ export default function AppHeader() {
     };
   }, [moreOpen]);
 
-  if (HIDE_HEADER_ROUTES.has(pathname)) return null;
+  if (hideChrome) return null;
 
   // Wrap in a plain div so the `data-app-header` attribute reliably lands
   // on a DOM node - Primer's <Header> doesn't forward arbitrary data
