@@ -10,7 +10,7 @@ body:
       value: |
         Bugs that earn Hub / Gittensor score must be **reproducible**. Drive-by “AI found a smell” reports without steps will be closed as `slop`.
 
-        Prefer picking an existing [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted) issue when one already covers the bug.
+        Prefer picking an existing [`gittensor-hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/gittensor-hub%3Awanted) issue when one already covers the bug.
   - type: textarea
     id: description
     attributes:

@@ -1,5 +1,5 @@
 name: Feature Request
-description: Propose a feature with design note. Maintainer may retarget to hub:wanted or maintainer-only.
+description: Propose a feature with design note. Maintainer may retarget to gittensor-hub:wanted or maintainer-only.
 title: "feat: "
 labels:
   - feature
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Feature requests are **intake**, not an automatic score grant. Maintainers may label `hub:wanted` (community eligible) or `maintainer-only` (no miner points).
+        Feature requests are **intake**, not an automatic score grant. Maintainers may label `gittensor-hub:wanted` (community eligible) or `maintainer-only` (no miner points).
 
         Unsolicited AI feature dumps without a concrete problem statement will be closed as `slop`.
   - type: textarea

@@ -35,7 +35,7 @@ jobs:
 
           This PR does not appear to reference a GitHub issue (`#N` / `Closes #N`).
 
-          For Hub Score / Gittensor-eligible contributions, link a **currently-open** issue — prefer [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted).
+          For Hub Score / Gittensor-eligible contributions, link a **currently-open** issue — prefer [`gittensor-hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/gittensor-hub%3Awanted).
 
           Drive-by AI refactors without a wanted issue may be labeled `slop` and closed.
 

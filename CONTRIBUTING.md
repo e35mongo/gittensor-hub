@@ -4,7 +4,7 @@
 
 1. Read the [README](./README.md)
 2. Stack: **Next.js 16**, React 19, TypeScript, Primer React, SQLite (`better-sqlite3`)
-3. Check [wanted issues](https://github.com/MkDev11/gittensor-hub/issues?q=is%3Aissue+is%3Aopen+label%3Ahub%3Awanted) before inventing work
+3. Check [wanted issues](https://github.com/MkDev11/gittensor-hub/issues?q=is%3Aissue+is%3Aopen+label%3Agittensor-hub%3Awanted) before inventing work
 4. Read [docs/github-os.md](./docs/github-os.md) for labels, milestones, and issue views
 
 ### Local Development
@@ -23,7 +23,7 @@ Most low-value PRs are agent-generated without deep thinking. We only want work 
 
 **Do this:**
 
-* Pick an open [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted) or [`help wanted`](https://github.com/MkDev11/gittensor-hub/labels/help%20wanted) issue
+* Pick an open [`gittensor-hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/gittensor-hub%3Awanted) or [`help wanted`](https://github.com/MkDev11/gittensor-hub/labels/help%20wanted) issue
 * Or [`good first issue`](https://github.com/MkDev11/gittensor-hub/labels/good%20first%20issue)
 * Link that **currently-open** issue from your PR (`Closes #N`)
 
@@ -39,7 +39,7 @@ Most low-value PRs are agent-generated without deep thinking. We only want work 
 Blank issues are **disabled**. Use a form:
 
 * **Bug Report** — reproduction + proof required (`gittensor:bug` path)
-* **Feature Request** — design note required; may become `hub:wanted` or `maintainer-only`
+* **Feature Request** — design note required; may become `gittensor-hub:wanted` or `maintainer-only`
 * **Claim wanted work** — only if you need a new wanted-scoped tracker
 
 Security: use [Security Advisories](https://github.com/MkDev11/gittensor-hub/security/advisories/new) — see [SECURITY.md](./SECURITY.md).
@@ -48,7 +48,7 @@ Security: use [Security Advisories](https://github.com/MkDev11/gittensor-hub/sec
 
 | Label | Meaning |
 | --- | --- |
-| `hub:wanted` | Maintainer-requested — high-score eligible gate |
+| `gittensor-hub:wanted` | Maintainer-requested — high-score eligible gate |
 | `gittensor:bug` | Bug fix path (when accepted / merged with policy) |
 | `gittensor:feature` | Feature path tied to a real issue |
 | `gittensor:priority` | Maintainer-only grant for outstanding work |

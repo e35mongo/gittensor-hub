@@ -3,58 +3,58 @@
   "items": [
     {
       "id": "landing-v1",
-      "title": "hub:wanted — Public landing page v1 (brand + SN74 proof + CTAs)",
+      "title": "gittensor-hub:wanted — Public landing page v1 (brand + SN74 proof + CTAs)",
       "milestone": "Presence & Re-list",
-      "labels": ["hub:wanted", "help wanted", "frontend"],
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
       "body": "## Goal\nShip a public landing page at `/` (or dedicated marketing route) that explains Gittensor Hub, shows live SN74 proof, and CTAs to sign-in / docs / wanted board.\n\n## Acceptance\n- Chromeless public route (no OAuth wall)\n- Brand-first hero; one CTA group\n- Link to changelog + wanted issues\n- Works on mobile + desktop\n\n## Anti-slop\nNo generic AI purple theme. Match hub visual language or a deliberate branded landing system.\n"
     },
     {
       "id": "changelog-page",
-      "title": "hub:wanted — Weekly /changelog page + first ship note",
+      "title": "gittensor-hub:wanted — Weekly /changelog page + first ship note",
       "milestone": "Presence & Re-list",
-      "labels": ["hub:wanted", "help wanted", "frontend", "docs"],
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "docs"],
       "body": "## Goal\nAdd `/changelog` listing weekly ship notes (markdown or structured data).\n\n## Acceptance\n- Public route\n- At least one real entry describing recent work\n- Documented how maintainers add the next weekly note\n"
     },
     {
       "id": "status-page",
-      "title": "hub:wanted — Public /status page for poller freshness",
+      "title": "gittensor-hub:wanted — Public /status page for poller freshness",
       "milestone": "Platform Foundation",
-      "labels": ["hub:wanted", "help wanted", "frontend", "backend"],
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
       "body": "## Goal\nPublic status page showing poller / cache freshness (repos cached, last fetch, recent errors).\n\n## Acceptance\n- Uses existing poller-status data (or a public API wrapper)\n- Clear healthy / degraded presentation\n- Linked from docs or landing\n"
     },
     {
       "id": "docs-miners-maintainers",
-      "title": "hub:wanted — Docs cover Miners, Maintainers, and anti-slop",
+      "title": "gittensor-hub:wanted — Docs cover Miners, Maintainers, and anti-slop",
       "milestone": "Platform Foundation",
-      "labels": ["hub:wanted", "help wanted", "docs", "frontend"],
-      "body": "## Goal\nExtend in-app `/docs` (and README pointers) so Miners + Maintainers views and anti-slop contribution rules are documented.\n\n## Acceptance\n- New doc sections for Miners and Maintainers\n- Anti-slop / hub:wanted rules summarized with links to CONTRIBUTING\n- Stack versions say Next 16 / React 19\n"
+      "labels": ["gittensor-hub:wanted", "help wanted", "docs", "frontend"],
+      "body": "## Goal\nExtend in-app `/docs` (and README pointers) so Miners + Maintainers views and anti-slop contribution rules are documented.\n\n## Acceptance\n- New doc sections for Miners and Maintainers\n- Anti-slop / gittensor-hub:wanted rules summarized with links to CONTRIBUTING\n- Stack versions say Next 16 / React 19\n"
     },
     {
       "id": "my-work-cockpit",
-      "title": "hub:wanted — My Work cockpit for signed-in GitHub user",
+      "title": "gittensor-hub:wanted — My Work cockpit for signed-in GitHub user",
       "milestone": "Platform Foundation",
-      "labels": ["hub:wanted", "help wanted", "frontend"],
-      "body": "## Goal\nOne page (`/my-work`) showing the signed-in user's open issues/PRs on this repo (and later Hub Score placeholder).\n\n## Acceptance\n- Auth-gated\n- Lists user's open PRs/issues against MkDev11/gittensor-hub\n- Empty state points at hub:wanted board\n"
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
+      "body": "## Goal\nOne page (`/my-work`) showing the signed-in user's open issues/PRs on this repo (and later Hub Score placeholder).\n\n## Acceptance\n- Auth-gated\n- Lists user's open PRs/issues against MkDev11/gittensor-hub\n- Empty state points at gittensor-hub:wanted board\n"
     },
     {
       "id": "chatbot-mvp",
-      "title": "hub:wanted — Gittensor explainer chatbot MVP (docs RAG)",
+      "title": "gittensor-hub:wanted — Gittensor explainer chatbot MVP (docs RAG)",
       "milestone": "Platform Foundation",
-      "labels": ["hub:wanted", "help wanted", "backend", "frontend"],
+      "labels": ["gittensor-hub:wanted", "help wanted", "backend", "frontend"],
       "body": "## Goal\nRetrieval-only chatbot over committed docs (allocator math, how to mine, hub guides). Cite sources; never invent emission figures.\n\n## Acceptance\n- `/chat` (public or signed-in — document choice)\n- Answers “how do SN74 emissions split?” with citations\n- Clear “not financial advice / not a score oracle” disclaimer\n"
     },
     {
       "id": "subnet-registry-shell",
-      "title": "hub:wanted — Subnet registry + /subnet/[netuid] metagraph shell",
+      "title": "gittensor-hub:wanted — Subnet registry + /subnet/[netuid] metagraph shell",
       "milestone": "Multi-subnet Wedge",
-      "labels": ["hub:wanted", "help wanted", "frontend", "backend"],
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
       "body": "## Goal\nRegistry for netuid 1–128 with live/inactive/unknown, plus generic metagraph page per netuid (taoswap-style proxy).\n\n## Acceptance\n- `/subnets` list\n- `/subnet/[netuid]/metagraph` shows neuron table or honest empty/error\n- SN74 linked as first-class hub experience\n"
     },
     {
       "id": "pr-gate-docs",
-      "title": "hub:wanted — Document PR linked-issue gate for contributors",
+      "title": "gittensor-hub:wanted — Document PR linked-issue gate for contributors",
       "milestone": "Presence & Re-list",
-      "labels": ["hub:wanted", "help wanted", "docs"],
+      "labels": ["gittensor-hub:wanted", "help wanted", "docs"],
       "body": "## Goal\nShort docs snippet + CONTRIBUTING cross-links explaining the linked-open-issue requirement and max-2-PR rule.\n\n## Acceptance\n- Visible from README or docs/github-os.md\n- Examples of good vs slop PRs\n"
     }
   ]

@@ -1,16 +1,16 @@
 name: Claim wanted work
-description: Claim or discuss a hub:wanted issue you intend to open a PR for.
+description: Claim or discuss a gittensor-hub:wanted issue you intend to open a PR for.
 title: "claim: "
 labels:
-  - hub:wanted
+  - gittensor-hub:wanted
   - help wanted
 body:
   - type: markdown
     attributes:
       value: |
-        Use this only if you need a **new** wanted-scoped tracking issue. Prefer commenting on an existing [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted) issue instead of opening duplicates.
+        Use this only if you need a **new** wanted-scoped tracking issue. Prefer commenting on an existing [`gittensor-hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/gittensor-hub%3Awanted) issue instead of opening duplicates.
 
-        Score-eligible PRs must link a currently-open `hub:wanted` (or maintainer-accepted) issue.
+        Score-eligible PRs must link a currently-open `gittensor-hub:wanted` (or maintainer-accepted) issue.
   - type: input
     id: related
     attributes:

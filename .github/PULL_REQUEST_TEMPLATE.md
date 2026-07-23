@@ -11,7 +11,7 @@ Closes #
 ## Type of Change
 
 - [ ] Bug fix (`gittensor:bug` path)
-- [ ] Feature (`gittensor:feature` / `hub:wanted` path)
+- [ ] Feature (`gittensor:feature` / `gittensor-hub:wanted` path)
 - [ ] Enhancement
 - [ ] Refactor (usually not score-eligible unless linked to wanted work)
 - [ ] Documentation
@@ -19,7 +19,7 @@ Closes #
 
 ## Anti-slop checklist
 
-- [ ] Linked issue is **open** and in scope (prefer `hub:wanted` / `help wanted`)
+- [ ] Linked issue is **open** and in scope (prefer `gittensor-hub:wanted` / `help wanted`)
 - [ ] Diff is focused — no drive-by README/typo farms or unrelated refactors
 - [ ] Includes proof of understanding (repro, design note, or test) in issue or PR body
 - [ ] I have **≤ 2** open PRs on this repository (including this one)
