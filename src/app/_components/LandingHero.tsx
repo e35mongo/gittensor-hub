@@ -25,7 +25,7 @@ const DOCS_URL =
   'https://github.com/e35mongo/gittensor-hub/blob/main/CONTRIBUTING.md';
 
 export default function LandingHero() {
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,12 +46,20 @@ export default function LandingHero() {
 
   return (
     <div className={`${styles.root} ${syne.variable} ${dmSans.variable}`}>
-      <div className={styles.grid} aria-hidden />
+      <div className={styles.stage} aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/landing-product.png"
+          alt=""
+          className={styles.stageImage}
+        />
+        <div className={styles.scrim} />
+      </div>
 
       <main className={styles.hero}>
         <p className={styles.brand}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/gt-logo-white.png" alt="" width={40} height={40} className={styles.brandMark} />
+          <img src="/gt-logo-white.png" alt="" width={48} height={48} className={styles.brandMark} />
           Gittensor Hub
         </p>
 
@@ -63,14 +71,19 @@ export default function LandingHero() {
 
         <div className={styles.ctas}>
           <Link href={primaryHref} className={styles.ctaPrimary} prefetch={false}>
-            {authed === null ? 'Continue' : primaryLabel}
+            {primaryLabel}
           </Link>
-          <a href={DOCS_URL} className={styles.ctaGhost} target="_blank" rel="noreferrer">
-            Explore docs
-          </a>
-          <a href={WANTED_URL} className={styles.ctaGhost} target="_blank" rel="noreferrer">
-            Wanted board
-          </a>
+          <div className={styles.ctaLinks}>
+            <a href={DOCS_URL} className={styles.ctaLink} target="_blank" rel="noreferrer">
+              Explore docs
+            </a>
+            <span className={styles.ctaSep} aria-hidden>
+              ·
+            </span>
+            <a href={WANTED_URL} className={styles.ctaLink} target="_blank" rel="noreferrer">
+              Wanted board
+            </a>
+          </div>
         </div>
       </main>
     </div>
