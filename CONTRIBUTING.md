@@ -70,6 +70,8 @@ When this repo is Gittensor-listed, validator `label_multipliers` should mirror 
 * Prefer **merge-as-is or close with reason** for drive-by / off-scope PRs (open a fresh corrected PR)
 * Do not DM or spam @mentions to chase review — it slows you down
 * Address requested changes with new commits on the same branch
+* **Unrelated UI work** (changing pages/components/styles on a backend/docs-only issue, or UI with no linked `frontend` wanted issue) is flagged by the PR UI scope bot (`pr:flagged`) and may be closed as `slop`
+* User-visible UI PRs must include a screenshot or before/after in the PR body
 
 ### Code Standards
 
