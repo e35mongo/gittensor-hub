@@ -35,7 +35,7 @@ export default function LandingHero() {
   }, []);
 
   const primaryHref = authed ? '/dashboard' : '/sign-in?next=/dashboard';
-  const primaryLabel = authed ? 'Open dashboard' : 'Sign in with GitHub';
+  const primaryLabel = 'Dashboard';
 
   return (
     <div className={`${styles.root} ${dmSans.variable}`}>
