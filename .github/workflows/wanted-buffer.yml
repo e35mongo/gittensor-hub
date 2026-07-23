@@ -2,6 +2,7 @@ name: Wanted buffer
 
 # Tops up open gittensor-hub:wanted issues from .github/wanted-backlog.json so miners
 # always have maintainer-requested work.
+# Issues authored as jaguar[bot] when JAGUAR_APP_* secrets are set; else github-actions.
 
 on:
   workflow_dispatch:
@@ -26,6 +27,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Mint jaguar token
+        id: jaguar
+        uses: ./.github/actions/jaguar-token
+        with:
+          app-id: ${{ secrets.JAGUAR_APP_ID }}
+          private-key: ${{ secrets.JAGUAR_APP_PRIVATE_KEY }}
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -33,7 +41,7 @@ jobs:
 
       - name: Create missing gittensor-hub:wanted issues
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.jaguar.outputs.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: node scripts/wanted-buffer.mjs --write | tee wanted-buffer.log
 
@@ -41,6 +49,7 @@ jobs:
         run: |
           {
             echo '## Wanted buffer'
+            echo "Identity: \`${{ steps.jaguar.outputs.identity }}\`"
             echo '```json'
             cat wanted-buffer.log
             echo '```'

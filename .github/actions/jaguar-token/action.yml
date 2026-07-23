@@ -1,0 +1,51 @@
+name: Mint jaguar GitHub App token
+description: >
+  Create an installation access token for the jaguar GitHub App when secrets
+  are configured; otherwise fall back to github.token (comments as github-actions).
+
+inputs:
+  app-id:
+    description: Jaguar GitHub App ID
+    required: false
+    default: ""
+  private-key:
+    description: Jaguar GitHub App private key (PEM)
+    required: false
+    default: ""
+
+outputs:
+  token:
+    description: Token to use as GH_TOKEN
+    value: ${{ steps.pick.outputs.token }}
+  identity:
+    description: jaguar | github-actions
+    value: ${{ steps.pick.outputs.identity }}
+
+runs:
+  using: composite
+  steps:
+    - name: Create jaguar app token
+      id: mint
+      if: ${{ inputs.app-id != '' && inputs.private-key != '' }}
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+
+    - name: Select token
+      id: pick
+      shell: bash
+      env:
+        APP_TOKEN: ${{ steps.mint.outputs.token }}
+        FALLBACK: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        if [ -n "${APP_TOKEN:-}" ]; then
+          echo "token=${APP_TOKEN}" >> "$GITHUB_OUTPUT"
+          echo "identity=jaguar" >> "$GITHUB_OUTPUT"
+          echo "Using jaguar GitHub App token."
+        else
+          echo "token=${FALLBACK}" >> "$GITHUB_OUTPUT"
+          echo "identity=github-actions" >> "$GITHUB_OUTPUT"
+          echo "JAGUAR_APP_ID / JAGUAR_APP_PRIVATE_KEY not set — falling back to github.token."
+        fi
