@@ -31,7 +31,7 @@ Most low-value PRs are agent-generated without deep thinking. We only want work 
 
 * Unsolicited AI refactors, typo farms, or “improve README” spam → labeled `slop`, score **0**, usually closed
 * Work labeled [`maintainer-only`](https://github.com/MkDev11/gittensor-hub/labels/maintainer-only) — **no** miner / Hub Score points
-* Opening a 3rd concurrent PR (max **5** open PRs per author)
+* Opening more than **5** concurrent PRs (jagtensor flags `too-many-open-prs`)
 * Plagiarism or alt/sockpuppet farming → `banned`
 
 ### Creating Issues
@@ -61,9 +61,10 @@ When this repo is Gittensor-listed, validator `label_multipliers` should mirror 
 ### Pull requests
 
 1. Branch from `main`, PR into `main`
-2. Fill the PR template — linked open issue is required for score-eligible work
+2. Fill the PR template — linked open issue is required for score-eligible work (see [Linked-issue gate](./docs/github-os.md#linked-issue-gate))
 3. Keep the diff focused
 4. Ensure `pnpm run lint` and `pnpm build` pass
+5. Stay at ≤ **5** open PRs per author
 
 #### Review norms
 

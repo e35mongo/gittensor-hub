@@ -57,6 +57,27 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 
 Bot identity: see [docs/bots.md](./bots.md). Policy comments speak as **jagtensor[bot]** once `JAGTENSOR_APP_*` secrets are set.
 
+## Linked-issue gate
+
+Score-eligible PRs must point at a **currently open** issue. jagtensor enforces this on every PR (`missing-linked-issue` / `linked-issue-not-open`).
+
+### Required
+
+1. Pick an open [`gittensor-hub:wanted`](https://github.com/e35mongo/gittensor-hub/labels/gittensor-hub%3Awanted) / [`help wanted`](https://github.com/e35mongo/gittensor-hub/labels/help%20wanted) issue (or another accepted score path).
+2. In the PR body (and ideally the title), link it: `Closes #123` or at least `#123`.
+3. Keep ≤ **5** open PRs per author — close or merge before opening more.
+
+### Good vs slop
+
+| Good | Slop / will be flagged |
+| --- | --- |
+| `Closes #266` — implements the wanted `/my-work` shell only | No `#N` at all |
+| Links an **open** wanted issue; diff matches that slice | Links a **closed** or unrelated epic |
+| One PR per wanted child issue | Drive-by README / typo farm with no issue |
+| Screenshot in body when UI changes | UI on a backend/docs-only issue |
+
+Full bot codes: [docs/bots.md](./bots.md). Contributor rules: [CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## Wanted buffer
 
 Curated seeds live in [`.github/wanted-backlog.json`](../.github/wanted-backlog.json). Maintainers edit that file; the weekly workflow opens missing issues labeled `gittensor-hub:wanted` + `help wanted`.
