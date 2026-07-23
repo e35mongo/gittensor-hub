@@ -1,6 +1,6 @@
 # PR labels (gittensor-hub)
 
-Detailed `pr:*` labels for triage. jaguar applies/clears the **auto** ones on each policy run.
+Detailed `pr:*` labels for triage. jagtensor applies/clears the **auto** ones on each policy run.
 
 ## Policy findings (auto)
 
@@ -15,7 +15,7 @@ Detailed `pr:*` labels for triage. jaguar applies/clears the **auto** ones on ea
 | `pr:large` | Above size warn threshold |
 | `pr:too-many-open` | Author > 2 open PRs |
 | `pr:needs-tests` | `src/` changed, no tests in diff |
-| `pr:needs-work` | Any jaguar finding still open |
+| `pr:needs-work` | Any jagtensor finding still open |
 | `pr:flagged` | Any **major** finding |
 | `manual-review` | Same as flagged (human hold) |
 

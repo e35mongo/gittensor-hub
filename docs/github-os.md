@@ -12,7 +12,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the scoring-relevant set. Trust / 
 * `status: waiting-on-author`
 * Area: `backend`, `frontend`, `docs`, `roadmap`
 
-Detailed PR taxonomy (size, surface, jaguar findings, review lifecycle): [docs/pr-labels.md](./pr-labels.md) · seed [`.github/pr-labels.json`](../.github/pr-labels.json).
+Detailed PR taxonomy (size, surface, jagtensor findings, review lifecycle): [docs/pr-labels.md](./pr-labels.md) · seed [`.github/pr-labels.json`](../.github/pr-labels.json).
 
 ## Milestones
 
@@ -51,10 +51,10 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 | Workflow | Role |
 | --- | --- |
 | `wanted-buffer.yml` | Weekly: ensure open `gittensor-hub:wanted` count meets the floor from `.github/wanted-backlog.json` |
-| `pr-jaguar-policy.yml` | jaguar gates: linked issue, UI scope, screenshots, size, protected paths, ≤2 open PRs |
+| `pr-jagtensor-policy.yml` | jagtensor gates: linked issue, UI scope, screenshots, size, protected paths, ≤2 open PRs |
 | `build.yml` | Lint / typecheck / build |
 
-Bot identity + optional LoopOver: see [docs/bots.md](./bots.md). Policy comments speak as **jaguar[bot]** once `JAGUAR_APP_*` secrets are set.
+Bot identity + optional LoopOver: see [docs/bots.md](./bots.md). Policy comments speak as **jagtensor[bot]** once `JAGTENSOR_APP_*` secrets are set.
 
 ## Wanted buffer
 

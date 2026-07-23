@@ -13,7 +13,7 @@ wantedPaths:
   - "content/chat/**"
   - "docs/chat/**"
 
-# Any match → not a community-data submission; hold for human / jaguar policy bots.
+# Any match → not a community-data submission; hold for human / jagtensor policy bots.
 blockedPaths:
   - "*"
   - ".*"
@@ -67,4 +67,4 @@ settings:
 review:
   note: "Link an open gittensor-hub:wanted issue. UI changes require the frontend label + a screenshot. Unrelated UI on backend/docs issues will be flagged."
   footer:
-    text: "Reviewed with LoopOver · hub policy also enforced by jaguar Actions bots."
+    text: "Reviewed with LoopOver · hub policy also enforced by jagtensor Actions bots."

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * jaguar policy review — deterministic hub PR gates (no LoopOver clone).
+ * jagtensor policy review — deterministic hub PR gates (no LoopOver clone).
  *
  * Checks: linked issue, UI scope, screenshots, size, protected paths,
  * concurrent open PRs, and src-without-tests nudges.
  *
  * Usage (CI):
- *   node scripts/pr-jaguar-policy.mjs --pr <n> --repo owner/name [--write]
+ *   node scripts/pr-jagtensor-policy.mjs --pr <n> --repo owner/name [--write]
  */
 import { execFileSync } from 'node:child_process';
 
@@ -19,7 +19,12 @@ function flag(name) {
 
 const PR = flag('--pr') || process.env.PR_NUMBER;
 const REPO = flag('--repo') || process.env.GITHUB_REPOSITORY;
-const MARKER = '<!-- gittensor-hub:jaguar-policy -->';
+const MARKER = '<!-- gittensor-hub:jagtensor-policy -->';
+const LEGACY_MARKERS = [
+  MARKER,
+  '<!-- gittensor-hub:jaguar-policy -->',
+  '<!-- gittensor-hub:pr-ui-scope-review -->',
+];
 const MAX_OPEN_PRS = 2;
 const SIZE_WARN_FILES = 25;
 const SIZE_WARN_LINES = 600;
@@ -27,7 +32,7 @@ const SIZE_HOLD_FILES = 45;
 const SIZE_HOLD_LINES = 1200;
 
 if (!PR || !REPO) {
-  console.error('Usage: node scripts/pr-jaguar-policy.mjs --pr <n> --repo owner/name [--write]');
+  console.error('Usage: node scripts/pr-jagtensor-policy.mjs --pr <n> --repo owner/name [--write]');
   process.exit(2);
 }
 
@@ -371,7 +376,7 @@ if (major.length > 0) {
 }
 
 const summary = {
-  bot: 'jaguar',
+  bot: 'jagtensor',
   repo: REPO,
   pr: Number(PR),
   write: WRITE,
@@ -409,13 +414,13 @@ const existing = ghJson([
 ]) || [];
 
 const prior = existing.find(
-  (c) => typeof c.body === 'string' && c.body.includes(MARKER),
+  (c) => typeof c.body === 'string' && LEGACY_MARKERS.some((m) => c.body.includes(m)),
 );
 
 let commentBody;
 if (findings.length === 0) {
   commentBody = `${MARKER}
-## jaguar policy — clear
+## jagtensor policy — clear
 
 No policy findings for linked-issue, UI scope, size, protected paths, or open-PR limits.
 
@@ -425,7 +430,7 @@ _Files:_ ${fileCount} · _Δ lines:_ ${lineDelta} · _size:_ \`${desiredSize}\`
   const lines = findings.map((f) => `- **${f.severity}** (\`${f.code}\`): ${f.message}`);
   const labelList = [...desiredFinding, desiredSize, ...desiredSurface].map((l) => `\`${l}\``).join(', ');
   commentBody = `${MARKER}
-## jaguar policy review
+## jagtensor policy review
 
 Deterministic hub gates (not a full AI review). Fix majors before asking for merge.
 

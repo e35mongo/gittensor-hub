@@ -2,24 +2,26 @@
 
 | Layer | Identity | Job |
 | --- | --- | --- |
-| **jaguar** (our GitHub App) | `jaguar[bot]` | Hub policy Actions: linked issue, UI scope, size, protected paths, concurrent PR limit, wanted-buffer |
-| **LoopOver** (optional) | `loopover-orb[bot]` | Deep AI review — requires self-host; not required for jaguar |
+| **jagtensor** (our GitHub App) | `jagtensor[bot]` | Hub policy Actions: linked issue, UI scope, size, protected paths, concurrent PR limit, wanted-buffer |
+| **LoopOver** (optional) | `loopover-orb[bot]` | Deep AI review — requires self-host; not required for jagtensor |
 
-jaguar is the speaker + deterministic policy we own. It is **not** a LoopOver clone.
+jagtensor is the speaker + deterministic policy we own. It is **not** a LoopOver clone.
 
-## 1) jaguar GitHub App (one-time)
+## 1) jagtensor GitHub App (one-time)
 
-1. Create App named `jaguar` (webhook **inactive**).
+1. Create (or rename) the App to **`jagtensor`** (webhook **inactive**).  
+   If you already created `jaguar`: GitHub App settings → change name/slug to `jagtensor` so comments show as `jagtensor[bot]`.
 2. Permissions: Pull requests R/W, Issues R/W, Contents Read, Metadata Read.
 3. Install on `e35mongo/gittensor-hub`.
-4. Repo secrets: `JAGUAR_APP_ID`, `JAGUAR_APP_PRIVATE_KEY`.
+4. Repo secrets (preferred): `JAGTENSOR_APP_ID`, `JAGTENSOR_APP_PRIVATE_KEY`.  
+   Legacy `JAGUAR_APP_*` still works until you rename them.
 
 Until secrets exist, workflows fall back to `github-actions[bot]`.
 
-## 2) jaguar policy checks
+## 2) jagtensor policy checks
 
-Workflow: `pr-jaguar-policy.yml` → `scripts/pr-jaguar-policy.mjs`  
-One sticky PR comment (`<!-- gittensor-hub:jaguar-policy -->`).
+Workflow: `pr-jagtensor-policy.yml` → `scripts/pr-jagtensor-policy.mjs`  
+One sticky PR comment (`<!-- gittensor-hub:jagtensor-policy -->`).
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -43,6 +45,6 @@ Shared hosted App is paused — self-host only. Config stub: [`.loopover.yml`](.
 
 ## 4) Verify
 
-1. PR without `#N` → jaguar sticky comment with `missing-linked-issue`.
+1. PR without `#N` → jagtensor sticky comment with `missing-linked-issue`.
 2. UI on a backend-only wanted issue → `ui-outside-issue-scope`.
-3. Job summary shows `Identity: jaguar` when secrets + install are set.
+3. Job summary shows `Identity: jagtensor` when secrets + install are set.

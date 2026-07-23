@@ -8,7 +8,7 @@
   { "name": "pr:large", "color": "FBCA04", "description": "PR getting large — prefer smaller diffs" },
   { "name": "pr:too-many-open", "color": "B60205", "description": "Author has more than 2 open PRs" },
   { "name": "pr:needs-tests", "color": "FBCA04", "description": "Source changed without tests in the diff" },
-  { "name": "pr:needs-work", "color": "FBCA04", "description": "jaguar/maintainer waiting on author fixes" },
+  { "name": "pr:needs-work", "color": "FBCA04", "description": "jagtensor/maintainer waiting on author fixes" },
   { "name": "pr:size/xs", "color": "C2E0C6", "description": "PR size XS (≤2 files, ≤50 lines)" },
   { "name": "pr:size/s", "color": "BFDADC", "description": "PR size S (≤8 files, ≤200 lines)" },
   { "name": "pr:size/m", "color": "BFD4F2", "description": "PR size M (≤25 files, ≤600 lines)" },
