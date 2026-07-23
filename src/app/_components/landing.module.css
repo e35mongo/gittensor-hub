@@ -12,7 +12,7 @@
   overflow: hidden;
   color: var(--landing-fg);
   background: var(--landing-ink);
-  font-family: var(--font-landing-body), 'DM Sans', sans-serif;
+  font-family: var(--font-landing), 'DM Sans', sans-serif;
 }
 
 /* Quiet structure — not a fake loading skeleton. */
@@ -49,10 +49,10 @@
   align-items: center;
   gap: 0.85rem;
   margin: 0;
-  font-family: var(--font-landing-display), Syne, sans-serif;
+  font-family: var(--font-landing), 'DM Sans', sans-serif;
   font-size: clamp(2rem, 5.5vw, 3.15rem);
   font-weight: 800;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.04em;
   line-height: 1;
   color: var(--landing-fg);
   white-space: nowrap;
@@ -70,7 +70,7 @@
 .headline {
   margin: 0;
   max-width: 15ch;
-  font-family: var(--font-landing-display), Syne, sans-serif;
+  font-family: var(--font-landing), 'DM Sans', sans-serif;
   font-size: clamp(1.45rem, 3.4vw, 1.95rem);
   font-weight: 600;
   letter-spacing: -0.03em;
