@@ -31,7 +31,7 @@ Most low-value PRs are agent-generated without deep thinking. We only want work 
 
 * Unsolicited AI refactors, typo farms, or “improve README” spam → labeled `slop`, score **0**, usually closed
 * Work labeled [`maintainer-only`](https://github.com/MkDev11/gittensor-hub/labels/maintainer-only) — **no** miner / Hub Score points
-* Opening a 3rd concurrent PR (max **2** open PRs per author)
+* Opening a 3rd concurrent PR (max **5** open PRs per author)
 * Plagiarism or alt/sockpuppet farming → `banned`
 
 ### Creating Issues
@@ -70,8 +70,9 @@ When this repo is Gittensor-listed, validator `label_multipliers` should mirror 
 * Prefer **merge-as-is or close with reason** for drive-by / off-scope PRs (open a fresh corrected PR)
 * Do not DM or spam @mentions to chase review — it slows you down
 * Address requested changes with new commits on the same branch
-* **Unrelated UI work** (changing pages/components/styles on a backend/docs-only issue, or UI with no linked `frontend` wanted issue) is flagged by the PR UI scope bot (`pr:flagged`) and may be closed as `slop`
+* **Unrelated UI work** (changing pages/components/styles on a backend/docs-only issue, or UI with no linked `frontend` wanted issue) is flagged by **jagtensor** (`pr:flagged`) and may be closed as `slop`
 * User-visible UI PRs must include a screenshot or before/after in the PR body
+* jagtensor also flags missing linked issues, oversized PRs, protected-path edits (workflows / `scripts/*` / lockfiles / config), and >5 open PRs per author — see [docs/bots.md](./docs/bots.md)
 
 ### Code Standards
 

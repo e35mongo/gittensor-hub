@@ -1,26 +1,25 @@
-name: Wanted buffer
+name: jagtensor policy
 
-# Tops up open gittensor-hub:wanted issues from .github/wanted-backlog.json so miners
-# always have maintainer-requested work.
-# Issues authored as jagtensor[bot] when JAGTENSOR_APP_* secrets are set; else github-actions.
+# Deterministic hub PR gates as jagtensor[bot] (linked issue, UI scope, size,
+# protected paths, concurrent PR limit). Falls back to github-actions without secrets.
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "17 8 * * 3"
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
+  pull-requests: write
   issues: write
 
 concurrency:
-  group: wanted-buffer
-  cancel-in-progress: false
+  group: jagtensor-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  top-up:
+  policy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +30,7 @@ jobs:
         id: jagtensor
         uses: ./.github/actions/jagtensor-token
         with:
+          # Prefer JAGTENSOR_*; accept legacy JAGUAR_* until secrets are renamed
           app-id: ${{ secrets.JAGTENSOR_APP_ID || secrets.JAGUAR_APP_ID }}
           private-key: ${{ secrets.JAGTENSOR_APP_PRIVATE_KEY || secrets.JAGUAR_APP_PRIVATE_KEY }}
 
@@ -39,18 +39,18 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Create missing gittensor-hub:wanted issues
+      - name: Run jagtensor policy
         env:
           GH_TOKEN: ${{ steps.jagtensor.outputs.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node scripts/wanted-buffer.mjs --write | tee wanted-buffer.log
+        run: node scripts/pr-jagtensor-policy.mjs --pr "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --write | tee jagtensor-policy.json
 
       - name: Job summary
         run: |
           {
-            echo '## Wanted buffer'
+            echo '## jagtensor policy'
             echo "Identity: \`${{ steps.jagtensor.outputs.identity }}\`"
             echo '```json'
-            cat wanted-buffer.log
+            cat jagtensor-policy.json
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
