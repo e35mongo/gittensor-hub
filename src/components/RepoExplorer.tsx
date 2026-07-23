@@ -138,13 +138,13 @@ function RepoPolicyChip({
       title={title ?? `${label}: ${value}`}
       aria-label={title ?? `${label}: ${value}`}
     >
-      <Text as="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+      <Text sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
         {label}
       </Text>
-      <Text as="span" sx={{ color: 'var(--fg-muted)', mx: 1 }}>
+      <Text sx={{ color: 'var(--fg-muted)', mx: 1 }}>
         ·
       </Text>
-      <Text as="span" sx={{ color: 'var(--fg-default)', fontFamily: 'mono', fontSize: '11px', flexShrink: 0 }}>
+      <Text sx={{ color: 'var(--fg-default)', fontFamily: 'mono', fontSize: '11px', flexShrink: 0 }}>
         {value}
       </Text>
     </Box>

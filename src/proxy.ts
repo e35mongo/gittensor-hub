@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/session-token';
 import { getUserById } from '@/lib/auth';
 
-export const runtime = 'nodejs';
-
 // Routes accessible without any session.
 const PUBLIC_PATHS = new Set(['/sign-in']);
 const PUBLIC_API_PREFIXES = ['/api/auth/'];
@@ -14,7 +12,7 @@ function isPublic(pathname: string): boolean {
   return false;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (isPublic(pathname)) return NextResponse.next();
 

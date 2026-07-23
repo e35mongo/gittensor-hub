@@ -469,16 +469,14 @@ function RepoRow({
         )}
       </Box>
       <Box as="td" sx={{ px: 3, py: 2, verticalAlign: 'middle' }} onClick={(e) => e.stopPropagation()}>
-        <IconButton
-          as="a"
-          href={githubHref}
-          target="_blank"
-          rel="noreferrer"
-          icon={LinkExternalIcon}
-          aria-label="Open on GitHub"
-          size="small"
-          variant="invisible"
-        />
+        <a href={githubHref} target="_blank" rel="noreferrer">
+          <IconButton
+            icon={LinkExternalIcon}
+            aria-label="Open on GitHub"
+            size="small"
+            variant="invisible"
+          />
+        </a>
       </Box>
     </Box>
   );
