@@ -1,6 +1,6 @@
 # GitHub operating system (hub)
 
-This repo’s Issues / Labels / Milestones are a **contributor flywheel**, modeled on [metagraphed](https://github.com/JSONbored/metagraphed/issues).
+This repo’s Issues / Labels / Milestones are a **contributor flywheel** — curated wanted work, clear labels, and automation so miners get real tasks instead of AI drive-by noise.
 
 ## Labels
 

@@ -1,8 +1,7 @@
 name: PR linked-issue gate
 
-# Guides contributors toward metagraphed-style discipline: score-eligible work
-# must reference a currently-open issue. Warns loudly; does not auto-close
-# (maintainers may close as slop).
+# Score-eligible work must reference a currently-open issue. Warns loudly;
+# does not auto-close (maintainers may close as slop).
 
 on:
   pull_request:

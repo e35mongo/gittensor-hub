@@ -1,7 +1,7 @@
 name: Wanted buffer
 
 # Tops up open hub:wanted issues from .github/wanted-backlog.json so miners
-# always have maintainer-requested work (metagraphed enrichment-issues pattern).
+# always have maintainer-requested work.
 
 on:
   workflow_dispatch:
