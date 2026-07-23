@@ -19,10 +19,10 @@
     },
     {
       "id": "discord",
-      "label": "Bittensor / Gittensor chat",
-      "handle": null,
-      "url": null,
-      "role": "Community replies ≤48h (fill server/channel + handle)"
+      "label": "Gittensor Discord",
+      "handle": "discord.gg/mAXpcvAcZ",
+      "url": "https://discord.gg/mAXpcvAcZ",
+      "role": "Community replies ≤48h in the Gittensor server"
     }
   ],
   "evidence": [
@@ -31,6 +31,12 @@
       "kind": "ops",
       "summary": "Presence SLA clock started. Landing + /changelog live; chat/social handles pending fill.",
       "url": "https://github.com/e35mongo/gittensor-hub/issues/284"
+    },
+    {
+      "date": "2026-07-23",
+      "kind": "ops",
+      "summary": "Published Gittensor Discord invite on /presence.",
+      "url": "https://discord.gg/mAXpcvAcZ"
     }
   ]
 }
