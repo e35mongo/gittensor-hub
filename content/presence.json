@@ -36,6 +36,18 @@
       "kind": "ops",
       "summary": "Deferred X for now — presence channels are GitHub + Gittensor Discord only.",
       "url": null
+    },
+    {
+      "date": "2026-07-23",
+      "kind": "ops",
+      "summary": "Ask Hub live on every page (FAB + retrieval API). Chatbot MVP epic closed.",
+      "url": "https://github.com/e35mongo/gittensor-hub/pull/291"
+    },
+    {
+      "date": "2026-07-23",
+      "kind": "ops",
+      "summary": "Second weekly changelog note published (Ask Hub + jagtensor /review).",
+      "url": "https://github.com/e35mongo/gittensor-hub/blob/main/content/changelog/2026-07-23-ask-hub.md"
     }
   ]
 }
