@@ -44,6 +44,9 @@ export default function PresencePage() {
             <Link href="/changelog" prefetch={false}>
               Changelog
             </Link>
+            <Link href="/status" prefetch={false}>
+              Status
+            </Link>
             <Link href="/dashboard" prefetch={false}>
               Dashboard
             </Link>

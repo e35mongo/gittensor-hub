@@ -38,6 +38,9 @@ export default function ChangelogPage() {
             <Link href="/presence" prefetch={false}>
               Presence
             </Link>
+            <Link href="/status" prefetch={false}>
+              Status
+            </Link>
             <Link href="/dashboard" prefetch={false}>
               Dashboard
             </Link>

@@ -8,7 +8,7 @@ Built with Next.js 16 (App Router), React 19, TypeScript, Primer React, and `bet
 
 Contributor OS (labels, milestones, wanted board, **linked-issue gate**): [docs/github-os.md](./docs/github-os.md) · [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Public presence: [`/presence`](./docs/presence.md) (chat/social SLA) · [`/changelog`](./docs/changelog.md).
+Public presence: [`/presence`](./docs/presence.md) (chat/social SLA) · [`/changelog`](./docs/changelog.md) · public `/status` (poller freshness).
 
 ## Main views
 
