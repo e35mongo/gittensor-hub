@@ -341,6 +341,7 @@ const MANAGED_FINDING_LABELS = [
 
 const SIZE_LABELS = ['pr:size/xs', 'pr:size/s', 'pr:size/m', 'pr:size/l', 'pr:size/xl'];
 const SURFACE_LABELS = ['pr:ui', 'pr:api', 'pr:ci', 'pr:deps', 'pr:docs-only'];
+const ROLE_LABELS = ['pr:maintainer', 'pr:maintainer-only'];
 
 function sizeLabelFor(filesN, linesN) {
   if (filesN <= 2 && linesN <= 50) return 'pr:size/xs';
@@ -367,6 +368,9 @@ function surfaceLabelsFor(paths) {
 
 const desiredSize = sizeLabelFor(fileCount, lineDelta);
 const desiredSurface = surfaceLabelsFor(files);
+const desiredRole = new Set();
+if (writer) desiredRole.add('pr:maintainer');
+if (isMaintainerOnly) desiredRole.add('pr:maintainer-only');
 const desiredFinding = new Set(
   [...findingCodes].map((c) => FINDING_LABELS[c]).filter(Boolean),
 );
@@ -385,6 +389,7 @@ const summary = {
   authorAssociation: association || null,
   size: { files: fileCount, lines: lineDelta, label: desiredSize },
   surfaceLabels: desiredSurface,
+  roleLabels: [...desiredRole],
   findingLabels: [...desiredFinding],
   openPrsByAuthor: openByAuthor.map((p) => p.number),
   files: {
@@ -429,7 +434,7 @@ _Files:_ ${fileCount} · _Δ lines:_ ${lineDelta} · _size:_ \`${desiredSize}\`
 `;
 } else {
   const lines = findings.map((f) => `- **${f.severity}** (\`${f.code}\`): ${f.message}`);
-  const labelList = [...desiredFinding, desiredSize, ...desiredSurface].map((l) => `\`${l}\``).join(', ');
+  const labelList = [...desiredFinding, desiredSize, ...desiredSurface, ...desiredRole].map((l) => `\`${l}\``).join(', ');
   commentBody = `${MARKER}
 ## jagtensor policy review
 
@@ -485,7 +490,7 @@ function removeLabel(name) {
   }
 }
 
-const desiredAll = new Set([...desiredFinding, desiredSize, ...desiredSurface]);
+const desiredAll = new Set([...desiredFinding, desiredSize, ...desiredSurface, ...desiredRole]);
 
 for (const name of MANAGED_FINDING_LABELS) {
   if (desiredFinding.has(name)) addLabel(name);
@@ -499,6 +504,11 @@ for (const name of SIZE_LABELS) {
 
 for (const name of SURFACE_LABELS) {
   if (desiredSurface.includes(name)) addLabel(name);
+  else removeLabel(name);
+}
+
+for (const name of ROLE_LABELS) {
+  if (desiredRole.has(name)) addLabel(name);
   else removeLabel(name);
 }
 

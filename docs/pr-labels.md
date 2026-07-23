@@ -40,6 +40,13 @@ Detailed `pr:*` labels for triage. jagtensor applies/clears the **auto** ones on
 | `pr:deps` | package / lockfile |
 | `pr:docs-only` | Docs-only diff |
 
+## Role (auto)
+
+| Label | Meaning |
+| --- | --- |
+| `pr:maintainer` | Author is OWNER / MEMBER / COLLABORATOR |
+| `pr:maintainer-only` | Linked issue is `maintainer-only` or `roadmap` (not score-eligible) |
+
 ## Review lifecycle (manual)
 
 | Label | Meaning |

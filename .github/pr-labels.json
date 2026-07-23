@@ -23,5 +23,7 @@
   { "name": "pr:deps", "color": "0366D6", "description": "Dependency / lockfile changes" },
   { "name": "pr:api", "color": "5319E7", "description": "API / route / server surface" },
   { "name": "pr:ui", "color": "1F6FEB", "description": "UI / components / pages" },
-  { "name": "pr:docs-only", "color": "0075CA", "description": "Documentation-only PR" }
+  { "name": "pr:docs-only", "color": "0075CA", "description": "Documentation-only PR" },
+  { "name": "pr:maintainer", "color": "C5DEF5", "description": "PR author has write access (OWNER/MEMBER/COLLABORATOR)" },
+  { "name": "pr:maintainer-only", "color": "C5DEF5", "description": "Linked to maintainer-only/roadmap work — not score-eligible" }
 ]
