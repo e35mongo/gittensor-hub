@@ -47,6 +47,7 @@ export default function ChatFab() {
   const titleId = useId();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ChatResponse | null>(null);
@@ -57,6 +58,10 @@ export default function ChatFab() {
 
   const closeModal = useCallback(() => {
     setOpen(false);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -111,7 +116,7 @@ export default function ChatFab() {
   }
 
   const panel =
-    open && typeof document !== 'undefined'
+    open && mounted
       ? createPortal(
           <div
             className={`${styles.panel} ${chromeless ? styles.panelChromeless : styles.panelApp}`}
