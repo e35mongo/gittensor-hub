@@ -1,31 +1,35 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FlatCompat } from '@eslint/eslintrc';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  {
-    ignores: [
-      '.next/**',
-      'out/**',
-      'build/**',
-      'coverage/**',
-      'next-env.d.ts',
-    ],
-  },
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'build/**',
+    'coverage/**',
+    'next-env.d.ts',
+  ]),
   {
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
     },
     rules: {
       'react/no-unescaped-entities': 'off',
+      // React Compiler rules ship enabled in eslint-config-next 16, but this
+      // app does not use the React Compiler. Keep the pre-upgrade lint baseline.
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/static-components': 'off',
     },
   },
   {
@@ -101,6 +105,6 @@ const eslintConfig = [
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
-];
+]);
 
 export default eslintConfig;

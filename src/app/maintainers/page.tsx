@@ -656,8 +656,8 @@ function RepoBreakdown({ m, gradeSettings, minerPoolTAO }: { m: MaintainerSummar
                   <Text sx={{ fontWeight: 500, color: 'fg.default' }}>{r.repo.split('/')[1]}</Text>
                 </a>
                 <Text sx={{ display: 'block', whiteSpace: 'nowrap' }}>
-                  <Text as="span" sx={{ color: MODE_COLOR[r.mode], textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9.5px' }}>{modeLabel}</Text>
-                  <Text as="span" sx={{ color: 'fg.subtle' }}> · {cutPct}% cut</Text>
+                  <Text sx={{ color: MODE_COLOR[r.mode], textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9.5px' }}>{modeLabel}</Text>
+                  <Text sx={{ color: 'fg.subtle' }}> · {cutPct}% cut</Text>
                 </Text>
               </Box>
             </Box>
@@ -732,7 +732,7 @@ function RepoRow({
             </Box>
             <Text sx={{ fontSize: 0, color: MODE_COLOR[r.mode], textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {r.mode === 'PR' ? 'PR review' : r.mode === 'issue' ? 'issue discovery' : 'mixed'}
-              <Text as="span" sx={{ color: 'fg.subtle', textTransform: 'none', letterSpacing: 0 }}>
+              <Text sx={{ color: 'fg.subtle', textTransform: 'none', letterSpacing: 0 }}>
                 {' · '}{(r.maintainerCut * 100).toFixed(r.maintainerCut > 0 && r.maintainerCut < 0.1 ? 1 : 0)}% cut
               </Text>
             </Text>

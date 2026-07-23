@@ -48,7 +48,7 @@ function tileColor(tile: PoolTile): string {
   return tile.kind === 'miner' && tile.view ? streamColor(tile.view) : OTHERS_COLOR;
 }
 
-function useMeasuredWidth(): [React.RefObject<HTMLDivElement>, number] {
+function useMeasuredWidth(): [React.RefObject<HTMLDivElement | null>, number] {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   useEffect(() => {

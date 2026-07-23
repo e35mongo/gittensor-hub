@@ -24,7 +24,7 @@ export function AuthorSidebarModal({
   onClose: () => void;
   onIssueClick: (issue: Issue) => void;
   onPullClick: (pull: Pull) => void;
-}): JSX.Element | null {
+}): React.ReactElement | null {
   if (!target) return null;
   return (
     <>

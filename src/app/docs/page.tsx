@@ -420,9 +420,9 @@ function P({ children }: { children: React.ReactNode }) {
 
 function H3({ children }: { children: React.ReactNode }) {
   return (
-    <Heading as="h3" sx={{ fontSize: 2, mt: 3, mb: 2, color: 'fg.default' }}>
+    <Box as="h3" sx={{ fontSize: 2, mt: 3, mb: 2, color: 'fg.default', fontWeight: 600, m: 0 }}>
       {children}
-    </Heading>
+    </Box>
   );
 }
 

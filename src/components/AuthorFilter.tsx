@@ -314,7 +314,7 @@ function VirtualList({
   onPickAll,
   onPick,
 }: {
-  listRef: React.RefObject<HTMLDivElement>;
+  listRef: React.RefObject<HTMLDivElement | null>;
   onScroll: (px: number) => void;
   scrollTop: number;
   items: AuthorOption[];

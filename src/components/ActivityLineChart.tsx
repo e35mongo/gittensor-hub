@@ -489,7 +489,7 @@ export function EarningForecastChart({ series }: { series: ForecastSeries }) {
                   <Text sx={{ display: 'block', fontWeight: 700, color: 'fg.default', fontSize: 1, mb: 1 }}>
                     {displayPoint.label}
                     {displayPoint.projected ? (
-                      <Text as="span" sx={{ color: 'fg.muted', fontWeight: 400, fontStyle: 'italic', fontSize: 0 }}> · forecast</Text>
+                      <Text sx={{ color: 'fg.muted', fontWeight: 400, fontStyle: 'italic', fontSize: 0 }}> · forecast</Text>
                     ) : null}
                   </Text>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

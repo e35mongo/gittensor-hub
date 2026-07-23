@@ -4,7 +4,7 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
-  serverExternalPackages: ['better-sqlite3'],
+  serverExternalPackages: ['better-sqlite3', 'isomorphic-dompurify', 'jsdom'],
   webpack: (config, { isServer }) => {
     if (isServer) {
       // isomorphic-dompurify (used for server-side markdown sanitization) pulls

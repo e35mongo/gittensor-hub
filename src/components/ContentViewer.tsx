@@ -689,7 +689,6 @@ function TabStrip({
                 }}
               />
               <Text
-                as="span"
                 sx={{
                   color: 'var(--fg-subtle)',
                   fontSize: '10px',
@@ -970,7 +969,7 @@ function TimelineBody({
             }}
           >
             <Text sx={{ color: 'var(--fg-muted)', fontSize: 0 }}>
-              <Text as="span" sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
+              <Text sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
                 {author}
               </Text>{' '}
               opened this {kind === 'pull' ? 'pull request' : 'issue'} {formatRelativeTime(data.created_at)}
@@ -1050,7 +1049,7 @@ function ClosedTimelineText({
     return (
       <Text sx={{ color: 'var(--fg-muted)', fontSize: 0 }}>
         closed this as{' '}
-        <Text as="span" sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
+        <Text sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
           completed
         </Text>{' '}
         in{' '}
@@ -1073,7 +1072,7 @@ function ClosedTimelineText({
       {reason ? (
         <>
           closed this as{' '}
-          <Text as="span" sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
+          <Text sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
             {reason}
           </Text>
         </>
@@ -1384,7 +1383,7 @@ function ClosedIssueTimelineEvent({
           <Text sx={{ color: 'var(--fg-muted)', fontSize: 0 }}>
             closed this{reason ? ' as ' : ' '}
             {reason && (
-              <Text as="span" sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
+              <Text sx={{ color: 'var(--fg-default)', fontWeight: 600 }}>
                 {formatIssueCloseReason(reason)}
               </Text>
             )}
@@ -1529,7 +1528,6 @@ function RenamedTimelineEvent({ event }: { event: IssueTimelineEvent }) {
         <Text sx={{ color: 'var(--fg-muted)', fontSize: 0 }}>changed the title</Text>
         {event.rename && (
           <Text
-            as="span"
             sx={{
               color: 'var(--fg-default)',
               fontSize: 0,
@@ -1539,7 +1537,7 @@ function RenamedTimelineEvent({ event }: { event: IssueTimelineEvent }) {
           >
             {event.rename.from && (
               <>
-                <Text as="span" sx={{ color: 'var(--fg-muted)', textDecoration: 'line-through' }}>
+                <Text sx={{ color: 'var(--fg-muted)', textDecoration: 'line-through' }}>
                   {event.rename.from}
                 </Text>{' '}
               </>
@@ -1746,7 +1744,6 @@ function TimelineWhen({ iso }: { iso: string | null | undefined }) {
 function SmallTimelinePill({ children }: { children: React.ReactNode }) {
   return (
     <Text
-      as="span"
       sx={{
         px: '6px',
         py: '1px',
@@ -1771,7 +1768,6 @@ function AssociationPill({ association }: { association: string | null }) {
 function VerifiedPill() {
   return (
     <Text
-      as="span"
       sx={{
         px: '7px',
         py: '1px',
@@ -1814,7 +1810,7 @@ function TimelinePullLink({ pr, repoFullName }: { pr: Pull; repoFullName: string
       }}
     >
       {pr.title}{' '}
-      <Text as="span" sx={{ color: 'var(--fg-muted)', fontWeight: 500 }}>
+      <Text sx={{ color: 'var(--fg-muted)', fontWeight: 500 }}>
         #{pr.number}
       </Text>
     </PrimerLink>
@@ -1864,7 +1860,7 @@ function TimelineSubjectLink({ subject, fallbackRepo }: { subject: TimelineSubje
       >
         {title}{' '}
         {number && (
-          <Text as="span" sx={{ color: 'var(--fg-muted)', fontWeight: 500 }}>
+          <Text sx={{ color: 'var(--fg-muted)', fontWeight: 500 }}>
             #{number}
           </Text>
         )}
