@@ -2,21 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Syne, DM_Sans } from 'next/font/google';
+import { DM_Sans } from 'next/font/google';
 import styles from './landing.module.css';
-
-const syne = Syne({
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['600', '700', '800'],
-  variable: '--font-landing-display',
-});
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
   display: 'swap',
-  weight: ['400', '500', '600'],
-  variable: '--font-landing-body',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-landing',
 });
 
 const WANTED_URL =
@@ -45,7 +38,7 @@ export default function LandingHero() {
   const primaryLabel = authed ? 'Open dashboard' : 'Sign in with GitHub';
 
   return (
-    <div className={`${styles.root} ${syne.variable} ${dmSans.variable}`}>
+    <div className={`${styles.root} ${dmSans.variable}`}>
       <div className={styles.mesh} aria-hidden />
 
       <main className={styles.hero}>
