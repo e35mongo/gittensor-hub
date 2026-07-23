@@ -1,33 +1,42 @@
 ## Summary
 
-<!-- Brief description of what this PR changes and why. -->
+<!-- What changed and why (2–5 lines). -->
 
 ## Related Issues
 
-<!-- Link any issues this PR addresses, e.g. "Fixes #123" or "Closes #456". -->
+<!-- Required for score-eligible work: link a currently-open issue. -->
+
+Closes #
 
 ## Type of Change
 
-<!-- Check one: -->
-
-- [ ] Bug fix
-- [ ] New feature
+- [ ] Bug fix (`gittensor:bug` path)
+- [ ] Feature (`gittensor:feature` / `hub:wanted` path)
 - [ ] Enhancement
-- [ ] Refactor
+- [ ] Refactor (usually not score-eligible unless linked to wanted work)
 - [ ] Documentation
-- [ ] Other (describe):
+- [ ] Chore / maintainer-only
+
+## Anti-slop checklist
+
+- [ ] Linked issue is **open** and in scope (prefer `hub:wanted` / `help wanted`)
+- [ ] Diff is focused — no drive-by README/typo farms or unrelated refactors
+- [ ] Includes proof of understanding (repro, design note, or test) in issue or PR body
+- [ ] I have **≤ 2** open PRs on this repository (including this one)
 
 ## Testing
 
-<!-- How did you verify this works? -->
-
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm exec tsc --noEmit` passes (or covered by CI)
 - [ ] `pnpm build` passes
-- [ ] Manual browser smoke test (for UI changes)
-- [ ] N/A — docs / config only
+- [ ] Manual browser smoke test (UI) / N/A
 
 ## Checklist
 
 - [ ] Self-reviewed the diff
-- [ ] Follows existing code patterns and naming
-- [ ] No unrelated changes included
-- [ ] Documentation updated if behavior changed
+- [ ] Follows existing patterns; no unrelated files
+- [ ] Docs updated if behavior changed
+
+## Scoring disclaimer
+
+Merging this PR does **not** by itself promise Hub Score, leaderboard rank, or Gittensor TAO emissions. Scoring follows repo labels, maintainer policy, and (when listed) Gittensor validator rules.

@@ -1,0 +1,46 @@
+name: Claim wanted work
+description: Claim or discuss a hub:wanted issue you intend to open a PR for.
+title: "claim: "
+labels:
+  - hub:wanted
+  - help wanted
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this only if you need a **new** wanted-scoped tracking issue. Prefer commenting on an existing [`hub:wanted`](https://github.com/MkDev11/gittensor-hub/labels/hub%3Awanted) issue instead of opening duplicates.
+
+        Score-eligible PRs must link a currently-open `hub:wanted` (or maintainer-accepted) issue.
+  - type: input
+    id: related
+    attributes:
+      label: Related wanted issue (if any)
+      description: e.g. #12 — leave blank only if proposing a net-new wanted item for maintainer approval.
+      placeholder: "#12"
+    validations:
+      required: false
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope you will ship
+      description: Concrete deliverable in one PR. Keep it small.
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Implementation plan
+      description: Files/areas you will touch and how you will verify (pnpm build, smoke steps).
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Contributor rules
+      options:
+        - label: I will link this issue from my PR and keep at most 2 open PRs on this repo.
+          required: true
+        - label: I will not submit AI-generated drive-by refactors unrelated to this scope.
+          required: true
+        - label: I understand merges do not promise TAO / Hub Score payouts by themselves.
+          required: true

@@ -1,0 +1,47 @@
+name: Wanted buffer
+
+# Tops up open hub:wanted issues from .github/wanted-backlog.json so miners
+# always have maintainer-requested work (metagraphed enrichment-issues pattern).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 8 * * 3"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: wanted-buffer
+  cancel-in-progress: false
+
+jobs:
+  top-up:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Create missing hub:wanted issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/wanted-buffer.mjs --write | tee wanted-buffer.log
+
+      - name: Job summary
+        run: |
+          {
+            echo '## Wanted buffer'
+            echo '```json'
+            cat wanted-buffer.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
