@@ -3,9 +3,8 @@
 | Layer | Identity | Job |
 | --- | --- | --- |
 | **jagtensor** (our GitHub App) | `jagtensor[bot]` | Hub policy Actions: linked issue, UI scope, size, protected paths, concurrent PR limit, wanted-buffer |
-| **LoopOver** (optional) | `loopover-orb[bot]` | Deep AI review — requires self-host; not required for jagtensor |
 
-jagtensor is the speaker + deterministic policy we own. It is **not** a LoopOver clone.
+jagtensor is the speaker + deterministic policy we own for this repo.
 
 ## 1) jagtensor GitHub App (one-time)
 
@@ -38,11 +37,7 @@ Majors add `pr:flagged` + `manual-review` plus granular labels (`pr:missing-issu
 
 Also: `wanted-buffer.yml` weekly tops up `gittensor-hub:wanted` issues.
 
-## 3) LoopOver (optional)
-
-Shared hosted App is paused — self-host only. Config stub: [`.loopover.yml`](../.loopover.yml). Skip unless you want deep AI review.
-
-## 4) Verify
+## 3) Verify
 
 1. PR without `#N` → jagtensor sticky comment with `missing-linked-issue`.
 2. UI on a backend-only wanted issue → `ui-outside-issue-scope`.

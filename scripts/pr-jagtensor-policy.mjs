@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * jagtensor policy review — deterministic hub PR gates (no LoopOver clone).
+ * jagtensor policy review — deterministic hub PR gates.
  *
  * Checks: linked issue, UI scope, screenshots, size, protected paths,
  * concurrent open PRs, and src-without-tests nudges.
@@ -88,8 +88,7 @@ function isProtectedPath(file) {
     f === 'pnpm-workspace.yaml' ||
     f.startsWith('next.config.') ||
     f === 'tsconfig.json' ||
-    f === 'eslint.config.mjs' ||
-    f === '.loopover.yml'
+    f === 'eslint.config.mjs'
   );
 }
 
@@ -434,7 +433,7 @@ _Files:_ ${fileCount} · _Δ lines:_ ${lineDelta} · _size:_ \`${desiredSize}\`
   commentBody = `${MARKER}
 ## jagtensor policy review
 
-Deterministic hub gates (not a full AI review). Fix majors before asking for merge.
+Deterministic hub gates. Fix majors before asking for merge.
 
 ### Findings
 ${lines.join('\n')}

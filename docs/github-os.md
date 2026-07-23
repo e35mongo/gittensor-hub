@@ -54,7 +54,7 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 | `pr-jagtensor-policy.yml` | jagtensor gates: linked issue, UI scope, screenshots, size, protected paths, ≤5 open PRs |
 | `build.yml` | Lint / typecheck / build |
 
-Bot identity + optional LoopOver: see [docs/bots.md](./bots.md). Policy comments speak as **jagtensor[bot]** once `JAGTENSOR_APP_*` secrets are set.
+Bot identity: see [docs/bots.md](./bots.md). Policy comments speak as **jagtensor[bot]** once `JAGTENSOR_APP_*` secrets are set.
 
 ## Wanted buffer
 
