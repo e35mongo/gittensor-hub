@@ -80,6 +80,10 @@ When this repo is Gittensor-listed, validator `label_multipliers` should mirror 
 * Meaningful changes > cosmetic churn
 * `pnpm build` must pass
 
+### Weekly changelog (maintainers)
+
+Public ship notes: [`/changelog`](https://github.com/e35mongo/gittensor-hub/blob/main/docs/changelog.md). Add a markdown file under `content/changelog/` — see [docs/changelog.md](./docs/changelog.md).
+
 ### Branches
 
 #### `main`

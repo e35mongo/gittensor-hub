@@ -98,6 +98,12 @@ export default function LandingHero({ snapshot }: { snapshot: Sn74Snapshot }) {
               Dashboard
             </Link>
             <div className={styles.ctaLinks}>
+              <Link href="/changelog" prefetch={false}>
+                Changelog
+              </Link>
+              <span aria-hidden className={styles.ctaDot}>
+                ·
+              </span>
               <a href={DOCS_URL} target="_blank" rel="noreferrer">
                 Docs
               </a>
