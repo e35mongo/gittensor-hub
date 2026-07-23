@@ -309,6 +309,67 @@ if (!writer && authorLogin && openByAuthor.length > MAX_OPEN_PRS) {
 }
 
 const major = findings.filter((f) => f.severity === 'major');
+const findingCodes = new Set(findings.map((f) => f.code));
+
+const FINDING_LABELS = {
+  'missing-linked-issue': 'pr:missing-issue',
+  'linked-issue-not-open': 'pr:issue-closed',
+  'ui-without-issue': 'pr:ui-scope',
+  'ui-outside-issue-scope': 'pr:ui-scope',
+  'ui-on-maintainer-epic': 'pr:ui-scope',
+  'ui-mixed-into-backend-pr': 'pr:ui-scope',
+  'ui-missing-screenshot': 'pr:needs-screenshot',
+  'protected-paths': 'pr:protected-paths',
+  'oversized-pr': 'pr:oversized',
+  'large-pr': 'pr:large',
+  'too-many-open-prs': 'pr:too-many-open',
+  'src-without-tests': 'pr:needs-tests',
+};
+
+const MANAGED_FINDING_LABELS = [
+  ...new Set(Object.values(FINDING_LABELS)),
+  'pr:needs-work',
+  'pr:flagged',
+  'manual-review',
+];
+
+const SIZE_LABELS = ['pr:size/xs', 'pr:size/s', 'pr:size/m', 'pr:size/l', 'pr:size/xl'];
+const SURFACE_LABELS = ['pr:ui', 'pr:api', 'pr:ci', 'pr:deps', 'pr:docs-only'];
+
+function sizeLabelFor(filesN, linesN) {
+  if (filesN <= 2 && linesN <= 50) return 'pr:size/xs';
+  if (filesN <= 8 && linesN <= 200) return 'pr:size/s';
+  if (filesN <= SIZE_WARN_FILES && linesN <= SIZE_WARN_LINES) return 'pr:size/m';
+  if (filesN <= SIZE_HOLD_FILES && linesN <= SIZE_HOLD_LINES) return 'pr:size/l';
+  return 'pr:size/xl';
+}
+
+function surfaceLabelsFor(paths) {
+  const out = new Set();
+  let onlyDocs = paths.length > 0;
+  for (const f of paths) {
+    const p = f.replace(/\\/g, '/');
+    if (isUiPath(p)) out.add('pr:ui');
+    if (p.startsWith('src/app/api/') || p.startsWith('src/server/')) out.add('pr:api');
+    if (p.startsWith('.github/workflows/') || p.startsWith('.github/actions/')) out.add('pr:ci');
+    if (p === 'package.json' || p === 'pnpm-lock.yaml' || p.startsWith('package-lock')) out.add('pr:deps');
+    if (!isDocPath(p)) onlyDocs = false;
+  }
+  if (onlyDocs) out.add('pr:docs-only');
+  return [...out];
+}
+
+const desiredSize = sizeLabelFor(fileCount, lineDelta);
+const desiredSurface = surfaceLabelsFor(files);
+const desiredFinding = new Set(
+  [...findingCodes].map((c) => FINDING_LABELS[c]).filter(Boolean),
+);
+if (findings.length > 0) desiredFinding.add('pr:needs-work');
+if (major.length > 0) {
+  desiredFinding.add('pr:flagged');
+  desiredFinding.add('manual-review');
+}
+
 const summary = {
   bot: 'jaguar',
   repo: REPO,
@@ -316,7 +377,9 @@ const summary = {
   write: WRITE,
   author: authorLogin,
   authorAssociation: association || null,
-  size: { files: fileCount, lines: lineDelta },
+  size: { files: fileCount, lines: lineDelta, label: desiredSize },
+  surfaceLabels: desiredSurface,
+  findingLabels: [...desiredFinding],
   openPrsByAuthor: openByAuthor.map((p) => p.number),
   files: {
     ui: uiFiles,
@@ -356,10 +419,11 @@ if (findings.length === 0) {
 
 No policy findings for linked-issue, UI scope, size, protected paths, or open-PR limits.
 
-_Files:_ ${fileCount} · _Δ lines:_ ${lineDelta}
+_Files:_ ${fileCount} · _Δ lines:_ ${lineDelta} · _size:_ \`${desiredSize}\`
 `;
 } else {
   const lines = findings.map((f) => `- **${f.severity}** (\`${f.code}\`): ${f.message}`);
+  const labelList = [...desiredFinding, desiredSize, ...desiredSurface].map((l) => `\`${l}\``).join(', ');
   commentBody = `${MARKER}
 ## jaguar policy review
 
@@ -371,11 +435,12 @@ ${lines.join('\n')}
 ### Snapshot
 | | |
 | --- | --- |
-| Files / lines | ${fileCount} / ${lineDelta} |
+| Files / lines | ${fileCount} / ${lineDelta} (\`${desiredSize}\`) |
 | UI paths | ${uiFiles.length ? uiFiles.map((f) => `\`${f}\``).join(', ') : '_none_'} |
 | Protected paths | ${protectedFiles.length ? protectedFiles.map((f) => `\`${f}\``).join(', ') : '_none_'} |
 | Open PRs by author | ${openByAuthor.length} (max ${MAX_OPEN_PRS}) |
 | Linked open issues | ${openIssues.length ? openIssues.map((i) => `#${i.number}`).join(', ') : '_none_'} |
+| Labels applied | ${labelList || '_none_'} |
 
 ### What to do
 1. Link an open \`gittensor-hub:wanted\` issue and keep the diff on-scope.
@@ -383,7 +448,7 @@ ${lines.join('\n')}
 3. Leave workflows / lockfiles / Next config to maintainers unless asked.
 4. Stay at ≤ ${MAX_OPEN_PRS} open PRs; split oversized diffs.
 
-See [CONTRIBUTING.md](https://github.com/${REPO}/blob/main/CONTRIBUTING.md) · [docs/bots.md](https://github.com/${REPO}/blob/main/docs/bots.md).
+See [CONTRIBUTING.md](https://github.com/${REPO}/blob/main/CONTRIBUTING.md) · [docs/bots.md](https://github.com/${REPO}/blob/main/docs/bots.md) · [docs/pr-labels.md](https://github.com/${REPO}/blob/main/docs/pr-labels.md).
 `;
 }
 
@@ -398,14 +463,40 @@ if (prior) {
   gh(['pr', 'comment', String(PR), '--repo', REPO, '--body', commentBody]);
 }
 
-if (major.length > 0) {
-  for (const label of ['pr:flagged', 'manual-review']) {
-    try {
-      gh(['pr', 'edit', String(PR), '--repo', REPO, '--add-label', label]);
-    } catch {
-      /* already present or missing label */
-    }
+function addLabel(name) {
+  try {
+    gh(['pr', 'edit', String(PR), '--repo', REPO, '--add-label', name]);
+  } catch {
+    /* already present or missing */
   }
 }
+
+function removeLabel(name) {
+  try {
+    gh(['pr', 'edit', String(PR), '--repo', REPO, '--remove-label', name]);
+  } catch {
+    /* not present */
+  }
+}
+
+const desiredAll = new Set([...desiredFinding, desiredSize, ...desiredSurface]);
+
+for (const name of MANAGED_FINDING_LABELS) {
+  if (desiredFinding.has(name)) addLabel(name);
+  else removeLabel(name);
+}
+
+for (const name of SIZE_LABELS) {
+  if (name === desiredSize) addLabel(name);
+  else removeLabel(name);
+}
+
+for (const name of SURFACE_LABELS) {
+  if (desiredSurface.includes(name)) addLabel(name);
+  else removeLabel(name);
+}
+
+// keep summary accurate for operators reading stdout already printed
+void desiredAll;
 
 process.exit(0);

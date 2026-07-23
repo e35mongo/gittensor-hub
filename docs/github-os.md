@@ -12,6 +12,8 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the scoring-relevant set. Trust / 
 * `status: waiting-on-author`
 * Area: `backend`, `frontend`, `docs`, `roadmap`
 
+Detailed PR taxonomy (size, surface, jaguar findings, review lifecycle): [docs/pr-labels.md](./pr-labels.md) · seed [`.github/pr-labels.json`](../.github/pr-labels.json).
+
 ## Milestones
 
 | Milestone | Purpose |

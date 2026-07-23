@@ -33,7 +33,7 @@ One sticky PR comment (`<!-- gittensor-hub:jaguar-policy -->`).
 | `src-without-tests` | minor | Src changed, no tests in diff |
 | `ui-wanted-missing-frontend-label` | minor | Wanted issue missing `frontend` label |
 
-Majors add labels `pr:flagged` + `manual-review`.
+Majors add `pr:flagged` + `manual-review` plus granular labels (`pr:missing-issue`, `pr:ui-scope`, …). Full table: [docs/pr-labels.md](./pr-labels.md).
 
 Also: `wanted-buffer.yml` weekly tops up `gittensor-hub:wanted` issues.
 
