@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "description": "Retrieval corpus for the Gittensor Hub explainer chatbot. Factual only — cite these paths; never invent emission numbers.",
+  "documents": [
+    {
+      "id": "what-is-gittensor",
+      "path": "docs/chat/00-what-is-gittensor.md",
+      "title": "What is Gittensor (SN74)?",
+      "tags": ["gittensor", "sn74", "overview", "hub"]
+    },
+    {
+      "id": "emissions-split",
+      "path": "docs/chat/01-emissions-split.md",
+      "title": "How SN74 emissions split (OSS pool)",
+      "tags": ["emissions", "allocator", "emission_share", "maintainer_cut", "issue_discovery"]
+    },
+    {
+      "id": "how-to-mine",
+      "path": "docs/chat/02-how-to-mine.md",
+      "title": "How to mine on Gittensor (high level)",
+      "tags": ["miner", "register", "pat", "gitt"]
+    },
+    {
+      "id": "hub-contribution",
+      "path": "docs/chat/03-hub-contribution.md",
+      "title": "Contributing to Gittensor Hub (anti-slop)",
+      "tags": ["hub", "wanted", "slop", "contributing"]
+    },
+    {
+      "id": "hub-score-vs-tao",
+      "path": "docs/chat/04-hub-score-vs-tao.md",
+      "title": "Hub Score vs Gittensor emissions (TAO)",
+      "tags": ["hub-score", "tao", "emissions", "disclaimer"]
+    }
+  ]
+}
