@@ -46,29 +46,7 @@ export default function LandingHero() {
 
   return (
     <div className={`${styles.root} ${syne.variable} ${dmSans.variable}`}>
-      {/* Abstract dashboard chrome — shapes only, no readable UI text under the copy. */}
-      <div className={styles.stage} aria-hidden>
-        <div className={styles.rail} />
-        <div className={styles.panels}>
-          <div className={styles.panelTop} />
-          <div className={styles.panelRow}>
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className={styles.panelList}>
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </div>
-        </div>
-        <div className={styles.scrim} />
-      </div>
+      <div className={styles.mesh} aria-hidden />
 
       <main className={styles.hero}>
         <p className={styles.brand}>
