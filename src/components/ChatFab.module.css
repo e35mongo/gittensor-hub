@@ -1,7 +1,7 @@
 .fab {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
-  z-index: 9990;
+  z-index: 10001;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -31,41 +31,34 @@
 }
 
 .fabApp {
-  bottom: calc(3.25rem + env(safe-area-inset-bottom));
+  /* Clear fixed mobile bottom nav (0 on desktop) — same token as toast/AppHeader */
+  bottom: calc(var(--bottom-nav-height, 0px) + 1rem);
 }
 
-.root {
+/* Docked panel — no backdrop, page stays fully visible underneath */
+.panel {
   position: fixed;
-  inset: 0;
+  right: max(1rem, env(safe-area-inset-right));
   z-index: 10000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  box-sizing: border-box;
-}
-
-.backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.62);
-  cursor: pointer;
-}
-
-.modal {
-  position: relative;
-  z-index: 1;
-  display: flex;
   flex-direction: column;
-  width: min(440px, 100%);
-  max-height: min(78vh, 680px);
+  width: min(380px, calc(100vw - 2rem));
+  max-height: min(70vh, 560px);
   overflow: hidden;
   border: 1px solid rgba(120, 200, 180, 0.28);
   border-radius: 12px;
   background: #0a1815;
   color: #eef8f4;
   font-family: var(--font-sans), system-ui, sans-serif;
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.panelChromeless {
+  bottom: calc(1.25rem + 52px + 0.75rem + env(safe-area-inset-bottom));
+}
+
+.panelApp {
+  bottom: calc(var(--bottom-nav-height, 0px) + 1rem + 52px + 0.75rem);
 }
 
 .header {
@@ -267,18 +260,8 @@
 }
 
 @media (max-width: 520px) {
-  .root {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .modal {
-    width: 100%;
-    max-height: 88vh;
-    border-radius: 12px 12px 0 0;
-  }
-
-  .fabApp {
-    bottom: calc(4rem + env(safe-area-inset-bottom));
+  .panel {
+    width: calc(100vw - 1.5rem);
+    max-height: min(65vh, 520px);
   }
 }
