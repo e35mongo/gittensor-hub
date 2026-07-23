@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { DM_Sans } from 'next/font/google';
 import styles from './landing.module.css';
+import LandingProofStrip from './LandingProofStrip';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -47,6 +48,8 @@ export default function LandingHero() {
           </a>
         </div>
       </main>
+
+      <LandingProofStrip />
     </div>
   );
 }
