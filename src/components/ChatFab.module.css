@@ -1,7 +1,7 @@
 .fab {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
-  z-index: 90;
+  z-index: 9990;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -14,7 +14,7 @@
   color: #041412;
   background: #2bb3a4;
   box-shadow: none;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .fab:hover {
@@ -31,29 +31,24 @@
 }
 
 .fabApp {
-  /* Sit above the in-flow poller status bar */
   bottom: calc(3.25rem + env(safe-area-inset-bottom));
 }
 
 .root {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 10000;
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
 .backdrop {
   position: absolute;
   inset: 0;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.62);
   cursor: pointer;
 }
 
@@ -62,15 +57,15 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  width: min(420px, 100%);
-  max-height: min(72vh, 640px);
+  width: min(440px, 100%);
+  max-height: min(78vh, 680px);
   overflow: hidden;
-  border: 1px solid rgba(120, 200, 180, 0.22);
+  border: 1px solid rgba(120, 200, 180, 0.28);
   border-radius: 12px;
   background: #0a1815;
   color: #eef8f4;
   font-family: var(--font-sans), system-ui, sans-serif;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.55);
 }
 
 .header {
@@ -273,16 +268,14 @@
 
 @media (max-width: 520px) {
   .root {
-    align-items: stretch;
-    justify-content: stretch;
+    align-items: flex-end;
     padding: 0;
   }
 
   .modal {
     width: 100%;
-    max-height: 85vh;
+    max-height: 88vh;
     border-radius: 12px 12px 0 0;
-    margin-top: auto;
   }
 
   .fabApp {
