@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev --webpack -p 12075",
     "build": "next build --webpack",
-    "start": "next start -p 12075",
+    "start": "next start -p 12074",
     "lint": "eslint . --max-warnings=0",
     "lint:warnings": "eslint ."
   },
