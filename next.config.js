@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Remote browsers hit this host by public IP; without an allowlist Next blocks
+  // /_next/* (HMR websockets, fonts, chunks) in development.
+  allowedDevOrigins: ['95.216.237.220', '127.0.0.1'],
   compiler: {
     styledComponents: true,
   },
