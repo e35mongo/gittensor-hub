@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ensure open hub:wanted issues meet the floor defined in
+ * Ensure open gittensor-hub:wanted issues meet the floor defined in
  * .github/wanted-backlog.json. Creates missing issues (by exact title match).
  *
  * Usage:
@@ -47,7 +47,7 @@ const openWanted = (ghJson([
   '--state', 'open',
   '--limit', '100',
   '--json', 'number,title,labels',
-]) || []).filter((i) => (i.labels || []).some((l) => l.name === 'hub:wanted'));
+]) || []).filter((i) => (i.labels || []).some((l) => l.name === 'gittensor-hub:wanted'));
 
 const openTitles = new Set(openWanted.map((i) => i.title));
 const milestones = ghJson([
@@ -69,7 +69,7 @@ for (const item of missing) {
     '--title', item.title,
     '--body', item.body || `Wanted backlog item \`${item.id}\`.`,
   ];
-  for (const label of item.labels || ['hub:wanted', 'help wanted']) {
+  for (const label of item.labels || ['gittensor-hub:wanted', 'help wanted']) {
     args.push('--label', label);
   }
   if (item.milestone && milestoneByTitle.has(item.milestone)) {
@@ -86,7 +86,7 @@ const openAfter = WRITE
       '--state', 'open',
       '--limit', '100',
       '--json', 'number,title,labels',
-    ]) || []).filter((i) => (i.labels || []).some((l) => l.name === 'hub:wanted')))
+    ]) || []).filter((i) => (i.labels || []).some((l) => l.name === 'gittensor-hub:wanted')))
   : openWanted;
 
 const projectedOpen = WRITE ? openAfter.length : openWanted.length + missing.length;
@@ -106,7 +106,7 @@ process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
 
 if (WRITE && openAfter.length < minOpen) {
   console.error(
-    `[wanted-buffer] open hub:wanted (${openAfter.length}) still below min_open (${minOpen}). Add more backlog items.`,
+    `[wanted-buffer] open gittensor-hub:wanted (${openAfter.length}) still below min_open (${minOpen}). Add more backlog items.`,
   );
   process.exitCode = 1;
 }

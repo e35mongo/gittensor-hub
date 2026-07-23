@@ -27,7 +27,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the scoring-relevant set. Trust / 
 GitHub does not version saved views in-repo. Create these under **Issues → Views** (or search bookmarks):
 
 1. **Wanted (miner work)**  
-   `is:issue is:open label:hub:wanted -label:maintainer-only`
+   `is:issue is:open label:gittensor-hub:wanted -label:maintainer-only`
 
 2. **Good first**  
    `is:issue is:open label:"good first issue"`
@@ -48,10 +48,10 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 
 | Workflow | Role |
 | --- | --- |
-| `wanted-buffer.yml` | Weekly: ensure open `hub:wanted` count meets the floor from `.github/wanted-backlog.yml` |
+| `wanted-buffer.yml` | Weekly: ensure open `gittensor-hub:wanted` count meets the floor from `.github/wanted-backlog.json` |
 | `pr-linked-issue.yml` | Warn/close guidance when a PR has no linked issue |
 | `build.yml` | Lint / typecheck / build |
 
 ## Wanted buffer
 
-Curated seeds live in [`.github/wanted-backlog.json`](../.github/wanted-backlog.json). Maintainers edit that file; the weekly workflow opens missing issues labeled `hub:wanted` + `help wanted`.
+Curated seeds live in [`.github/wanted-backlog.json`](../.github/wanted-backlog.json). Maintainers edit that file; the weekly workflow opens missing issues labeled `gittensor-hub:wanted` + `help wanted`.
