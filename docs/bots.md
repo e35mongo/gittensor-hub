@@ -32,7 +32,7 @@ One sticky PR comment (`<!-- gittensor-hub:jagtensor-policy -->`).
 | `large-pr` | minor | Getting large — prefer slices |
 | `too-many-open-prs` | major | Author over the ≤5 open PR limit |
 | `src-without-tests` | minor | Src changed, no tests in diff |
-| `ui-wanted-missing-frontend-label` | minor | Wanted issue missing `frontend` label |
+| `ui-wanted-missing-frontend-label` | minor | Wanted issue missing `frontend` label → `pr:needs-frontend-label` |
 
 Majors add `pr:flagged` + `manual-review` plus granular labels (`pr:missing-issue`, `pr:ui-scope`, …). Full table: [docs/pr-labels.md](./pr-labels.md).
 

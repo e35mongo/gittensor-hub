@@ -324,6 +324,7 @@ const FINDING_LABELS = {
   'ui-outside-issue-scope': 'pr:ui-scope',
   'ui-on-maintainer-epic': 'pr:ui-scope',
   'ui-mixed-into-backend-pr': 'pr:ui-scope',
+  'ui-wanted-missing-frontend-label': 'pr:needs-frontend-label',
   'ui-missing-screenshot': 'pr:needs-screenshot',
   'protected-paths': 'pr:protected-paths',
   'oversized-pr': 'pr:oversized',

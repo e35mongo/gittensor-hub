@@ -10,6 +10,7 @@ Detailed `pr:*` labels for triage. jagtensor applies/clears the **auto** ones on
 | `pr:issue-closed` | Linked issue not open |
 | `pr:ui-scope` | Unrelated / out-of-scope UI |
 | `pr:needs-screenshot` | UI without visual proof |
+| `pr:needs-frontend-label` | Wanted issue missing `frontend` for UI work |
 | `pr:protected-paths` | Workflows / scripts / lockfiles / Next config |
 | `pr:oversized` | Above size hold threshold |
 | `pr:large` | Above size warn threshold |
