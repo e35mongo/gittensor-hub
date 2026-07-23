@@ -1,61 +1,124 @@
 {
-  "min_open": 5,
+  "min_open": 8,
   "items": [
     {
-      "id": "landing-v1",
-      "title": "gittensor-hub:wanted — Public landing page v1 (brand + SN74 proof + CTAs)",
+      "id": "landing-public-routes",
+      "title": "gittensor-hub:wanted — Make landing/marketing routes public (proxy allowlist)",
+      "milestone": "Presence & Re-list",
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
+      "body": "Parent epic: #251\n\nSee issue body on GitHub — keep this backlog title stable for wanted-buffer dedupe.\n"
+    },
+    {
+      "id": "landing-hero",
+      "title": "gittensor-hub:wanted — Landing hero: brand + one headline + one supporting line + CTA group",
       "milestone": "Presence & Re-list",
       "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
-      "body": "## Goal\nShip a public landing page at `/` (or dedicated marketing route) that explains Gittensor Hub, shows live SN74 proof, and CTAs to sign-in / docs / wanted board.\n\n## Acceptance\n- Chromeless public route (no OAuth wall)\n- Brand-first hero; one CTA group\n- Link to changelog + wanted issues\n- Works on mobile + desktop\n\n## Anti-slop\nNo generic AI purple theme. Match hub visual language or a deliberate branded landing system.\n"
+      "body": "Parent epic: #251\n"
+    },
+    {
+      "id": "landing-proof",
+      "title": "gittensor-hub:wanted — Landing proof strip: live SN74 snapshot (repos / activity)",
+      "milestone": "Presence & Re-list",
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
+      "body": "Parent epic: #251\n"
     },
     {
       "id": "changelog-page",
       "title": "gittensor-hub:wanted — Weekly /changelog page + first ship note",
       "milestone": "Presence & Re-list",
       "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "docs"],
-      "body": "## Goal\nAdd `/changelog` listing weekly ship notes (markdown or structured data).\n\n## Acceptance\n- Public route\n- At least one real entry describing recent work\n- Documented how maintainers add the next weekly note\n"
+      "body": "## Goal\nAdd `/changelog` listing weekly ship notes.\n\n## Acceptance\n- Public route\n- At least one real entry\n- Documented how maintainers add the next note\n"
     },
     {
       "id": "status-page",
       "title": "gittensor-hub:wanted — Public /status page for poller freshness",
       "milestone": "Platform Foundation",
       "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
-      "body": "## Goal\nPublic status page showing poller / cache freshness (repos cached, last fetch, recent errors).\n\n## Acceptance\n- Uses existing poller-status data (or a public API wrapper)\n- Clear healthy / degraded presentation\n- Linked from docs or landing\n"
+      "body": "## Goal\nPublic status page for poller / cache freshness.\n"
     },
     {
       "id": "docs-miners-maintainers",
       "title": "gittensor-hub:wanted — Docs cover Miners, Maintainers, and anti-slop",
       "milestone": "Platform Foundation",
       "labels": ["gittensor-hub:wanted", "help wanted", "docs", "frontend"],
-      "body": "## Goal\nExtend in-app `/docs` (and README pointers) so Miners + Maintainers views and anti-slop contribution rules are documented.\n\n## Acceptance\n- New doc sections for Miners and Maintainers\n- Anti-slop / gittensor-hub:wanted rules summarized with links to CONTRIBUTING\n- Stack versions say Next 16 / React 19\n"
+      "body": "## Goal\nExtend `/docs` for Miners, Maintainers, anti-slop; Next 16 / React 19 accurate.\n"
     },
     {
-      "id": "my-work-cockpit",
-      "title": "gittensor-hub:wanted — My Work cockpit for signed-in GitHub user",
+      "id": "my-work-shell",
+      "title": "gittensor-hub:wanted — Add /my-work page shell (auth-gated empty state)",
       "milestone": "Platform Foundation",
       "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
-      "body": "## Goal\nOne page (`/my-work`) showing the signed-in user's open issues/PRs on this repo (and later Hub Score placeholder).\n\n## Acceptance\n- Auth-gated\n- Lists user's open PRs/issues against MkDev11/gittensor-hub\n- Empty state points at gittensor-hub:wanted board\n"
+      "body": "Parent epic: #255\n"
     },
     {
-      "id": "chatbot-mvp",
-      "title": "gittensor-hub:wanted — Gittensor explainer chatbot MVP (docs RAG)",
+      "id": "my-work-prs",
+      "title": "gittensor-hub:wanted — My Work: list signed-in user's open PRs on this repo",
       "milestone": "Platform Foundation",
-      "labels": ["gittensor-hub:wanted", "help wanted", "backend", "frontend"],
-      "body": "## Goal\nRetrieval-only chatbot over committed docs (allocator math, how to mine, hub guides). Cite sources; never invent emission figures.\n\n## Acceptance\n- `/chat` (public or signed-in — document choice)\n- Answers “how do SN74 emissions split?” with citations\n- Clear “not financial advice / not a score oracle” disclaimer\n"
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
+      "body": "Parent epic: #255\n"
     },
     {
-      "id": "subnet-registry-shell",
-      "title": "gittensor-hub:wanted — Subnet registry + /subnet/[netuid] metagraph shell",
-      "milestone": "Multi-subnet Wedge",
+      "id": "my-work-issues",
+      "title": "gittensor-hub:wanted — My Work: list signed-in user's open issues on this repo",
+      "milestone": "Platform Foundation",
       "labels": ["gittensor-hub:wanted", "help wanted", "frontend", "backend"],
-      "body": "## Goal\nRegistry for netuid 1–128 with live/inactive/unknown, plus generic metagraph page per netuid (taoswap-style proxy).\n\n## Acceptance\n- `/subnets` list\n- `/subnet/[netuid]/metagraph` shows neuron table or honest empty/error\n- SN74 linked as first-class hub experience\n"
+      "body": "Parent epic: #255\n"
+    },
+    {
+      "id": "chat-knowledge",
+      "title": "gittensor-hub:wanted — Chat knowledge pack: commit allocator/mining/hub FAQ markdown",
+      "milestone": "Platform Foundation",
+      "labels": ["gittensor-hub:wanted", "help wanted", "docs"],
+      "body": "Parent epic: #256\n"
+    },
+    {
+      "id": "chat-api",
+      "title": "gittensor-hub:wanted — Chat retrieval API: search knowledge pack and return citations",
+      "milestone": "Platform Foundation",
+      "labels": ["gittensor-hub:wanted", "help wanted", "backend"],
+      "body": "Parent epic: #256\n"
+    },
+    {
+      "id": "chat-ui",
+      "title": "gittensor-hub:wanted — Chat UI page /chat with citations and disclaimer",
+      "milestone": "Platform Foundation",
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
+      "body": "Parent epic: #256\n"
+    },
+    {
+      "id": "subnet-registry",
+      "title": "gittensor-hub:wanted — Subnet registry module (netuid 1–128, live/inactive/unknown)",
+      "milestone": "Multi-subnet Wedge",
+      "labels": ["gittensor-hub:wanted", "help wanted", "backend"],
+      "body": "Parent epic: #257\n"
+    },
+    {
+      "id": "subnets-page",
+      "title": "gittensor-hub:wanted — /subnets list page from registry",
+      "milestone": "Multi-subnet Wedge",
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
+      "body": "Parent epic: #257\n"
+    },
+    {
+      "id": "metagraph-api",
+      "title": "gittensor-hub:wanted — Metagraph API proxy for any netuid",
+      "milestone": "Multi-subnet Wedge",
+      "labels": ["gittensor-hub:wanted", "help wanted", "backend"],
+      "body": "Parent epic: #257\n"
+    },
+    {
+      "id": "metagraph-page",
+      "title": "gittensor-hub:wanted — /subnet/[netuid]/metagraph page",
+      "milestone": "Multi-subnet Wedge",
+      "labels": ["gittensor-hub:wanted", "help wanted", "frontend"],
+      "body": "Parent epic: #257\n"
     },
     {
       "id": "pr-gate-docs",
       "title": "gittensor-hub:wanted — Document PR linked-issue gate for contributors",
       "milestone": "Presence & Re-list",
       "labels": ["gittensor-hub:wanted", "help wanted", "docs"],
-      "body": "## Goal\nShort docs snippet + CONTRIBUTING cross-links explaining the linked-open-issue requirement and max-2-PR rule.\n\n## Acceptance\n- Visible from README or docs/github-os.md\n- Examples of good vs slop PRs\n"
+      "body": "## Goal\nDocument linked-open-issue + max-2-PR rules for contributors.\n"
     }
   ]
 }
