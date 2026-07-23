@@ -9,8 +9,7 @@ jagtensor is the speaker + deterministic policy we own. It is **not** a LoopOver
 
 ## 1) jagtensor GitHub App (one-time)
 
-1. Create (or rename) the App to **`jagtensor`** (webhook **inactive**).  
-   If you already created `jaguar`: GitHub App settings → change name/slug to `jagtensor` so comments show as `jagtensor[bot]`.
+1. Create App named **`jagtensor`** (webhook **inactive**), or keep your existing `jagtensor` App.
 2. Permissions: Pull requests R/W, Issues R/W, Contents Read, Metadata Read.
 3. Install on `e35mongo/gittensor-hub`.
 4. Repo secrets (preferred): `JAGTENSOR_APP_ID`, `JAGTENSOR_APP_PRIVATE_KEY`.  
