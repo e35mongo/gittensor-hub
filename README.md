@@ -8,6 +8,8 @@ Built with Next.js 16 (App Router), React 19, TypeScript, Primer React, and `bet
 
 Contributor OS (labels, milestones, wanted board, **linked-issue gate**): [docs/github-os.md](./docs/github-os.md) · [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+In-app docs (`/docs`): Miners, Maintainers, and **Contributing & anti-slop** sections (Next.js 16 / React 19 stack noted in Overview).
+
 Public presence: [`/presence`](./docs/presence.md) (chat/social SLA) · [`/changelog`](./docs/changelog.md) · public `/status` (poller freshness).
 
 ## Main views
@@ -15,7 +17,9 @@ Public presence: [`/presence`](./docs/presence.md) (chat/social SLA) · [`/chang
 - `/` redirects to `/dashboard`, the daily SN74 overview.
 - `/dashboard` shows network activity, scored PRs, issue discovery, reward-ranked Top Contributions, and PR/issue pipelines.
 - `/explorer` is the repo drill-down view for issues and pull requests.
-- `/miners`, `/repositories`, `/issues`, and `/pulls` provide focused global tables.
+- `/miners` and `/maintainers` are the SN74 miner / maintainer boards.
+- `/repositories`, `/issues`, and `/pulls` provide focused global tables.
+- `/docs` documents those views plus contribution rules.
 
 Dashboard reward-share cards follow the Gittensor allocator at UI level:
 
