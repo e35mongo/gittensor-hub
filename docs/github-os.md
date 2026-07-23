@@ -49,11 +49,10 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 | Workflow | Role |
 | --- | --- |
 | `wanted-buffer.yml` | Weekly: ensure open `gittensor-hub:wanted` count meets the floor from `.github/wanted-backlog.json` |
-| `pr-linked-issue.yml` | Warn/close guidance when a PR has no linked issue |
-| `pr-ui-scope-review.yml` | Flag unrelated UI work (UI files outside linked issue `frontend` scope; missing screenshots) |
+| `pr-jaguar-policy.yml` | jaguar gates: linked issue, UI scope, screenshots, size, protected paths, ≤2 open PRs |
 | `build.yml` | Lint / typecheck / build |
 
-Bot identity + LoopOver deep review: see [docs/bots.md](./bots.md). Policy bots speak as **jaguar[bot]** once `JAGUAR_APP_*` secrets are set; deep PR gating is **LoopOver** via [`.loopover.yml`](../.loopover.yml).
+Bot identity + optional LoopOver: see [docs/bots.md](./bots.md). Policy comments speak as **jaguar[bot]** once `JAGUAR_APP_*` secrets are set.
 
 ## Wanted buffer
 

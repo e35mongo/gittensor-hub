@@ -1,8 +1,7 @@
-name: PR UI scope review
+name: jaguar policy
 
-# Flags unrelated UI work: UI file changes outside the linked issue's scope
-# (e.g. backend/docs wanted issue), missing frontend label, or UI without an issue.
-# Comments as jaguar[bot] when JAGUAR_APP_* secrets are set; else github-actions.
+# Deterministic hub PR gates as jaguar[bot] (linked issue, UI scope, size,
+# protected paths, concurrent PR limit). Falls back to github-actions without secrets.
 
 on:
   pull_request:
@@ -14,11 +13,11 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-ui-scope-${{ github.event.pull_request.number }}
+  group: jaguar-policy-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  ui-scope:
+  policy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -39,18 +38,18 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Review UI scope
+      - name: Run jaguar policy
         env:
           GH_TOKEN: ${{ steps.jaguar.outputs.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node scripts/pr-ui-scope-review.mjs --pr "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --write | tee ui-scope.json
+        run: node scripts/pr-jaguar-policy.mjs --pr "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --write | tee jaguar-policy.json
 
       - name: Job summary
         run: |
           {
-            echo '## PR UI scope review'
+            echo '## jaguar policy'
             echo "Identity: \`${{ steps.jaguar.outputs.identity }}\`"
             echo '```json'
-            cat ui-scope.json
+            cat jaguar-policy.json
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

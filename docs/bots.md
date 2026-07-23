@@ -1,61 +1,48 @@
 # Bots on gittensor-hub
 
-Hub uses **two layers** (same pattern as metagraphed):
-
 | Layer | Identity | Job |
 | --- | --- | --- |
-| **LoopOver** (install/self-host) | `loopover-orb[bot]` / `loopover[bot]` | Deep PR review gate, AI + deterministic anti-slop, path policy via [`.loopover.yml`](../.loopover.yml) |
-| **jaguar** (our GitHub App) | `jaguar[bot]` | Hub-specific Actions: linked-issue gate, UI-scope review, wanted-buffer |
+| **jaguar** (our GitHub App) | `jaguar[bot]` | Hub policy Actions: linked issue, UI scope, size, protected paths, concurrent PR limit, wanted-buffer |
+| **LoopOver** (optional) | `loopover-orb[bot]` | Deep AI review — requires self-host; not required for jaguar |
 
-You do **not** rebuild LoopOver as jaguar. jaguar is only the speaker + policy bots we own in Actions.
+jaguar is the speaker + deterministic policy we own. It is **not** a LoopOver clone.
 
-## 1) Create the jaguar GitHub App (you do this once)
+## 1) jaguar GitHub App (one-time)
 
-1. GitHub → Settings → Developer settings → **GitHub Apps** → New GitHub App  
-   - **Name:** `jaguar` (slug becomes the bot login `jaguar[bot]`)  
-   - Homepage: your hub URL  
-   - Webhook: inactive (Actions mint tokens; no webhook required for these bots)
-2. Permissions (Repository):
-   - **Pull requests:** Read & write  
-   - **Issues:** Read & write  
-   - **Contents:** Read  
-   - **Metadata:** Read
-3. Install the App on `e35mongo/gittensor-hub` (or `MkDev11/gittensor-hub` redirect).
-4. Copy **App ID** + generate a **private key** (PEM).
-5. Repo → Settings → Secrets and variables → Actions → add:
-   - `JAGUAR_APP_ID`
-   - `JAGUAR_APP_PRIVATE_KEY` (full PEM)
+1. Create App named `jaguar` (webhook **inactive**).
+2. Permissions: Pull requests R/W, Issues R/W, Contents Read, Metadata Read.
+3. Install on `e35mongo/gittensor-hub`.
+4. Repo secrets: `JAGUAR_APP_ID`, `JAGUAR_APP_PRIVATE_KEY`.
 
-Until those secrets exist, workflows fall back to `github-actions[bot]` (current behavior).
+Until secrets exist, workflows fall back to `github-actions[bot]`.
 
-## 2) Install LoopOver (deep review)
+## 2) jaguar policy checks
 
-LoopOver’s shared hosted App is paused; **self-host** is the supported path:
+Workflow: `pr-jaguar-policy.yml` → `scripts/pr-jaguar-policy.mjs`  
+One sticky PR comment (`<!-- gittensor-hub:jaguar-policy -->`).
 
-- Docs: https://loopover.ai/docs/github-app  
-- Self-host setup: https://loopover.ai/docs/maintainer-self-hosting  
-- Engine/repo: https://github.com/JSONbored/loopover  
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `missing-linked-issue` / `linked-issue-not-open` | major | Need open `#N` / `Closes #N` |
+| `ui-without-issue` / `ui-outside-issue-scope` / `ui-on-maintainer-epic` / `ui-mixed-into-backend-pr` | major | Unrelated or unsourced UI |
+| `ui-missing-screenshot` | major/minor | User-visible UI needs proof |
+| `protected-paths` | major | Workflows / lockfiles / Next config without write access |
+| `oversized-pr` | major | Too many files/lines → `manual-review` |
+| `large-pr` | minor | Getting large — prefer slices |
+| `too-many-open-prs` | major | Author over the ≤2 open PR limit |
+| `src-without-tests` | minor | Src changed, no tests in diff |
+| `ui-wanted-missing-frontend-label` | minor | Wanted issue missing `frontend` label |
 
-After Orb is installed on this repo:
+Majors add labels `pr:flagged` + `manual-review`.
 
-1. Confirm [`.loopover.yml`](../.loopover.yml) is on `main`.
-2. Keep gates **advisory** until health looks good, then tighten (`linkedIssue: block`, `slopGateMode`, etc.).
-3. Optionally require check **LoopOver Orb Review Agent** in branch protection once blocking rules are intentional.
+Also: `wanted-buffer.yml` weekly tops up `gittensor-hub:wanted` issues.
 
-`.loopover.yml` already treats `src/**` / workflows as **blockedPaths** (no auto-merge of product code as “community data”) and notes UI/screenshot policy for reviewers.
+## 3) LoopOver (optional)
 
-## 3) What each jaguar Action does
-
-| Workflow | Behavior |
-| --- | --- |
-| `pr-linked-issue.yml` | Warn if PR has no `#N` / `Closes #N` |
-| `pr-ui-scope-review.yml` | Flag unrelated UI vs linked issue labels; `pr:flagged` + `manual-review` |
-| `wanted-buffer.yml` | Weekly top-up of `gittensor-hub:wanted` issues |
-
-All three call [`.github/actions/jaguar-token`](../.github/actions/jaguar-token/action.yml) so comments come from **jaguar** when secrets are set.
+Shared hosted App is paused — self-host only. Config stub: [`.loopover.yml`](../.loopover.yml). Skip unless you want deep AI review.
 
 ## 4) Verify
 
-1. Open a tiny PR without an issue link → comment from `jaguar[bot]` (after secrets).  
-2. Open a PR that adds a `src/components/*` file on a backend-only wanted issue → UI-scope major finding.  
-3. With LoopOver installed, confirm the Orb check + sticky review panel on the same PR.
+1. PR without `#N` → jaguar sticky comment with `missing-linked-issue`.
+2. UI on a backend-only wanted issue → `ui-outside-issue-scope`.
+3. Job summary shows `Identity: jaguar` when secrets + install are set.
