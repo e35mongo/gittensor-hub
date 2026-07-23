@@ -8,6 +8,7 @@ import AppShell from '@/components/AppShell';
 import BackgroundWatchers from '@/components/BackgroundWatchers';
 import PollerStatusBar from '@/components/PollerStatusBar';
 import TopProgressBar from '@/components/TopProgressBar';
+import ChatFab from '@/components/ChatFab';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -60,6 +61,7 @@ export default function RootLayout({
               {children}
               <PollerStatusBar />
             </main>
+            <ChatFab />
           </Providers>
         </StyledComponentsRegistry>
       </body>
