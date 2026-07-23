@@ -482,7 +482,7 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
 
             <Article id="manage" title="Manage Repositories">
               <P>
-                <Code>/manage-repos</Code> (also accessible from the user menu) is now a legacy/admin custom-repo list.
+                <Code>/manage-repos</Code> (also accessible from Settings → Account) is now a legacy/admin custom-repo list.
                 Issue and PR polling only follows the live Gittensor repository list.
               </P>
               <Ul>
