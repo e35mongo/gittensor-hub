@@ -50,6 +50,7 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 | --- | --- |
 | `wanted-buffer.yml` | Weekly: ensure open `gittensor-hub:wanted` count meets the floor from `.github/wanted-backlog.json` |
 | `pr-linked-issue.yml` | Warn/close guidance when a PR has no linked issue |
+| `pr-ui-scope-review.yml` | Flag unrelated UI work (UI files outside linked issue `frontend` scope; missing screenshots) |
 | `build.yml` | Lint / typecheck / build |
 
 ## Wanted buffer
