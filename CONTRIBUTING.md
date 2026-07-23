@@ -72,7 +72,7 @@ When this repo is Gittensor-listed, validator `label_multipliers` should mirror 
 * Address requested changes with new commits on the same branch
 * **Unrelated UI work** (changing pages/components/styles on a backend/docs-only issue, or UI with no linked `frontend` wanted issue) is flagged by **jagtensor** (`pr:flagged`) and may be closed as `slop`
 * User-visible UI PRs must include a screenshot or before/after in the PR body
-* jagtensor also flags missing linked issues, oversized PRs, protected-path edits (workflows/lockfiles/config), and >2 open PRs per author — see [docs/bots.md](./docs/bots.md)
+* jagtensor also flags missing linked issues, oversized PRs, protected-path edits (workflows / `scripts/*` / lockfiles / config), and >2 open PRs per author — see [docs/bots.md](./docs/bots.md)
 
 ### Code Standards
 

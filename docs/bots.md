@@ -27,7 +27,7 @@ One sticky PR comment (`<!-- gittensor-hub:jagtensor-policy -->`).
 | `missing-linked-issue` / `linked-issue-not-open` | major | Need open `#N` / `Closes #N` |
 | `ui-without-issue` / `ui-outside-issue-scope` / `ui-on-maintainer-epic` / `ui-mixed-into-backend-pr` | major | Unrelated or unsourced UI |
 | `ui-missing-screenshot` | major/minor | User-visible UI needs proof |
-| `protected-paths` | major | Workflows / lockfiles / Next config without write access |
+| `protected-paths` | major | Workflows / `scripts/*` / lockfiles / Next config without write access |
 | `oversized-pr` | major | Too many files/lines → `manual-review` |
 | `large-pr` | minor | Getting large — prefer slices |
 | `too-many-open-prs` | major | Author over the ≤2 open PR limit |

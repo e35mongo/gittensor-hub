@@ -10,7 +10,7 @@ Detailed `pr:*` labels for triage. jagtensor applies/clears the **auto** ones on
 | `pr:issue-closed` | Linked issue not open |
 | `pr:ui-scope` | Unrelated / out-of-scope UI |
 | `pr:needs-screenshot` | UI without visual proof |
-| `pr:protected-paths` | Workflows / lockfiles / Next config |
+| `pr:protected-paths` | Workflows / scripts / lockfiles / Next config |
 | `pr:oversized` | Above size hold threshold |
 | `pr:large` | Above size warn threshold |
 | `pr:too-many-open` | Author > 2 open PRs |

@@ -82,6 +82,7 @@ function isProtectedPath(file) {
     f.startsWith('.github/workflows/') ||
     f.startsWith('.github/actions/') ||
     f === '.github/dependabot.yml' ||
+    f.startsWith('scripts/') ||
     f === 'package.json' ||
     f === 'pnpm-lock.yaml' ||
     f === 'pnpm-workspace.yaml' ||
@@ -258,7 +259,7 @@ if (protectedFiles.length > 0 && !writer && !isMaintainerOnly) {
     severity: 'major',
     code: 'protected-paths',
     message:
-      `This PR touches protected maintainer paths (${protectedFiles.map((f) => `\`${f}\``).join(', ')}). Community PRs should not change workflows, lockfiles, or app config unless a maintainer-only issue explicitly asks for it.`,
+      `This PR touches protected maintainer paths (${protectedFiles.map((f) => `\`${f}\``).join(', ')}). Community PRs should not change workflows, scripts, lockfiles, or app config unless a maintainer-only issue explicitly asks for it.`,
   });
 }
 
@@ -450,7 +451,7 @@ ${lines.join('\n')}
 ### What to do
 1. Link an open \`gittensor-hub:wanted\` issue and keep the diff on-scope.
 2. No unrelated UI on backend/docs issues; UI needs screenshots.
-3. Leave workflows / lockfiles / Next config to maintainers unless asked.
+3. Leave workflows / \`scripts/*\` / lockfiles / Next config to maintainers unless asked.
 4. Stay at ≤ ${MAX_OPEN_PRS} open PRs; split oversized diffs.
 
 See [CONTRIBUTING.md](https://github.com/${REPO}/blob/main/CONTRIBUTING.md) · [docs/bots.md](https://github.com/${REPO}/blob/main/docs/bots.md) · [docs/pr-labels.md](https://github.com/${REPO}/blob/main/docs/pr-labels.md).

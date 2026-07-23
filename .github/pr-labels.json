@@ -3,7 +3,7 @@
   { "name": "pr:issue-closed", "color": "B60205", "description": "Linked issue is closed or missing — reopen or retarget" },
   { "name": "pr:ui-scope", "color": "D93F0B", "description": "Unrelated or out-of-scope UI changes vs linked issue" },
   { "name": "pr:needs-screenshot", "color": "FBCA04", "description": "UI PR needs screenshot / before-after in body" },
-  { "name": "pr:protected-paths", "color": "B60205", "description": "Touches workflows, lockfiles, or app config" },
+  { "name": "pr:protected-paths", "color": "B60205", "description": "Touches workflows, scripts, lockfiles, or app config" },
   { "name": "pr:oversized", "color": "B60205", "description": "PR too large — split into focused slices" },
   { "name": "pr:large", "color": "FBCA04", "description": "PR getting large — prefer smaller diffs" },
   { "name": "pr:too-many-open", "color": "B60205", "description": "Author has more than 2 open PRs" },
