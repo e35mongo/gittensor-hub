@@ -53,6 +53,8 @@ GitHub does not version saved views in-repo. Create these under **Issues → Vie
 | `pr-ui-scope-review.yml` | Flag unrelated UI work (UI files outside linked issue `frontend` scope; missing screenshots) |
 | `build.yml` | Lint / typecheck / build |
 
+Bot identity + LoopOver deep review: see [docs/bots.md](./bots.md). Policy bots speak as **jaguar[bot]** once `JAGUAR_APP_*` secrets are set; deep PR gating is **LoopOver** via [`.loopover.yml`](../.loopover.yml).
+
 ## Wanted buffer
 
 Curated seeds live in [`.github/wanted-backlog.json`](../.github/wanted-backlog.json). Maintainers edit that file; the weekly workflow opens missing issues labeled `gittensor-hub:wanted` + `help wanted`.
