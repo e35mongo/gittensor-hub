@@ -11,13 +11,6 @@
       "role": "Issues, PRs, and wanted-board discussion"
     },
     {
-      "id": "x",
-      "label": "X",
-      "handle": null,
-      "url": null,
-      "role": "Weekly ship-note posts (fill handle to publish)"
-    },
-    {
       "id": "discord",
       "label": "Gittensor Discord",
       "handle": "discord.gg/mAXpcvAcZ",
@@ -29,7 +22,7 @@
     {
       "date": "2026-07-23",
       "kind": "ops",
-      "summary": "Presence SLA clock started. Landing + /changelog live; chat/social handles pending fill.",
+      "summary": "Presence SLA clock started. Landing + /changelog live.",
       "url": "https://github.com/e35mongo/gittensor-hub/issues/284"
     },
     {
@@ -37,6 +30,12 @@
       "kind": "ops",
       "summary": "Published Gittensor Discord invite on /presence.",
       "url": "https://discord.gg/mAXpcvAcZ"
+    },
+    {
+      "date": "2026-07-23",
+      "kind": "ops",
+      "summary": "Deferred X for now — presence channels are GitHub + Gittensor Discord only.",
+      "url": null
     }
   ]
 }
