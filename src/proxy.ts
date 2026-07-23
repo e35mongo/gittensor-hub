@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/session-token';
+import {
+  verifySessionToken,
+  SESSION_COOKIE_NAME,
+  isDevAuthBypass,
+} from '@/lib/session-token';
 import { getUserById } from '@/lib/auth';
 import { isPublicPath } from '@/lib/marketing-routes';
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Local-only: skip GitHub sign-in gate when DEV_BYPASS_AUTH is set.
+  if (isDevAuthBypass()) {
+    if (pathname === '/sign-in') {
+      const next = req.nextUrl.searchParams.get('next');
+      const safeNext =
+        next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+      const url = req.nextUrl.clone();
+      url.pathname = safeNext;
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
 
   // Public routes skip auth — except signed-in users should not see /sign-in.
   if (isPublicPath(pathname)) {

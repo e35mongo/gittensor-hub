@@ -12,10 +12,10 @@ import {
   BookIcon,
   PeopleIcon,
   ShieldCheckIcon,
+  GearIcon,
 } from '@primer/octicons-react';
 import type { Icon } from '@primer/octicons-react';
 import ThemeToggle from '@/components/ThemeToggle';
-import UserMenu from '@/components/UserMenu';
 import PriceTicker from '@/components/PriceTicker';
 import { isChromelessPath } from '@/lib/marketing-routes';
 
@@ -39,6 +39,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const SECONDARY: NavItem[] = [
+  { href: '/settings', label: 'Settings', icon: GearIcon },
   { href: '/docs', label: 'Docs', icon: BookIcon },
 ];
 
@@ -128,9 +129,8 @@ export default function AppSidebar() {
       data-app-sidebar=""
     >
       {/* Brand */}
-      <Link
-        href="/dashboard"
-        prefetch={false}
+      <a
+        href="https://gittensor-hub.io"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -151,7 +151,7 @@ export default function AppSidebar() {
         >
           Gittensor Hub
         </span>
-      </Link>
+      </a>
 
       {/* Primary nav */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
@@ -186,12 +186,11 @@ export default function AppSidebar() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             gap: 8,
             minWidth: 0,
           }}
         >
-          <UserMenu maxWidth={156} />
           <ThemeToggle />
         </div>
       </div>

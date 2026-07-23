@@ -111,10 +111,29 @@ const EMPTY: AuthSession = {
   loading: true,
 };
 
+function isClientDevAuthBypass(): boolean {
+  const raw = (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH || '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+const DEV_BYPASS_SESSION: AuthSession = {
+  authenticated: true,
+  username: 'local-dev',
+  isAdmin: true,
+  avatarUrl: null,
+  status: 'approved',
+  loading: false,
+};
+
 export function useSession(): AuthSession & { signOut: () => Promise<void> } {
-  const [session, setSession] = useState<AuthSession>(EMPTY);
+  const bypass = isClientDevAuthBypass();
+  const [session, setSession] = useState<AuthSession>(bypass ? DEV_BYPASS_SESSION : EMPTY);
 
   const refresh = useCallback(async () => {
+    if (isClientDevAuthBypass()) {
+      setSession(DEV_BYPASS_SESSION);
+      return;
+    }
     try {
       const r = await fetch('/api/auth/me', { cache: 'no-store' });
       if (r.ok) {
@@ -142,6 +161,10 @@ export function useSession(): AuthSession & { signOut: () => Promise<void> } {
     const handler = (e: Event) => {
       const kind = (e as CustomEvent<{ kind?: string }>).detail?.kind;
       if (kind === 'logout') {
+        if (isClientDevAuthBypass()) {
+          setSession(DEV_BYPASS_SESSION);
+          return;
+        }
         setSession({ ...EMPTY, loading: false });
         return;
       }
@@ -152,6 +175,10 @@ export function useSession(): AuthSession & { signOut: () => Promise<void> } {
   }, [refresh]);
 
   const signOut = useCallback(async () => {
+    if (isClientDevAuthBypass()) {
+      setSession(DEV_BYPASS_SESSION);
+      return;
+    }
     await fetch('/api/auth/logout', { method: 'POST' });
     setSession({ ...EMPTY, loading: false });
     window.dispatchEvent(new CustomEvent('session-changed', { detail: { kind: 'logout' } }));

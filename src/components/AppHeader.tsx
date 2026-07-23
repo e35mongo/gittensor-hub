@@ -13,11 +13,11 @@ import {
   BookIcon,
   PeopleIcon,
   ShieldCheckIcon,
+  GearIcon,
   KebabHorizontalIcon,
 } from '@primer/octicons-react';
 import type { Icon } from '@primer/octicons-react';
 import ThemeToggle from '@/components/ThemeToggle';
-import UserMenu from '@/components/UserMenu';
 import PriceTicker from '@/components/PriceTicker';
 import { isChromelessPath } from '@/lib/marketing-routes';
 
@@ -35,11 +35,12 @@ const navItems: NavItem[] = [
   { href: '/repositories', label: 'Repositories', icon: StackIcon },
   { href: '/issues', label: 'Issues', icon: IssueOpenedIcon },
   { href: '/pulls', label: 'Pull Requests', icon: GitPullRequestIcon },
+  { href: '/settings', label: 'Settings', icon: GearIcon },
   { href: '/docs', label: 'Docs', icon: BookIcon },
 ];
 
 const mobilePrimaryHrefs = ['/dashboard', '/explorer', '/miners', '/repositories'];
-const mobileOverflowHrefs = ['/issues', '/pulls', '/docs'];
+const mobileOverflowHrefs = ['/issues', '/pulls', '/settings', '/docs'];
 const mobilePrimaryHrefSet = new Set(mobilePrimaryHrefs);
 const mobilePrimaryItems = mobilePrimaryHrefs
   .map((href) => navItems.find((item) => item.href === href))
@@ -115,7 +116,7 @@ export default function AppHeader() {
         }}
       >
         <Box sx={{ gridArea: 'brand', minWidth: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Link href="/dashboard" prefetch={false} style={{ minWidth: 0, textDecoration: 'none' }}>
+          <a href="https://gittensor-hub.io" style={{ minWidth: 0, textDecoration: 'none' }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 2, minWidth: 0, color: 'var(--fg-default)' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/gt-logo.png" alt="Gittensor Hub" width={28} height={28} style={{ display: 'block', flexShrink: 0 }} />
@@ -123,7 +124,7 @@ export default function AppHeader() {
                 Gittensor Hub
               </Text>
             </Box>
-          </Link>
+          </a>
         </Box>
 
         <Box
@@ -202,7 +203,6 @@ export default function AppHeader() {
             <PriceTicker />
           </Box>
           <ThemeToggle />
-          <UserMenu />
         </Box>
       </Box>
 

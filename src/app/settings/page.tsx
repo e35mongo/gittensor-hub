@@ -5,9 +5,8 @@ export const dynamic = 'force-dynamic';
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout, Heading, Text, Box } from '@primer/react';
-import Spinner from '@/components/Spinner';
-import { GearIcon, PaintbrushIcon, BellIcon, RepoIcon, PersonIcon, EyeIcon, ArrowLeftIcon } from '@primer/octicons-react';
-import { useSettings, useSession } from '@/lib/settings';
+import { GearIcon, PaintbrushIcon, BellIcon, RepoIcon, EyeIcon, ArrowLeftIcon } from '@primer/octicons-react';
+import { useSettings } from '@/lib/settings';
 import { useTheme } from '@/lib/theme';
 import Dropdown from '@/components/Dropdown';
 
@@ -23,8 +22,6 @@ export default function SettingsPage() {
       router.push('/dashboard');
     }
   };
-
-  const { username, avatarUrl, loading: sessionLoading } = useSession();
 
   return (
     <PageLayout containerWidth="large" padding="normal">
@@ -66,51 +63,6 @@ export default function SettingsPage() {
         <Text sx={{ color: 'fg.muted' }}>Customize the dashboard. All preferences are stored locally in your browser.</Text>
       </PageLayout.Header>
       <PageLayout.Content>
-        {/* Profile */}
-        <Section title="Profile" icon={<PersonIcon size={16} />}>
-          {sessionLoading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'fg.muted' }}>
-              <Spinner size="sm" tone="muted" />
-              <Text>Loading…</Text>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt={username ?? ''}
-                  style={{ width: 64, height: 64, borderRadius: '50%', display: 'block', flexShrink: 0 }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    bg: 'var(--accent-emphasis)',
-                    color: 'white',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 28,
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  {(username ?? '?').charAt(0).toUpperCase()}
-                </Box>
-              )}
-              <Box>
-                <Text sx={{ fontSize: 3, fontWeight: 600, display: 'block' }}>{username ?? '—'}</Text>
-                <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-                  Signed in via GitHub
-                </Text>
-              </Box>
-            </Box>
-          )}
-        </Section>
-
         {/* Appearance */}
         <Section title="Appearance" icon={<PaintbrushIcon size={16} />}>
           <Field label="Theme" hint="Light or dark color scheme.">
