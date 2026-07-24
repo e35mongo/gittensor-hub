@@ -25,17 +25,33 @@ export const SN74_NAV: NavItem[] = [
   { href: '/repositories', label: 'Repositories', icon: StackIcon },
 ];
 
-/** Multi-subnet wedge — registry / future metagraph, not SN74 ops. */
+export const SN74_NETUID = 74;
+
+export function subnetPath(netuid: number): string {
+  return `/subnet/${netuid}`;
+}
+
+/** Default landing when entering Network scope. */
+export function defaultNetworkPath(): string {
+  return subnetPath(SN74_NETUID);
+}
+
+export function parseSubnetNetuid(pathname: string): number | null {
+  const match = pathname.match(/^\/subnet\/(\d+)(?:\/|$)/);
+  if (!match) return null;
+  const netuid = Number(match[1]);
+  return Number.isInteger(netuid) ? netuid : null;
+}
+
+/** Multi-subnet wedge — lands on default netuid details (sidebar lists all). */
 export const NETWORK_NAV: NavItem[] = [
-  { href: '/subnet/74', label: 'Subnets', icon: VersionsIcon },
+  { href: defaultNetworkPath(), label: 'Subnets', icon: VersionsIcon },
 ];
 
 export const UTILITY_NAV: NavItem[] = [
   { href: '/settings', label: 'Settings', icon: GearIcon },
   { href: '/docs', label: 'Docs', icon: BookIcon },
 ];
-
-export const SN74_NETUID = 74;
 
 export function isNavActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');

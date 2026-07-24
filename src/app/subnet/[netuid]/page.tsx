@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Box, Heading, Text } from '@primer/react';
+import { Box, Text } from '@primer/react';
 import { getSubnet, isValidNetuid } from '@/lib/subnets/registry';
 import { SN74_NETUID } from '@/lib/nav';
 
@@ -19,21 +19,23 @@ export default async function SubnetDetailPage({
   if (!subnet) notFound();
 
   const isSn74 = netuid === SN74_NETUID;
+  const title = subnet.name ?? `Subnet ${netuid}`;
 
   return (
     <Box sx={{ maxWidth: 720, mx: 'auto', px: [3, 4], py: [3, 4] }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-        <Heading as="h1" sx={{ fontSize: 4, m: 0 }}>
-          SN{netuid}
-          {subnet.name ? ` · ${subnet.name}` : ''}
-        </Heading>
+        <Text sx={{ fontFamily: 'mono', color: 'fg.muted', fontSize: 1, fontWeight: 700 }}>
+          SN{String(netuid).padStart(3, '0')}
+        </Text>
         <StatusBadge status={subnet.status} />
       </Box>
 
-      <Text as="p" sx={{ color: 'fg.muted', mb: 4, fontSize: 2, maxWidth: 560 }}>
+      <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 12px', letterSpacing: '-0.02em' }}>{title}</h1>
+
+      <p style={{ color: 'var(--fg-muted)', margin: '0 0 24px', fontSize: 16, maxWidth: 560, lineHeight: 1.5 }}>
         {subnet.tagline ??
-          'This netuid is an unknown stub in the hub registry. Name and ops surfaces will appear once curated.'}
-      </Text>
+          'This netuid is an unknown stub in the hub registry. Name and ops surfaces will appear once curated — no invented market data.'}
+      </p>
 
       <Box
         sx={{
@@ -70,6 +72,7 @@ export default async function SubnetDetailPage({
 
 function StatusBadge({ status }: { status: string }) {
   const live = status === 'live';
+  const inactive = status === 'inactive';
   return (
     <span
       style={{
@@ -80,9 +83,9 @@ function StatusBadge({ status }: { status: string }) {
         fontWeight: 700,
         letterSpacing: '0.04em',
         textTransform: 'uppercase',
-        color: live ? 'var(--success-fg)' : 'var(--fg-muted)',
-        background: live ? 'var(--success-subtle)' : 'var(--bg-muted)',
-        border: `1px solid ${live ? 'var(--success-muted)' : 'var(--border-muted)'}`,
+        color: live ? 'var(--success-fg)' : inactive ? 'var(--attention-fg)' : 'var(--fg-muted)',
+        background: live ? 'var(--success-subtle)' : inactive ? 'var(--attention-subtle)' : 'var(--bg-muted)',
+        border: `1px solid ${live ? 'var(--success-muted)' : inactive ? 'var(--attention-muted)' : 'var(--border-muted)'}`,
       }}
     >
       {status}

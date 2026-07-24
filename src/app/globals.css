@@ -226,6 +226,11 @@ a {
   --bottom-nav-height: 0px;
 }
 
+/* Network scope uses a wider rail for the taoswap-style subnet list. */
+html:has([data-app-sidebar][data-network-sidebar]) {
+  --sidebar-width: 280px;
+}
+
 body {
   padding-left: var(--sidebar-width);
 }

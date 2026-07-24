@@ -6,6 +6,7 @@ import AppHeader from '@/components/AppHeader';
 import AppSidebar from '@/components/AppSidebar';
 import { useSettings } from '@/lib/settings';
 import { isChromelessPath } from '@/lib/marketing-routes';
+import { isNetworkScope } from '@/lib/nav';
 
 /**
  * Renders both chrome variants and lets CSS pick the active one based on
@@ -20,8 +21,10 @@ export default function AppShell() {
   const pathname = usePathname();
   const { settings, hydrated } = useSettings();
   const hideChrome = isChromelessPath(pathname);
-  const showSidebar = !hideChrome && settings.layout === 'sidebar';
-  const topNav = !hideChrome && settings.layout === 'top-nav';
+  const networkScope = isNetworkScope(pathname);
+  // Network scope always needs the subnet list rail — force sidebar layout.
+  const showSidebar = !hideChrome && (settings.layout === 'sidebar' || networkScope);
+  const topNav = !hideChrome && settings.layout === 'top-nav' && !networkScope;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
