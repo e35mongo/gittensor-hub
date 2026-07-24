@@ -5,6 +5,9 @@
 export const SESSION_COOKIE_NAME = 'gittensor_session';
 export const SESSION_MAX_AGE_SEC = 30 * 24 * 3600;
 
+/** Synthetic uid for DEV_BYPASS_AUTH sessions (never a real DB row). */
+export const DEV_BYPASS_UID = -1;
+
 export type SessionStatus = 'pending' | 'approved' | 'rejected';
 
 export interface SessionPayload {
@@ -16,6 +19,24 @@ export interface SessionPayload {
   is_admin: boolean;
   avatar_url?: string | null;
   exp: number;
+}
+
+/** Local-only auth skip. Never enabled in production builds. */
+export function isDevAuthBypass(): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  const raw = (process.env.DEV_BYPASS_AUTH || '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+export function devBypassSession(): SessionPayload {
+  return {
+    uid: DEV_BYPASS_UID,
+    username: 'local-dev',
+    status: 'approved',
+    is_admin: true,
+    avatar_url: null,
+    exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SEC,
+  };
 }
 
 // Cache the imported HMAC key, but key it by the current secret string so that

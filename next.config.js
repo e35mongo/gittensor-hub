@@ -4,6 +4,12 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  async redirects() {
+    return [
+      { source: '/issues', destination: '/explorer', permanent: false },
+      { source: '/pulls', destination: '/explorer', permanent: false },
+    ];
+  },
   serverExternalPackages: ['better-sqlite3', 'isomorphic-dompurify', 'jsdom'],
   webpack: (config, { isServer }) => {
     if (isServer) {

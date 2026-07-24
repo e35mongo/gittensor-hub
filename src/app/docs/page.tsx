@@ -10,8 +10,6 @@ import {
   GlobeIcon,
   RepoIcon,
   StackIcon,
-  IssueOpenedIcon,
-  GitPullRequestIcon,
   GearIcon,
   BellIcon,
   EyeIcon,
@@ -33,8 +31,6 @@ const SECTIONS: Section[] = [
   { id: 'miners', title: 'Miners', icon: <PersonIcon size={16} /> },
   { id: 'maintainers', title: 'Maintainers', icon: <PeopleIcon size={16} /> },
   { id: 'repositories', title: 'Repositories', icon: <StackIcon size={16} /> },
-  { id: 'issues', title: 'Issues', icon: <IssueOpenedIcon size={16} /> },
-  { id: 'pulls', title: 'Pull Requests', icon: <GitPullRequestIcon size={16} /> },
   { id: 'contributing', title: 'Contributing & anti-slop', icon: <ShieldIcon size={16} /> },
   { id: 'manage', title: 'Manage Repositories', icon: <RepoIcon size={16} /> },
   { id: 'notifications', title: 'Notifications', icon: <BellIcon size={16} /> },
@@ -197,7 +193,7 @@ export default function DocsPage() {
               </P>
               <P>
                 <Code>/</Code> opens the <strong>Dashboard</strong>. <Code>/explorer</Code> is the repo drill-down view.
-                Global pages for miners, repositories, issues, and pull requests are available from the
+                Global pages for miners, repositories, and Explorer (issues / PRs) are available from the
                 sidebar or mobile bottom navigation.
               </P>
               <H3>Tech stack</H3>
@@ -378,42 +374,6 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
               </P>
             </Article>
 
-            <Article id="issues" title="Issues page">
-              <P>
-                <Code>/issues</Code> — global server-backed issue feed across current Gittensor-listed repositories.
-                Results are fetched a page at a time, with compact pagination and configurable rows per page.
-              </P>
-              <Ul>
-                <Li><strong>Search</strong>: filter by title, repository, issue number, or author</Li>
-                <Li><strong>State filter</strong>: All / Open / Completed / Not planned / Closed (other)</Li>
-                <Li><strong>Author filter</strong>: searchable combobox with avatars + per-author counts</Li>
-                <Li><strong>Tracked only</strong>: limits results to repos you've starred; row stars update that watchlist</Li>
-                <Li><strong>Linked PRs</strong>: PR count chips open the related pull requests for each issue</Li>
-                <Li><strong>Author activity</strong>: click an author to open their repo-scoped activity sidebar</Li>
-                <Li><strong>Sorting</strong>: server-backed sorting on Repository, Weight, Comments, Opened, and Closed</Li>
-              </Ul>
-            </Article>
-
-            <Article id="pulls" title="Pull Requests page">
-              <P>
-                <Code>/pulls</Code> — global server-backed PR feed across current Gittensor-listed repositories. Results
-                are fetched a page at a time, with the same compact pagination and row-count controls used by the Issues
-                view.
-              </P>
-              <P>
-                Use search, state, author, and <strong>Tracked only</strong> filters to narrow the feed without loading
-                the full cache into the browser. Star controls on each row update the tracked repo set used by the
-                filter.
-              </P>
-              <Ul>
-                <Li><strong>Pagination</strong>: page controls at the table edge with configurable rows per page</Li>
-                <Li><strong>Author activity</strong>: click an author to open their repo-scoped activity sidebar with latest PRs and issues</Li>
-                <Li><strong>Score</strong>: Gittensor-backed PR score column; open PRs show potential and collateral values, merged PRs show the final score</Li>
-                <Li><strong>Linked issues</strong>: issue chips mirror Explorer and open the issue detail view directly</Li>
-                <Li><strong>Sorting</strong>: server-backed sort controls keep large PR sets responsive</Li>
-              </Ul>
-            </Article>
-
             <Article id="contributing" title="Contributing & anti-slop">
               <P>
                 Contributions to <strong>gittensor-hub</strong> itself go through a curated wanted board. Unsolicited
@@ -482,12 +442,12 @@ reward share = PR share x effective repo PR reward pool`}</Pre>
 
             <Article id="manage" title="Manage Repositories">
               <P>
-                <Code>/manage-repos</Code> (also accessible from the user menu) is now a legacy/admin custom-repo list.
+                <Code>/manage-repos</Code> (also accessible from Settings → Account) is now a legacy/admin custom-repo list.
                 Issue and PR polling only follows the live Gittensor repository list.
               </P>
               <Ul>
                 <Li>Form: <Code>owner/name</Code> + weight (0–1) + optional notes</Li>
-                <Li>Custom repos are stored for reference, but they do not feed the SN74 poller, Explorer, Issues, or Pull Requests pages unless they are also listed by Gittensor.</Li>
+                <Li>Custom repos are stored for reference, but they do not feed the SN74 poller or Explorer unless they are also listed by Gittensor.</Li>
                 <Li>Edit weight or notes inline; remove with the trash icon (confirmation prompt)</Li>
               </Ul>
               <P>Stored in SQLite (<Code>user_repos</Code> table) so they persist across server restarts.</P>

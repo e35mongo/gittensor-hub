@@ -5,8 +5,17 @@ export const dynamic = 'force-dynamic';
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout, Heading, Text, Box } from '@primer/react';
-import Spinner from '@/components/Spinner';
-import { GearIcon, PaintbrushIcon, BellIcon, RepoIcon, PersonIcon, EyeIcon, ArrowLeftIcon } from '@primer/octicons-react';
+import {
+  GearIcon,
+  PaintbrushIcon,
+  BellIcon,
+  RepoIcon,
+  EyeIcon,
+  ArrowLeftIcon,
+  PersonIcon,
+  ShieldLockIcon,
+  SignOutIcon,
+} from '@primer/octicons-react';
 import { useSettings, useSession } from '@/lib/settings';
 import { useTheme } from '@/lib/theme';
 import Dropdown from '@/components/Dropdown';
@@ -15,6 +24,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { settings, update, reset } = useSettings();
   const { theme, setTheme } = useTheme();
+  const { authenticated, isAdmin, signOut } = useSession();
 
   const handleBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -23,8 +33,6 @@ export default function SettingsPage() {
       router.push('/dashboard');
     }
   };
-
-  const { username, avatarUrl, loading: sessionLoading } = useSession();
 
   return (
     <PageLayout containerWidth="large" padding="normal">
@@ -66,50 +74,45 @@ export default function SettingsPage() {
         <Text sx={{ color: 'fg.muted' }}>Customize the dashboard. All preferences are stored locally in your browser.</Text>
       </PageLayout.Header>
       <PageLayout.Content>
-        {/* Profile */}
-        <Section title="Profile" icon={<PersonIcon size={16} />}>
-          {sessionLoading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'fg.muted' }}>
-              <Spinner size="sm" tone="muted" />
-              <Text>Loading…</Text>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt={username ?? ''}
-                  style={{ width: 64, height: 64, borderRadius: '50%', display: 'block', flexShrink: 0 }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    bg: 'var(--accent-emphasis)',
-                    color: 'white',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 28,
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
+        {authenticated && (
+          <Section title="Account" icon={<PersonIcon size={16} />}>
+            <Field label="Manage repositories" hint="Legacy / admin custom-repo list.">
+              <button
+                type="button"
+                onClick={() => router.push('/manage-repos')}
+                style={linkButtonStyle}
+              >
+                <RepoIcon size={14} />
+                Open
+              </button>
+            </Field>
+            {isAdmin && (
+              <Field label="User access" hint="Approve or reject pending GitHub sign-ups.">
+                <button
+                  type="button"
+                  onClick={() => router.push('/admin/users')}
+                  style={linkButtonStyle}
                 >
-                  {(username ?? '?').charAt(0).toUpperCase()}
-                </Box>
-              )}
-              <Box>
-                <Text sx={{ fontSize: 3, fontWeight: 600, display: 'block' }}>{username ?? '—'}</Text>
-                <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-                  Signed in via GitHub
-                </Text>
-              </Box>
-            </Box>
-          )}
-        </Section>
+                  <ShieldLockIcon size={14} />
+                  Open
+                </button>
+              </Field>
+            )}
+            <Field label="Sign out" hint="Clear the local session cookie.">
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOut();
+                  router.push('/sign-in');
+                }}
+                style={{ ...linkButtonStyle, color: 'var(--danger-fg)', borderColor: 'var(--danger-fg)' }}
+              >
+                <SignOutIcon size={14} />
+                Sign out
+              </button>
+            </Field>
+          </Section>
+        )}
 
         {/* Appearance */}
         <Section title="Appearance" icon={<PaintbrushIcon size={16} />}>
@@ -265,6 +268,21 @@ export default function SettingsPage() {
     </PageLayout>
   );
 }
+
+const linkButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '5px 12px',
+  border: '1px solid var(--border-default)',
+  borderRadius: 6,
+  background: 'var(--bg-canvas)',
+  color: 'var(--fg-default)',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (

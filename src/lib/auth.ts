@@ -11,6 +11,9 @@ import {
   SESSION_MAX_AGE_SEC,
   type SessionPayload,
   type SessionStatus,
+  isDevAuthBypass,
+  devBypassSession,
+  DEV_BYPASS_UID,
 } from '@/lib/session-token';
 
 // ---------------------------------------------------------------------------
@@ -93,6 +96,9 @@ export async function clearSessionCookie(): Promise<void> {
 }
 
 export async function getSessionFromCookies() {
+  // Prefer the synthetic local user so a stale gittensor_session cookie cannot
+  // beat the bypass and leave the chrome stuck on "Sign in".
+  if (isDevAuthBypass()) return devBypassSession();
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE_NAME)?.value;
   return verifySessionToken(token);
@@ -208,6 +214,21 @@ export function upsertGithubUser(input: {
 }
 
 export function getUserById(id: number): UserRow | null {
+  if (id === DEV_BYPASS_UID && isDevAuthBypass()) {
+    const now = new Date().toISOString();
+    return {
+      id: DEV_BYPASS_UID,
+      github_id: 'dev-bypass',
+      github_login: 'local-dev',
+      avatar_url: null,
+      status: 'approved',
+      is_admin: 1,
+      created_at: now,
+      last_login_at: now,
+      approved_at: now,
+      approved_by_id: null,
+    };
+  }
   const db = getDb();
   return (db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined) ?? null;
 }

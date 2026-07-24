@@ -18,7 +18,7 @@ Public presence: [`/presence`](./docs/presence.md) (chat/social SLA) · [`/chang
 - `/dashboard` shows network activity, scored PRs, issue discovery, reward-ranked Top Contributions, and PR/issue pipelines.
 - `/explorer` is the repo drill-down view for issues and pull requests.
 - `/miners` and `/maintainers` are the SN74 miner / maintainer boards.
-- `/repositories`, `/issues`, and `/pulls` provide focused global tables.
+- `/repositories` is the focused repo table; issues and PRs live in Explorer and per-repo views.
 - `/docs` documents those views plus contribution rules.
 
 Dashboard reward-share cards follow the Gittensor allocator at UI level:
