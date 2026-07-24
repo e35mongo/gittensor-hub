@@ -4,46 +4,29 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Box, Text } from '@primer/react';
-import {
-  StackIcon,
-  ChecklistIcon,
-  GlobeIcon,
-  BookIcon,
-  PeopleIcon,
-  ShieldCheckIcon,
-  GearIcon,
-  KebabHorizontalIcon,
-} from '@primer/octicons-react';
+import { KebabHorizontalIcon } from '@primer/octicons-react';
 import type { Icon } from '@primer/octicons-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import PriceTicker from '@/components/PriceTicker';
 import { isChromelessPath } from '@/lib/marketing-routes';
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: Icon;
-}
-
-const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: ChecklistIcon },
-  { href: '/explorer', label: 'Explorer', icon: GlobeIcon },
-  { href: '/miners', label: 'Miners', icon: PeopleIcon },
-  { href: '/maintainers', label: 'Maintainers', icon: ShieldCheckIcon },
-  { href: '/repositories', label: 'Repositories', icon: StackIcon },
-  { href: '/settings', label: 'Settings', icon: GearIcon },
-  { href: '/docs', label: 'Docs', icon: BookIcon },
-];
+import {
+  SN74_NAV,
+  NETWORK_NAV,
+  UTILITY_NAV,
+  isNavActive,
+  isNetworkScope,
+  type NavItem,
+} from '@/lib/nav';
 
 const mobilePrimaryHrefs = ['/dashboard', '/explorer', '/miners', '/repositories'];
-const mobileOverflowHrefs = ['/settings', '/docs'];
 const mobilePrimaryHrefSet = new Set(mobilePrimaryHrefs);
 const mobilePrimaryItems = mobilePrimaryHrefs
-  .map((href) => navItems.find((item) => item.href === href))
+  .map((href) => SN74_NAV.find((item) => item.href === href))
   .filter((item): item is NavItem => Boolean(item));
-const mobileOverflowItems = [
-  ...mobileOverflowHrefs.map((href) => navItems.find((item) => item.href === href)).filter((item): item is NavItem => Boolean(item)),
-  ...navItems.filter((item) => !mobilePrimaryHrefSet.has(item.href) && !mobileOverflowHrefs.includes(item.href)),
+const mobileOverflowItems: NavItem[] = [
+  ...NETWORK_NAV,
+  ...SN74_NAV.filter((item) => !mobilePrimaryHrefSet.has(item.href)),
+  ...UTILITY_NAV,
 ];
 
 export default function AppHeader() {
@@ -53,8 +36,9 @@ export default function AppHeader() {
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const hideChrome = isChromelessPath(pathname);
 
-  const isActive = (href: string) => pathname === href || (href !== '/' && pathname.startsWith(href));
-  const moreActive = mobileOverflowItems.some((item) => isActive(item.href));
+  const networkScope = isNetworkScope(pathname);
+  const contextualNav = networkScope ? NETWORK_NAV : SN74_NAV;
+  const moreActive = mobileOverflowItems.some((item) => isNavActive(pathname, item.href));
 
   useEffect(() => {
     setMoreOpen(false);
@@ -81,11 +65,6 @@ export default function AppHeader() {
 
   if (hideChrome) return null;
 
-  // Wrap in a plain div so the `data-app-header` attribute reliably lands
-  // on a DOM node - Primer's <Header> doesn't forward arbitrary data
-  // attributes, which is why CSS-driven show/hide couldn't target it before.
-  // `userSelect: none` prevents nav-item text from getting highlighted on
-  // accidental double-clicks (the sidebar applies the same to its <aside>).
   return (
     <div data-app-header="" style={{ position: 'sticky', top: 0, zIndex: 170, userSelect: 'none' }}>
       <Box
@@ -131,15 +110,17 @@ export default function AppHeader() {
             minWidth: 0,
             display: ['none', null, null, null, 'flex'],
             alignItems: 'center',
-            gap: 1,
+            gap: 2,
             overflowX: 'auto',
             overflowY: 'hidden',
             scrollbarWidth: 'none',
             '&::-webkit-scrollbar': { display: 'none' },
           }}
         >
-          {navItems.map((item) => {
-            const active = isActive(item.href);
+          <ScopeSwitch networkScope={networkScope} />
+          <Box sx={{ width: '1px', height: 20, bg: 'border.muted', flexShrink: 0 }} aria-hidden />
+          {contextualNav.map((item) => {
+            const active = isNavActive(pathname, item.href);
             const Icon = item.icon;
             return (
               <Link
@@ -166,6 +147,43 @@ export default function AppHeader() {
                     fontWeight: active ? 600 : 500,
                     whiteSpace: 'nowrap',
                     '&:hover': { color: 'var(--fg-default)', bg: 'var(--bg-inset)' },
+                  }}
+                >
+                  <Icon size={16} />
+                  {item.label}
+                </Box>
+              </Link>
+            );
+          })}
+          {UTILITY_NAV.map((item) => {
+            const active = isNavActive(pathname, item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch={false}
+                aria-current={active ? 'page' : undefined}
+                style={{ textDecoration: 'none', flexShrink: 0 }}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 2,
+                    height: 32,
+                    px: 2,
+                    borderRadius: 2,
+                    color: active ? 'var(--fg-default)' : 'var(--fg-muted)',
+                    bg: active ? 'var(--bg-inset)' : 'transparent',
+                    border: '1px solid',
+                    borderColor: active ? 'var(--border-default)' : 'transparent',
+                    fontSize: 1,
+                    fontWeight: active ? 600 : 500,
+                    whiteSpace: 'nowrap',
+                    opacity: 0.9,
+                    '&:hover': { color: 'var(--fg-default)', bg: 'var(--bg-inset)', opacity: 1 },
                   }}
                 >
                   <Icon size={16} />
@@ -227,100 +245,179 @@ export default function AppHeader() {
         }}
       >
         {mobilePrimaryItems.map((item) => (
-          <MobileNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item.href)} />
+          <MobileNavLink
+            key={item.href}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            active={isNavActive(pathname, item.href)}
+          />
         ))}
         {mobileOverflowItems.length > 0 && (
-        <Box sx={{ position: 'relative', minWidth: 0 }}>
-          <button
-            ref={moreButtonRef}
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={moreOpen}
-            aria-label="More navigation"
-            onClick={() => setMoreOpen((open) => !open)}
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              border: 'none',
-              borderRadius: 10,
-              background: 'transparent',
-              color: moreActive || moreOpen ? 'var(--fg-default)' : 'var(--fg-muted)',
-              font: 'inherit',
-              fontSize: 10,
-              fontWeight: moreActive || moreOpen ? 700 : 600,
-              lineHeight: 1,
-              cursor: 'pointer',
-            }}
-          >
-            <span
+          <Box sx={{ position: 'relative', minWidth: 0 }}>
+            <button
+              ref={moreButtonRef}
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+              aria-label="More navigation"
+              onClick={() => setMoreOpen((open) => !open)}
               style={{
-                width: 32,
-                height: 28,
-                display: 'inline-flex',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: moreActive || moreOpen ? 'var(--accent-fg)' : 'var(--fg-muted)',
+                gap: 5,
+                border: 'none',
+                borderRadius: 10,
+                background: 'transparent',
+                color: moreActive || moreOpen ? 'var(--fg-default)' : 'var(--fg-muted)',
+                font: 'inherit',
+                fontSize: 10,
+                fontWeight: moreActive || moreOpen ? 700 : 600,
+                lineHeight: 1,
+                cursor: 'pointer',
               }}
             >
-              <KebabHorizontalIcon size={20} />
-            </span>
-            <span>More</span>
-          </button>
-          {moreOpen && (
-            <div
-              ref={moreMenuRef}
-              role="menu"
-              style={{
-                position: 'fixed',
-                right: 12,
-                bottom: 'calc(var(--bottom-nav-height) + 10px)',
-                minWidth: 210,
-                padding: 6,
-                border: '1px solid var(--border-default)',
-                borderRadius: 8,
-                background: 'var(--bg-subtle)',
-                boxShadow: 'var(--shadow-overlay)',
-                zIndex: 130,
-              }}
-            >
-              {mobileOverflowItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    prefetch={false}
-                    role="menuitem"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '9px 10px',
-                      borderRadius: 6,
-                      color: active ? 'var(--fg-default)' : 'var(--fg-muted)',
-                      background: active ? 'var(--bg-emphasis)' : 'transparent',
-                      fontSize: 13,
-                      fontWeight: active ? 700 : 600,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <Icon size={16} />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </Box>
+              <span
+                style={{
+                  width: 32,
+                  height: 28,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: moreActive || moreOpen ? 'var(--accent-fg)' : 'var(--fg-muted)',
+                }}
+              >
+                <KebabHorizontalIcon size={20} />
+              </span>
+              <span>More</span>
+            </button>
+            {moreOpen && (
+              <div
+                ref={moreMenuRef}
+                role="menu"
+                style={{
+                  position: 'fixed',
+                  right: 12,
+                  bottom: 'calc(var(--bottom-nav-height) + 10px)',
+                  minWidth: 220,
+                  padding: 6,
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 8,
+                  background: 'var(--bg-subtle)',
+                  boxShadow: 'var(--shadow-overlay)',
+                  zIndex: 130,
+                }}
+              >
+                <MenuGroupLabel>Network</MenuGroupLabel>
+                {NETWORK_NAV.map((item) => (
+                  <MobileMenuItem key={item.href} item={item} active={isNavActive(pathname, item.href)} />
+                ))}
+                <MenuGroupLabel>SN74</MenuGroupLabel>
+                {SN74_NAV.filter((item) => !mobilePrimaryHrefSet.has(item.href)).map((item) => (
+                  <MobileMenuItem key={item.href} item={item} active={isNavActive(pathname, item.href)} />
+                ))}
+                <MenuGroupLabel>Utility</MenuGroupLabel>
+                {UTILITY_NAV.map((item) => (
+                  <MobileMenuItem key={item.href} item={item} active={isNavActive(pathname, item.href)} />
+                ))}
+              </div>
+            )}
+          </Box>
         )}
       </Box>
     </div>
+  );
+}
+
+function ScopeSwitch({ networkScope }: { networkScope: boolean }) {
+  return (
+    <Box
+      role="group"
+      aria-label="Navigation scope"
+      sx={{
+        display: 'inline-flex',
+        flexShrink: 0,
+        border: '1px solid',
+        borderColor: 'border.default',
+        borderRadius: 2,
+        overflow: 'hidden',
+        bg: 'canvas.subtle',
+      }}
+    >
+      <ScopeLink href="/dashboard" active={!networkScope} label="SN74" />
+      <ScopeLink href="/subnet/74" active={networkScope} label="Network" />
+    </Box>
+  );
+}
+
+function ScopeLink({ href, active, label }: { href: string; active: boolean; label: string }) {
+  return (
+    <Link href={href} prefetch={false} style={{ textDecoration: 'none' }}>
+      <Box
+        sx={{
+          px: 3,
+          height: 32,
+          display: 'inline-flex',
+          alignItems: 'center',
+          fontSize: 1,
+          fontWeight: active ? 700 : 500,
+          color: active ? 'fg.default' : 'fg.muted',
+          bg: active ? 'canvas.default' : 'transparent',
+          borderRight: label === 'SN74' ? '1px solid' : 'none',
+          borderColor: 'border.default',
+          '&:hover': { color: 'fg.default' },
+        }}
+      >
+        {label}
+      </Box>
+    </Link>
+  );
+}
+
+function MenuGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        padding: '8px 10px 4px',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        color: 'var(--fg-subtle)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function MobileMenuItem({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      prefetch={false}
+      role="menuitem"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '9px 10px',
+        borderRadius: 6,
+        color: active ? 'var(--fg-default)' : 'var(--fg-muted)',
+        background: active ? 'var(--bg-emphasis)' : 'transparent',
+        fontSize: 13,
+        fontWeight: active ? 700 : 600,
+        textDecoration: 'none',
+      }}
+    >
+      <Icon size={16} />
+      {item.label}
+    </Link>
   );
 }
 
