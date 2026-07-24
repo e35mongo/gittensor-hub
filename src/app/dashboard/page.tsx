@@ -2288,7 +2288,7 @@ function PullRequestPipeline({ columns, durationLabel, chartDuration, repos, sel
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <PipelineRepoList repos={repos} selectedRepos={selectedRepos} onRepoToggle={onRepoToggle} onRepoClear={onRepoClear} />
           <Text sx={{ color: 'fg.muted', fontSize: 0 }}>{fmtCount(total)} tracked PRs · {durationLabel}</Text>
-          <LinkPill href="/pulls">View all</LinkPill>
+          <LinkPill href="/explorer">View all</LinkPill>
         </Box>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', 'repeat(2, minmax(0, 1fr))', 'repeat(5, minmax(264px, 1fr))'], gap: 2, p: [2, null, 3], overflowX: ['visible', null, 'auto'] }}>
@@ -2606,7 +2606,7 @@ function IssuePipeline({ columns, durationLabel, chartDuration, repos, selectedR
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <PipelineRepoList repos={repos} selectedRepos={selectedRepos} onRepoToggle={onRepoToggle} onRepoClear={onRepoClear} />
           <Text sx={{ color: 'fg.muted', fontSize: 0 }}>{fmtCount(total)} tracked issues · {durationLabel}</Text>
-          <LinkPill href="/issues">View all</LinkPill>
+          <LinkPill href="/explorer">View all</LinkPill>
         </Box>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', 'repeat(2, minmax(0, 1fr))', 'repeat(4, minmax(264px, 1fr))'], gap: 2, p: [2, null, 3], overflowX: ['visible', null, 'auto'] }}>

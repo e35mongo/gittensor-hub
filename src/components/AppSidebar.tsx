@@ -7,8 +7,6 @@ import {
   StackIcon,
   GlobeIcon,
   ChecklistIcon,
-  IssueOpenedIcon,
-  GitPullRequestIcon,
   BookIcon,
   PeopleIcon,
   ShieldCheckIcon,
@@ -34,8 +32,6 @@ const PRIMARY: NavItem[] = [
   { href: '/miners', label: 'Miners', icon: PeopleIcon },
   { href: '/maintainers', label: 'Maintainers', icon: ShieldCheckIcon },
   { href: '/repositories', label: 'Repositories', icon: StackIcon },
-  { href: '/issues', label: 'Issues', icon: IssueOpenedIcon },
-  { href: '/pulls', label: 'Pull Requests', icon: GitPullRequestIcon },
 ];
 
 const SECONDARY: NavItem[] = [
