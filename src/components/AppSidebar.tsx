@@ -11,6 +11,7 @@ import {
   PeopleIcon,
   ShieldCheckIcon,
   GearIcon,
+  VersionsIcon,
 } from '@primer/octicons-react';
 import type { Icon } from '@primer/octicons-react';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -32,6 +33,7 @@ const PRIMARY: NavItem[] = [
   { href: '/miners', label: 'Miners', icon: PeopleIcon },
   { href: '/maintainers', label: 'Maintainers', icon: ShieldCheckIcon },
   { href: '/repositories', label: 'Repositories', icon: StackIcon },
+  { href: '/subnets', label: 'Subnets', icon: VersionsIcon },
 ];
 
 const SECONDARY: NavItem[] = [
