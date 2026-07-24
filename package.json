@@ -10,7 +10,8 @@
     "build": "next build --webpack",
     "start": "next start -p 12074",
     "lint": "eslint . --max-warnings=0",
-    "lint:warnings": "eslint ."
+    "lint:warnings": "eslint .",
+    "test:subnet-registry": "node scripts/assert-subnet-registry.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^21.0.2",
