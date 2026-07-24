@@ -29,8 +29,49 @@ type CuratedSubnet = {
   tagline: string;
 };
 
+function isCuratedStatus(value: unknown): value is Exclude<SubnetStatus, 'unknown'> {
+  return value === 'live' || value === 'inactive';
+}
+
+/** Validate raw curated.json so a typo cannot slip past the `as` cast. */
+export function parseCurated(raw: unknown): readonly CuratedSubnet[] {
+  if (!Array.isArray(raw)) {
+    throw new Error('curated.json must be an array');
+  }
+  const seen = new Set<number>();
+  const out: CuratedSubnet[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || typeof row !== 'object') {
+      throw new Error(`curated.json[${i}] must be an object`);
+    }
+    const { netuid, status, name, tagline } = row as Record<string, unknown>;
+    if (!Number.isInteger(netuid) || typeof netuid !== 'number') {
+      throw new Error(`curated.json[${i}].netuid must be an integer`);
+    }
+    if (netuid < MIN_NETUID || netuid > MAX_NETUID) {
+      throw new Error(`curated.json[${i}].netuid ${netuid} out of range ${MIN_NETUID}–${MAX_NETUID}`);
+    }
+    if (seen.has(netuid)) {
+      throw new Error(`curated.json duplicate netuid ${netuid}`);
+    }
+    seen.add(netuid);
+    if (!isCuratedStatus(status)) {
+      throw new Error(`curated.json[${i}].status must be live|inactive (got ${String(status)})`);
+    }
+    if (typeof name !== 'string' || !name.trim()) {
+      throw new Error(`curated.json[${i}].name must be a non-empty string`);
+    }
+    if (typeof tagline !== 'string' || !tagline.trim()) {
+      throw new Error(`curated.json[${i}].tagline must be a non-empty string`);
+    }
+    out.push({ netuid, status, name: name.trim(), tagline: tagline.trim() });
+  }
+  return out;
+}
+
 /** Small curated set for the multi-subnet wedge (SN74 hub + SN66 + SN1). */
-const CURATED = curatedJson as readonly CuratedSubnet[];
+const CURATED = parseCurated(curatedJson);
 
 const CURATED_BY_NETUID = new Map(CURATED.map((entry) => [entry.netuid, entry]));
 
@@ -67,6 +108,9 @@ export function listSubnets(): SubnetEntry[] {
 
 /** Invariants for the smoke script / future callers. Throws on failure. */
 export function assertRegistryInvariants(): void {
+  // Re-parse so callers also catch curated.json typos (not only module load).
+  parseCurated(curatedJson);
+
   const all = listSubnets();
   if (all.length !== MAX_NETUID - MIN_NETUID + 1) {
     throw new Error(`expected ${MAX_NETUID - MIN_NETUID + 1} entries, got ${all.length}`);

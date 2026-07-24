@@ -12,7 +12,37 @@ const MIN_NETUID = 1;
 const MAX_NETUID = 128;
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const curated = JSON.parse(readFileSync(join(root, 'src/lib/subnets/curated.json'), 'utf8'));
-const byNetuid = new Map(curated.map((e) => [e.netuid, e]));
+
+function parseCurated(raw) {
+  if (!Array.isArray(raw)) throw new Error('curated.json must be an array');
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || typeof row !== 'object') throw new Error(`curated.json[${i}] must be an object`);
+    const { netuid, status, name, tagline } = row;
+    if (!Number.isInteger(netuid)) throw new Error(`curated.json[${i}].netuid must be an integer`);
+    if (netuid < MIN_NETUID || netuid > MAX_NETUID) {
+      throw new Error(`curated.json[${i}].netuid ${netuid} out of range`);
+    }
+    if (seen.has(netuid)) throw new Error(`curated.json duplicate netuid ${netuid}`);
+    seen.add(netuid);
+    if (status !== 'live' && status !== 'inactive') {
+      throw new Error(`curated.json[${i}].status must be live|inactive`);
+    }
+    if (typeof name !== 'string' || !name.trim()) {
+      throw new Error(`curated.json[${i}].name must be a non-empty string`);
+    }
+    if (typeof tagline !== 'string' || !tagline.trim()) {
+      throw new Error(`curated.json[${i}].tagline must be a non-empty string`);
+    }
+    out.push({ netuid, status, name: name.trim(), tagline: tagline.trim() });
+  }
+  return out;
+}
+
+const curatedRows = parseCurated(curated);
+const byNetuid = new Map(curatedRows.map((e) => [e.netuid, e]));
 
 function isValidNetuid(netuid) {
   return Number.isInteger(netuid) && netuid >= MIN_NETUID && netuid <= MAX_NETUID;
@@ -37,6 +67,7 @@ function listSubnets() {
 }
 
 function assertRegistryInvariants() {
+  parseCurated(curated);
   const all = listSubnets();
   if (all.length !== MAX_NETUID - MIN_NETUID + 1) {
     throw new Error(`expected ${MAX_NETUID - MIN_NETUID + 1} entries, got ${all.length}`);
@@ -70,14 +101,7 @@ function assertRegistryInvariants() {
       throw new Error(`curated netuid ${entry.netuid} needs name + tagline`);
     }
   }
-  for (const entry of curated) {
-    if (entry.status !== 'live' && entry.status !== 'inactive') {
-      throw new Error(`curated netuid ${entry.netuid} status must be live|inactive`);
-    }
-    if (!Number.isInteger(entry.netuid) || entry.netuid < MIN_NETUID || entry.netuid > MAX_NETUID) {
-      throw new Error(`curated netuid ${entry.netuid} out of range`);
-    }
-  }
+  // curated.json row shape already validated via parseCurated() above.
 }
 
 assertRegistryInvariants();
