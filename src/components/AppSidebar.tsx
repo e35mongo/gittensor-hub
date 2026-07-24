@@ -3,16 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  SN74_NAV,
-  NETWORK_NAV,
-  UTILITY_NAV,
-  isNavActive,
-  isNetworkScope,
-  type NavItem,
-} from '@/lib/nav';
+import { SN74_NAV, UTILITY_NAV, isNavActive, isNetworkScope, type NavItem } from '@/lib/nav';
+import { defaultNetworkPath } from '@/lib/subnets/paths';
 import ThemeToggle from '@/components/ThemeToggle';
 import PriceTicker from '@/components/PriceTicker';
+import NetworkSubnetList from '@/components/NetworkSubnetList';
 import { isChromelessPath } from '@/lib/marketing-routes';
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -57,9 +52,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       >
         <Icon size={16} />
       </span>
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {item.label}
-      </span>
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
     </Link>
   );
 }
@@ -104,6 +97,8 @@ export default function AppSidebar() {
       aria-label="Primary navigation"
       data-app-sidebar=""
     >
+      {/* Inner flex column — keep `display` off the aside so CSS can hide it in top-nav mode. */}
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       <a
         href="https://gittensor-hub.io"
         style={{
@@ -113,6 +108,7 @@ export default function AppSidebar() {
           padding: '16px 16px 12px',
           textDecoration: 'none',
           color: 'var(--fg-default)',
+          flexShrink: 0,
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -120,8 +116,7 @@ export default function AppSidebar() {
         <span style={{ fontWeight: 600, fontSize: 16, letterSpacing: '-0.015em' }}>Gittensor Hub</span>
       </a>
 
-      {/* Scope switcher — SN74 hub vs multi-subnet registry */}
-      <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
         <Link
           href="/dashboard"
           prefetch={false}
@@ -155,7 +150,7 @@ export default function AppSidebar() {
           <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Ops hub — issues, PRs, miners</span>
         </Link>
         <Link
-          href="/subnets"
+          href={defaultNetworkPath()}
           prefetch={false}
           style={{
             display: 'flex',
@@ -170,13 +165,13 @@ export default function AppSidebar() {
             color: 'var(--fg-default)',
           }}
         >
-          <span style={{ fontWeight: 600, fontSize: 13 }}>All subnets</span>
-          <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Registry · netuid 1–128</span>
+          <span style={{ fontWeight: 600, fontSize: 13 }}>Network</span>
+          <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Browse all subnets</span>
         </Link>
       </div>
 
       {sn74Active && (
-        <nav aria-label="SN74" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav aria-label="SN74" style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
           <SectionLabel>SN74</SectionLabel>
           {SN74_NAV.map((item) => (
             <NavLink key={item.href} item={item} active={isNavActive(pathname, item.href)} />
@@ -185,17 +180,18 @@ export default function AppSidebar() {
       )}
 
       {networkActive && (
-        <nav aria-label="Network" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <SectionLabel>Network</SectionLabel>
-          {NETWORK_NAV.map((item) => (
-            <NavLink key={item.href} item={item} active={isNavActive(pathname, item.href)} />
-          ))}
-        </nav>
+        <>
+          <SectionLabel>Subnets</SectionLabel>
+          <NetworkSubnetList />
+        </>
       )}
 
-      <div style={{ flex: 1 }} />
+      {!networkActive && <div style={{ flex: 1 }} />}
 
-      <nav aria-label="Utility" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <nav
+        aria-label="Utility"
+        style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0, marginTop: networkActive ? 6 : 0 }}
+      >
         {UTILITY_NAV.map((item) => (
           <NavLink key={item.href} item={item} active={isNavActive(pathname, item.href)} />
         ))}
@@ -209,12 +205,14 @@ export default function AppSidebar() {
           flexDirection: 'column',
           gap: 8,
           marginTop: 6,
+          flexShrink: 0,
         }}
       >
         <PriceTicker />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minWidth: 0 }}>
           <ThemeToggle />
         </div>
+      </div>
       </div>
     </aside>
   );

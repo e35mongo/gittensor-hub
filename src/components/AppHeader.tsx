@@ -349,7 +349,7 @@ function ScopeSwitch({ networkScope }: { networkScope: boolean }) {
       }}
     >
       <ScopeLink href="/dashboard" active={!networkScope} label="SN74" />
-      <ScopeLink href="/subnets" active={networkScope} label="Network" />
+      <ScopeLink href="/subnet/74" active={networkScope} label="Network" />
     </Box>
   );
 }

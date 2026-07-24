@@ -27,7 +27,7 @@ export const SN74_NAV: NavItem[] = [
 
 /** Multi-subnet wedge — registry / future metagraph, not SN74 ops. */
 export const NETWORK_NAV: NavItem[] = [
-  { href: '/subnets', label: 'Subnets', icon: VersionsIcon },
+  { href: '/subnet/74', label: 'Subnets', icon: VersionsIcon },
 ];
 
 export const UTILITY_NAV: NavItem[] = [

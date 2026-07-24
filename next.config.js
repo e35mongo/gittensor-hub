@@ -8,6 +8,7 @@ const nextConfig = {
     return [
       { source: '/issues', destination: '/explorer', permanent: false },
       { source: '/pulls', destination: '/explorer', permanent: false },
+      { source: '/subnets', destination: '/subnet/74', permanent: false },
     ];
   },
   serverExternalPackages: ['better-sqlite3', 'isomorphic-dompurify', 'jsdom'],
