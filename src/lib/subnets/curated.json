@@ -1,0 +1,20 @@
+[
+  {
+    "netuid": 1,
+    "status": "live",
+    "name": "Apex",
+    "tagline": "Rotating algorithmic and agentic competition arena (Macrocosmos)."
+  },
+  {
+    "netuid": 66,
+    "status": "live",
+    "name": "ninja",
+    "tagline": "King-of-the-hill competition for open-source coding agents."
+  },
+  {
+    "netuid": 74,
+    "status": "live",
+    "name": "Gittensor",
+    "tagline": "Rewards merged GitHub PRs on whitelisted open-source repositories."
+  }
+]
